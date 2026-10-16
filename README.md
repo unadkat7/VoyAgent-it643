@@ -1,6 +1,6 @@
 # VoyAgent
 
-VoyAgent is an AI-powered travel-planning academic project. This repository is a minimal monorepo starter with a Next.js frontend, Express API, and FastAPI AI service.
+VoyAgent is an AI-powered travel-planning academic project.
 
 ## Project structure
 
@@ -32,4 +32,3 @@ voyagent/
 - Frontend: `http://localhost:3000`
 - Backend health check: `http://localhost:5000/api/health`
 - AI service health check: `http://localhost:8000/health`
-
