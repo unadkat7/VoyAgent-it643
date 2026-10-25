@@ -19,6 +19,8 @@ package = false
 testpaths = ["tests"]
 pythonpath = ["."]
 addopts = "-q"
+# langsmith (pulled in by langgraph) uses an asyncio API deprecated in newer Pythons.
+filterwarnings = ["ignore::DeprecationWarning:langsmith.*"]
 
 [tool.ruff]
 line-length = 100
