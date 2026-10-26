@@ -1,14 +1,14 @@
 from collections.abc import Mapping
 
 REQUIRED_FIELDS: tuple[str, ...] = (
-    "departure",
+    "origin",
     "destination",
     "duration_days",
     "budget",
-    "travelers",
+    "party_size",
     "travel_style",
 )
-_POSITIVE_NUMBER_FIELDS = frozenset({"duration_days", "budget", "travelers"})
+_POSITIVE_NUMBER_FIELDS = frozenset({"duration_days", "budget", "party_size"})
 
 
 def find_missing_fields(trip_request: Mapping[str, object]) -> list[str]:
