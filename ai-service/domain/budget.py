@@ -15,12 +15,12 @@ class BudgetCaps:
     flight_per_traveler: Fraction
 
     @classmethod
-    def for_trip(cls, *, budget: int, nights: int, travelers: int) -> "BudgetCaps":
-        if budget <= 0 or nights <= 0 or travelers <= 0:
-            raise ValueError("budget, nights and travelers must all be positive")
+    def for_trip(cls, *, budget: int, nights: int, party_size: int) -> "BudgetCaps":
+        if budget <= 0 or nights <= 0 or party_size <= 0:
+            raise ValueError("budget, nights and party_size must all be positive")
         return cls(
             hotel_per_night=Fraction(budget) * HOTEL_SHARE / nights,
-            flight_per_traveler=Fraction(budget) * FLIGHT_SHARE / travelers,
+            flight_per_traveler=Fraction(budget) * FLIGHT_SHARE / party_size,
         )
 
     @property

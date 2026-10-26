@@ -3,11 +3,11 @@ import pytest
 from domain.requirements import REQUIRED_FIELDS, find_missing_fields
 
 COMPLETE = {
-    "departure": "Ahmedabad",
+    "origin": "Ahmedabad",
     "destination": "Goa",
     "duration_days": 4,
     "budget": 40000,
-    "travelers": 2,
+    "party_size": 2,
     "travel_style": "relaxed",
 }
 
@@ -34,14 +34,14 @@ def test_blank_text_counts_as_missing(blank):
 
 @pytest.mark.parametrize(
     ("field", "value"),
-    [("duration_days", 0), ("budget", 0), ("budget", -500), ("travelers", 0)],
+    [("duration_days", 0), ("budget", 0), ("budget", -500), ("party_size", 0)],
 )
 def test_non_positive_numbers_count_as_missing(field, value):
     assert find_missing_fields({**COMPLETE, field: value}) == [field]
 
 
 def test_smallest_valid_numbers_are_accepted():
-    request = {**COMPLETE, "duration_days": 1, "budget": 1, "travelers": 1}
+    request = {**COMPLETE, "duration_days": 1, "budget": 1, "party_size": 1}
 
     assert find_missing_fields(request) == []
 

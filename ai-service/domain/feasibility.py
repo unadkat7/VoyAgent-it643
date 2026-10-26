@@ -17,11 +17,11 @@ def estimate_trip_cost(
     hotel_price_per_night: float | None,
     nights: int,
     flight_price_per_traveler: float | None,
-    travelers: int,
+    party_size: int,
 ) -> TripCost:
     """A missing Hotel or Flight adds nothing; the plan notes say why it is missing."""
     hotel = Fraction(hotel_price_per_night or 0) * nights
-    flight = Fraction(flight_price_per_traveler or 0) * travelers
+    flight = Fraction(flight_price_per_traveler or 0) * party_size
     return TripCost(hotel_total=hotel, flight_total=flight)
 
 
