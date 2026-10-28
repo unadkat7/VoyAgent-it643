@@ -21,7 +21,9 @@ def make_llm() -> GroqLLM:
 
 @respx.mock
 def test_returns_the_parsed_output_type():
-    respx.post(URL).respond(200, json=completion('{"summary": "Beach days", "important_tips": ["Carry cash"]}'))
+    respx.post(URL).respond(
+        200, json=completion('{"summary": "Beach days", "important_tips": ["Carry cash"]}')
+    )
 
     result = make_llm().generate(TripSummary, system="system", prompt="prompt")
 

@@ -1,13 +1,13 @@
 from datetime import date
 
 from adapters.estimate_search import EstimateSearch
+from ports.search import FlightQuery, HotelQuery
 from schemas.recommendations import (
     FlightRecommendation,
     FlightRecommendations,
     HotelRecommendation,
     HotelRecommendations,
 )
-from ports.search import FlightQuery, HotelQuery
 from tests.fakes import FakeLLM
 
 HOTEL_QUERY = HotelQuery(
@@ -32,7 +32,9 @@ def test_estimated_hotels_are_always_labelled_estimated():
     claimed_live = HotelRecommendation(
         name="Snow Peak Lodge", location="Old Manali", price_per_night=2500, price_source="live"
     )
-    search = EstimateSearch(FakeLLM({HotelRecommendations: HotelRecommendations(hotels=[claimed_live])}))
+    search = EstimateSearch(
+        FakeLLM({HotelRecommendations: HotelRecommendations(hotels=[claimed_live])})
+    )
 
     hotels = search.search_hotels(HOTEL_QUERY)
 
@@ -48,7 +50,9 @@ def test_estimated_flights_are_always_labelled_estimated():
         price_per_traveler=7000,
         price_source="live",
     )
-    search = EstimateSearch(FakeLLM({FlightRecommendations: FlightRecommendations(flights=[claimed_live])}))
+    search = EstimateSearch(
+        FakeLLM({FlightRecommendations: FlightRecommendations(flights=[claimed_live])})
+    )
 
     flights = search.search_flights(FLIGHT_QUERY)
 

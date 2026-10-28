@@ -32,7 +32,9 @@ def test_returns_the_parsed_output_type(response_value):
 
 @respx.mock
 def test_request_uses_bearer_token_and_json_schema():
-    route = respx.post(URL).respond(200, json={"success": True, "result": {"response": {"summary": "ok"}}})
+    route = respx.post(URL).respond(
+        200, json={"success": True, "result": {"response": {"summary": "ok"}}}
+    )
 
     make_llm().generate(TripSummary, system="Be brief.", prompt="Plan Shimla")
 

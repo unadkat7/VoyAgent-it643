@@ -14,7 +14,9 @@ def generate(llm):
 
 
 def test_primary_answer_is_used_when_primary_works():
-    llm = FallbackLLM(FakeLLM({TripSummary: PRIMARY_ANSWER}), FakeLLM({TripSummary: FALLBACK_ANSWER}))
+    llm = FallbackLLM(
+        FakeLLM({TripSummary: PRIMARY_ANSWER}), FakeLLM({TripSummary: FALLBACK_ANSWER})
+    )
 
     assert generate(llm) == PRIMARY_ANSWER
 
