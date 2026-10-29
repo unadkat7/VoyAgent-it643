@@ -91,7 +91,7 @@ def test_hotels_are_mapped_to_live_recommendations_and_unpriced_ones_skipped():
 
 
 @respx.mock
-def test_hotel_request_asks_for_inr_prices_under_the_nightly_cap():
+def test_hotel_request_asks_for_inr_prices_without_a_price_cap():
     route = respx.get(URL).respond(200, json={"properties": []})
 
     make_search().search_hotels(HOTEL_QUERY)
@@ -102,8 +102,9 @@ def test_hotel_request_asks_for_inr_prices_under_the_nightly_cap():
     assert "Goa" in params["q"]
     assert params["check_in_date"] == "2026-12-10"
     assert params["check_out_date"] == "2026-12-13"
-    assert params["price_max"] == "4000"
     assert params["currency"] == "INR"
+    # No cap at the Provider: the planner must see over-budget results to say "raise the Budget".
+    assert "price_max" not in params
 
 
 @respx.mock
@@ -137,7 +138,7 @@ def test_flight_request_prices_one_traveler_round_trip():
     assert params["return_date"] == "2026-12-13"
     assert params["flight_type"] == "round_trip"
     assert params["adults"] == "1"
-    assert params["max_price"] == "6000"
+    assert "max_price" not in params
 
 
 @pytest.mark.parametrize("status", [401, 429, 500, 503])
