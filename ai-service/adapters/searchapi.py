@@ -10,7 +10,10 @@ MAX_HOTEL_ADULTS = 6
 
 
 class SearchApiSearch:
-    """Live Provider: SearchApi.io google_hotels and google_flights engines, priced in INR."""
+    """Live Provider: SearchApi.io google_hotels and google_flights engines, priced in INR.
+
+    Budget caps are applied by the planner, not sent here, so over-budget results stay visible.
+    """
 
     def __init__(self, *, api_key: str, timeout_seconds: float = 45.0):
         self._api_key = api_key
@@ -24,7 +27,6 @@ class SearchApiSearch:
                 "check_in_date": query.check_in.isoformat(),
                 "check_out_date": query.check_out.isoformat(),
                 "adults": min(query.adults, MAX_HOTEL_ADULTS),
-                "price_max": query.max_price_per_night,
                 "currency": "INR",
                 "gl": "in",
                 "hl": "en",
@@ -48,7 +50,6 @@ class SearchApiSearch:
                 "return_date": query.return_date.isoformat(),
                 "flight_type": "round_trip",
                 "adults": 1,
-                "max_price": query.max_price_per_traveler,
                 "currency": "INR",
                 "gl": "in",
                 "hl": "en",
