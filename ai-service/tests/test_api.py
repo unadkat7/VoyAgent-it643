@@ -2,11 +2,11 @@ from datetime import date
 
 import pytest
 from fastapi.testclient import TestClient
-from settings import Settings
 
 from app import create_app
 from graph.engine import PlanningEngine
 from schemas.trip_request import TripRequest
+from settings import Settings
 from tests.fakes import BrokenLLM, FakeLLM, SequenceSearch
 
 KEY = "test-internal-key-123456"
