@@ -22,7 +22,7 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: [true, "Password is required"],
-      minlength: 6,
+      minlength: 8,
       select: false,
     },
   },
@@ -49,4 +49,3 @@ userSchema.methods.comparePassword = async function (enteredPassword) {
 const User = mongoose.model("User", userSchema);
 
 export default User;
-

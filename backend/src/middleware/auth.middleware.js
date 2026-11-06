@@ -1,42 +1,36 @@
 import jwt from "jsonwebtoken";
+import { env } from "../config/env.js";
 import User from "../models/user.model.js";
+import { HttpError } from "../utils/httpError.js";
 
 const protect = async (req, res, next) => {
-  try {
-    // The browser keeps the session token in an HTTP-only cookie.
-    const token = req.cookies.token;
-
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: "Not authorized. Please login.",
-      });
-    }
-
-    // Verify the token before trusting the user id inside it.
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // Load the current user so protected handlers can use it.
-    const user = await User.findById(decoded.id);
-
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: "User not found.",
-      });
-    }
-
-    // Keep the user on the request for the next handler.
-    req.user = user;
-
-    next();
-  } catch (error) {
-    return res.status(401).json({
-      success: false,
-      message: "Invalid or expired token.",
-    });
+  // The browser keeps the session token in an HTTP-only cookie.
+  const token = req.cookies.token;
+  if (!token) {
+    throw new HttpError(401, "Not authorized. Please log in.");
   }
+
+  let decoded;
+  try {
+    decoded = jwt.verify(token, env.JWT_SECRET);
+  } catch {
+    throw new HttpError(401, "Invalid or expired session.");
+  }
+
+  const user = await User.findById(decoded.id);
+  if (!user) {
+    throw new HttpError(401, "Account not found.");
+  }
+
+  req.user = user;
+  next();
+};
+
+export const requireAdmin = (req, res, next) => {
+  if (!env.adminEmails.includes(req.user.email)) {
+    throw new HttpError(403, "Admins only.");
+  }
+  next();
 };
 
 export default protect;
-

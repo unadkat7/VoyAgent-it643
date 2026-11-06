@@ -1,70 +1,53 @@
-import express from "express";
-import cors from "cors";
 import cookieParser from "cookie-parser";
+import cors from "cors";
+import express from "express";
+import helmet from "helmet";
+import morgan from "morgan";
+import { env } from "./config/env.js";
+import { errorHandler, notFound } from "./middleware/errorHandler.js";
+import { requireJson } from "./middleware/requireJson.js";
 import authRoutes from "./routes/auth.routes.js";
+import feedbackRoutes from "./routes/feedback.routes.js";
+import statsRoutes from "./routes/stats.routes.js";
 import tripRoutes from "./routes/trip.routes.js";
+import { HttpError } from "./utils/httpError.js";
 
 const app = express();
 
-const defaultAllowedOrigins = [
-  "http://localhost:3000",
-  "http://127.0.0.1:3000",
-];
+const allowedOrigins = new Set(["http://localhost:3000", "http://127.0.0.1:3000", ...env.frontendOrigins]);
 
-const configuredOrigins = [
-  process.env.FRONTEND_URL,
-  process.env.CLIENT_URL,
-  process.env.CORS_ORIGIN,
-]
-  .filter(Boolean)
-  .flatMap((origin) => origin.split(","))
-  .map((origin) => origin.trim())
-  .filter(Boolean);
-
-const allowedOrigins = new Set([
-  ...defaultAllowedOrigins,
-  ...configuredOrigins,
-]);
-
+// Render sits behind one proxy; this makes req.ip the real client for rate limits.
 app.set("trust proxy", 1);
 
-// Requests from the web app need JSON bodies, cookies, and credentialed CORS.
+app.use(helmet());
 app.use(
   cors({
     origin(origin, callback) {
       if (!origin || allowedOrigins.has(origin)) {
         return callback(null, true);
       }
-
-      return callback(new Error(`CORS blocked request from origin: ${origin}`));
+      return callback(new HttpError(403, "Origin not allowed"));
     },
     credentials: true,
   })
 );
-
-app.use(express.json());
+if (env.NODE_ENV !== "test") {
+  app.use(morgan(env.isProduction ? "combined" : "dev"));
+}
+app.use(express.json({ limit: "100kb" }));
 app.use(cookieParser());
 
-// Authentication owns account sessions and the current-user endpoint.
-app.use("/api/auth", authRoutes);
-
-// Trip routes are protected individually so ownership checks stay close to each action.
-app.use("/api/trips", tripRoutes);
-
-// Keep a small public endpoint for deployment health checks.
-app.get("/", (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: "VoyAgent Backend is running 🚀",
-  });
-});
-
 app.get("/health", (req, res) => {
-  res.status(200).json({
-    status: "ok",
-  });
+  res.status(200).json({ status: "ok" });
 });
+
+app.use("/api", requireJson);
+app.use("/api/auth", authRoutes);
+app.use("/api/trips", tripRoutes);
+app.use("/api/feedback", feedbackRoutes);
+app.use("/api/stats", statsRoutes);
+
+app.use(notFound);
+app.use(errorHandler);
 
 export default app;
-
-

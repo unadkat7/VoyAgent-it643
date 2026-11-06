@@ -1,55 +1,44 @@
 import mongoose from "mongoose";
+import { TripStatus } from "../domain/trip.js";
+
+const conversationTurnSchema = new mongoose.Schema(
+  {
+    role: { type: String, enum: ["traveler", "assistant"], required: true },
+    content: { type: String, required: true, maxlength: 4000 },
+  },
+  { _id: false }
+);
 
 const tripSchema = new mongoose.Schema(
   {
+    // The account that owns the Trip (Rule 5). "User" is the account, not a Traveler.
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
-
-    threadId: {
-      type: String,
-      required: true,
-      index: true,
-    },
-
-    promptHistory: [
-      {
-        type: String,
-      },
-    ],
-
     status: {
       type: String,
-      enum: ["clarification_needed", "completed", "error"],
-      default: "clarification_needed",
+      enum: Object.values(TripStatus),
+      default: TripStatus.DRAFT,
     },
-
+    conversation: [conversationTurnSchema],
+    destination: { type: String, trim: true },
     clarification: {
-      missing_fields: [
-        {
-          type: String,
-        },
-      ],
-      question: {
-        type: String,
-      },
+      missingFields: [String],
+      question: String,
     },
-
-    finalPlan: {
+    // The Trip plan exactly as the Planning Engine returned it.
+    plan: {
       type: mongoose.Schema.Types.Mixed,
       default: null,
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
+
+tripSchema.index({ userId: 1, createdAt: -1 });
 
 const Trip = mongoose.model("Trip", tripSchema);
 
 export default Trip;
-
-
