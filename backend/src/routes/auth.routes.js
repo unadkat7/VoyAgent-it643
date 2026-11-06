@@ -1,21 +1,15 @@
 import express from "express";
-import {
-  signup,
-  login,
-  logout,
-} from "../controllers/auth.controller.js";
+import { getMe, login, logout, signup } from "../controllers/auth.controller.js";
 import protect from "../middleware/auth.middleware.js";
-import { getMe } from "../controllers/auth.controller.js";
+import { loginLimiter, signupLimiter } from "../middleware/rateLimit.js";
+import { validateBody } from "../middleware/validate.js";
+import { loginSchema, signupSchema } from "../schemas/request.schemas.js";
 
 const router = express.Router();
 
-// Signup and login create the cookie used by protected requests.
-router.post("/signup", signup);
-router.post("/login", login);
-
-// Logout and profile lookup use the same session cookie.
+router.post("/signup", signupLimiter, validateBody(signupSchema), signup);
+router.post("/login", loginLimiter, validateBody(loginSchema), login);
 router.post("/logout", logout);
 router.get("/me", protect, getMe);
 
 export default router;
-
