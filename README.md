@@ -1,34 +1,46 @@
 # VoyAgent
 
-VoyAgent is an AI-powered travel-planning academic project.
+VoyAgent plans a Trip from a chat. Tell it where you start, where you want to go, for how long, how many of you are going, your Budget and your travel style. It asks for anything missing, then builds a day-by-day Itinerary with Hotel and Flight Recommendations that fit your Budget, plus an Estimated Cost in INR.
 
-## Project structure
+**Live:** _not deployed yet_ (frontend on Vercel, backend and ai-service on Render). See [docs/deployment.md](docs/deployment.md).
 
-```text
-voyagent/
-|-- frontend/      Next.js user interface
-|-- backend/       Express REST API
-|-- ai-service/    FastAPI AI microservice
-|-- docs/          Project documentation
-|-- .env.example   Shared local configuration reference
-`-- docker-compose.yml
+## Run it locally (Docker, 4 commands)
+
+```bash
+git clone https://github.com/unadkat7/VoyAgent-it643.git
+cd VoyAgent-it643
+cp .env.example .env        # then set GROQ_API_KEY (free at console.groq.com)
+docker compose up --build   # open http://localhost:3000
 ```
 
-## Local setup
+SearchApi.io and Cloudflare keys are optional. Without SearchApi.io, Hotels and Flights are AI-suggested and labelled *Estimated Cost*.
 
-1. Copy `.env.example` to `.env` and update values when integrations are added.
-2. Install JavaScript dependencies:
-   - `cd frontend && npm install`
-   - `cd ../backend && npm install`
-3. Install Python dependencies:
-   - `cd ../ai-service`
-   - `python -m venv .venv`
-   - `.venv\\Scripts\\activate`
-   - `pip install -r requirements.txt`
-4. Run each service in a separate terminal with `npm run dev` or `uvicorn main:app --reload`.
+## How it fits together
 
-## Initial endpoints
+| Part | Stack | Owner |
+|---|---|---|
+| `frontend/` | Next.js 16, React 19, Tailwind | Sumit |
+| `backend/` | Express 5, MongoDB (Mongoose), JWT cookie sessions, zod | Devam |
+| `ai-service/` domain rules, Planning Engine graph | FastAPI, LangGraph, Pydantic, uv | Jay |
+| `ai-service/` ports, LLM and search adapters, CI | Groq, Cloudflare Workers AI, SearchApi.io | Jeet |
 
-- Frontend: `http://localhost:3000`
-- Backend health check: `http://localhost:5000/api/health`
-- AI service health check: `http://localhost:8000/health`
+The browser talks only to the backend. The backend calls the ai-service with a shared internal key. Design, rules and the boundary are in [DESIGN.md](DESIGN.md), tests in [TESTING.md](TESTING.md), and words in [UBIQUITOUS_LANGUAGE.md](UBIQUITOUS_LANGUAGE.md).
+
+## Develop without Docker
+
+```bash
+cd ai-service && uv sync && uv run uvicorn app:create_app --factory --reload --port 8000
+cd backend && npm install && npm run dev          # needs MongoDB on localhost:27017
+cd frontend && npm install && npm run dev
+```
+
+Each service has its own `.env.example`.
+
+## Tests
+
+```bash
+cd ai-service && uv run pytest
+cd backend && npm test
+cd frontend && npm test
+python scripts/check_doc_refs.py
+```
