@@ -1,95 +1,58 @@
 # Ubiquitous Language
 
-## Purpose
+The words VoyAgent uses in the UI, the code, the tests and these docs. One word, one meaning. When code and this page disagree, the code is wrong or this page must change in the same commit.
 
-This document defines the shared vocabulary used throughout VoyAgent. The same terms should be used consistently in requirements, conversations, user interfaces, source code, tests, API contracts, and documentation. If the meaning of a term changes, this document and the affected artifacts must be updated together.
+Citations are `file:line` (`text expected on that line`) and are checked in CI by `scripts/check_doc_refs.py`.
 
-## Core Domain Terms
+## Terms
 
-| Term | Definition | Usage notes |
-|---|---|---|
-| **VoyAgent** | The travel-planning system that helps a traveler create and manage a personalized trip plan. | Use **VoyAgent** only for the product/system, not for an individual travel plan. |
-| **Traveler** | A person whose preferences and constraints are used to plan a trip. | Prefer **Traveler** over *User* when describing domain behavior. A user of the system may plan for one or more travelers. |
-| **Trip** | The top-level record representing planned travel from a start date through an end date. | A Trip contains destinations, travelers, preferences, constraints, and an itinerary. Do not use *Journey* or *Vacation* as interchangeable technical terms. |
-| **Destination** | A city, region, or other geographic place included in a Trip. | A Trip may contain one or more Destinations in a defined visit order. |
-| **Origin** | The place from which the Traveler begins the Trip. | The Origin is not automatically a Destination. |
-| **Travel Party** | The group of Travelers participating in the same Trip. | Party size affects cost estimates, reservations, and suitability of recommendations. |
-| **Travel Dates** | The Trip's inclusive start and end dates. | These dates define the time window in which itinerary items may be scheduled. |
-| **Duration** | The length of a Trip or Activity. | Trip duration is derived from Travel Dates; activity duration is an estimated or confirmed time span. |
-| **Preference** | A Traveler's stated desire that guides planning but does not have to be satisfied. | Examples: preferred cuisine, pace, interests, or accommodation style. A Preference is softer than a Constraint. |
-| **Constraint** | A rule or limitation that a valid plan must satisfy. | Examples: fixed dates, accessibility needs, maximum budget, or unavailable times. Do not label optional wishes as Constraints. |
-| **Budget** | The maximum planned spend for a Trip, optionally divided into categories. | Budget is not the same as Estimated Cost or Actual Cost. Currency must always be specified. |
-| **Budget Category** | A classification used to allocate and track Trip spending. | Typical categories include transportation, accommodation, food, and activities. |
-| **Itinerary** | The ordered, date-based plan for a Trip. | An Itinerary contains Itinerary Days and Itinerary Items. It is the plan as a whole, not a single recommendation. |
-| **Itinerary Day** | The portion of an Itinerary associated with one calendar date in the Destination's local time. | Each Itinerary Day may contain zero or more ordered Itinerary Items. |
-| **Itinerary Item** | A scheduled entry in an Itinerary, such as an Activity, transfer, meal, or accommodation event. | An item has a date/time or time window and may have a location, duration, cost, and status. |
-| **Activity** | An experience or visit a Traveler may include in an Itinerary. | Examples: museum visit, walking tour, hike, or restaurant meal. An Activity becomes scheduled only when represented by an Itinerary Item. |
-| **Recommendation** | A system-generated candidate that may help satisfy Trip Preferences and Constraints. | A Recommendation is not part of the Itinerary until the Traveler accepts or adds it. Avoid calling recommendations *bookings*. |
-| **Accommodation** | A place where the Travel Party stays overnight. | A property recommendation and a confirmed accommodation reservation are different states. |
-| **Transportation** | Movement between Origins, Destinations, or Activities. | Includes flights, trains, public transit, driving, walking, and other travel modes. |
-| **Route** | An ordered path between two places using a Transportation mode. | A Route may include multiple Legs. |
-| **Leg** | One continuous segment of a Route between two points. | Changing mode or service normally begins a new Leg. |
-| **Point of Interest (POI)** | A place that may be relevant to a Traveler, such as an attraction, restaurant, station, or landmark. | A POI is not necessarily recommended or scheduled. |
-| **Reservation** | A record that a travel service or place has been held or booked for the Travel Party. | A Reservation must not be described as **Confirmed** unless confirmation has been received from the provider. |
-| **Provider** | An external organization or service supplying travel information or fulfilling a Reservation. | Examples include airlines, hotels, maps, and activity platforms. |
-| **Availability** | Whether an offering can be reserved for the requested party, date, and time. | Availability may become stale and should be associated with the time it was checked. |
-| **Estimated Cost** | A non-final projection of the price of a Trip, Itinerary Item, or Recommendation. | Always identify currency. Do not present an estimate as a confirmed price. |
-| **Actual Cost** | The amount paid or incurred after a purchase or completed activity. | Actual Cost may differ from Estimated Cost. |
-| **Local Time** | The civil time in the time zone of the relevant Destination. | Itinerary dates and times should be displayed in Local Time unless explicitly stated otherwise. |
-| **Travel Pace** | The desired intensity and density of scheduled activities. | Suggested values are **Relaxed**, **Balanced**, and **Fast-paced**. |
+| Term | Definition | Aliases to avoid | Named in code at |
+|---|---|---|---|
+| **Traveler** | A person who goes on the Trip. Travelers speak in the Conversation. | Customer, Passenger, User (for a person travelling) | `ai-service/schemas/api.py:9` (`traveler`), `backend/src/models/trip.model.js:6` (`traveler`) |
+| **User** | A VoyAgent account: email, password, session. Only for sign-in and ownership, never for a person travelling. | Member, Customer | `backend/src/models/user.model.js:49` (`User`), `backend/src/models/trip.model.js:15` (`userId`) |
+| **Trip** | One planning attempt owned by a User: its Conversation, Trip Status and, once planned, its Trip Plan. | Journey, Vacation, Thread | `backend/src/models/trip.model.js:42` (`Trip`) |
+| **Conversation** | The ordered turns between the Traveler and the assistant for one Trip. The Planning Engine reads all of it on every call. | Prompt history, Thread, Chat | `backend/src/models/trip.model.js:25` (`conversation`), `ai-service/schemas/api.py:8` (`ConversationTurn`) |
+| **Trip Request** | What the Planning Engine understood from the Conversation: Origin, Destination, Duration, Budget, Party Size, Travel Style and optional details. | Requirements, Planner output | `ai-service/schemas/trip_request.py:4` (`TripRequest`) |
+| **Origin** | The city the Travel Party starts from. Not a Destination. | Departure, Source, From | `ai-service/schemas/trip_request.py:7` (`origin`) |
+| **Destination** | The main city or region the Trip goes to. | Place, To, Location | `ai-service/schemas/trip_request.py:8` (`destination`), `backend/src/models/trip.model.js:26` (`destination`) |
+| **Duration** | Number of days of the Trip. A 3-day Trip books 3 nights. | Length, Days count | `ai-service/schemas/trip_request.py:9` (`duration_days`) |
+| **Travel Dates** | Check-in and check-out dates. Check-out is the day after the last day. | Schedule | `ai-service/domain/dates.py:8` (`TripDates`) |
+| **Nights** | Check-out minus check-in. Hotel costs are counted per night. | Days (when nights are meant) | `ai-service/domain/dates.py:15` (`nights`) |
+| **Travel Party** / **Party Size** | The group travelling together / how many Travelers are in it, the speaker included. | Travelers (as a number), Adults, Pax | `ai-service/schemas/trip_request.py:11` (`party_size`) |
+| **Travel Style** | The kind of Trip wanted, e.g. budget, relaxed, luxury, adventure, family. A Preference, not a Constraint. | Trip type, Mode | `ai-service/schemas/trip_request.py:12` (`travel_style`) |
+| **Budget** | Total money, in INR, the whole Travel Party wants to spend on the Trip. | Price, Cost (they mean other things) | `ai-service/schemas/trip_request.py:10` (`budget`) |
+| **Budget Caps** | The shares of the Budget one item may use: Hotel 50% per night; Flight 35% per Traveler plus 15% grace. | Limits, Max price | `ai-service/domain/budget.py:11` (`BudgetCaps`) |
+| **Clarification** | The assistant's question listing the missing required fields, or asking to raise the Budget. | Follow-up, Critique | `ai-service/schemas/api.py:25` (`Clarification`), `backend/src/models/trip.model.js:27` (`clarification`) |
+| **Recommendation** | A Hotel or Flight the Planning Engine suggests. Never a booking. | Option, Suggestion, Booking | `ai-service/schemas/recommendations.py:9` (`HotelRecommendation`), `ai-service/schemas/recommendations.py:22` (`FlightRecommendation`) |
+| **Price Source** | Where a Recommendation's price came from: `live` (a Provider search) or `estimated` (the AI). | Real/fake price | `ai-service/schemas/recommendations.py:6` (`PriceSource`) |
+| **Estimated Cost** | A non-final price in INR: the cheapest Hotel for all Nights plus the cheapest Flight for the whole Party. | Price, Total cost, Actual cost | `ai-service/schemas/plan.py:17` (`EstimatedCost`), `ai-service/domain/feasibility.py:15` (`estimate_trip_cost`) |
+| **Feasible** | A plan whose Estimated Cost fits the Budget. Says nothing about availability. | Valid, Possible | `ai-service/domain/feasibility.py:28` (`is_within_budget`) |
+| **Itinerary** / **Itinerary Day** / **Activity** | The day-by-day plan / one day of it / one thing to do in a day. | Schedule, Agenda, Event | `ai-service/schemas/itinerary.py:18` (`Itinerary`), `ai-service/schemas/itinerary.py:12` (`ItineraryDay`), `ai-service/schemas/itinerary.py:4` (`Activity`) |
+| **Trip Plan** | The finished result: summary, tips, Recommendations, Itinerary, Estimated Cost and Notes. | Final plan, Final output, Itinerary (for the whole) | `ai-service/schemas/plan.py:24` (`TripPlan`), `backend/src/models/trip.model.js:32` (`plan`) |
+| **Note** | A plain sentence in the Trip Plan explaining something skipped or changed, e.g. "Flights were skipped". | Warning, Error | `ai-service/schemas/plan.py:35` (`notes`) |
+| **Trip Status** | `draft` (still needs details), `planned` (final), `planning_failed` (the Planning Engine was unavailable; can be retried). | In progress, Completed, Error | `backend/src/domain/trip.js:3` (`TripStatus`) |
+| **Planning Engine** | The ai-service component that turns a Conversation into a Clarification or a Trip Plan. | AI, Agent, Bot, LLM (for the whole engine) | `ai-service/graph/engine.py:10` (`PlanningEngine`) |
+| **Provider** | An outside service VoyAgent depends on: Groq and Cloudflare (LLMs), SearchApi.io (Hotels and Flights). | API, Vendor | `ai-service/adapters/groq_llm.py:11` (`GroqLLM`), `ai-service/adapters/searchapi.py:12` (`SearchApiSearch`) |
+| **Airport Code** | The IATA code for a known city. Unknown places have none. | Airport id | `ai-service/domain/airports.py:54` (`airport_code`) |
 
-## Planning and Lifecycle Terms
+## Flagged ambiguities
 
-| Term | Definition | Usage notes |
-|---|---|---|
-| **Trip Request** | The Traveler-provided input used to begin or revise planning. | It may include Destinations, dates, Budget, Preferences, Constraints, and Travel Party details. |
-| **Draft Trip** | A Trip whose details or Itinerary are still being developed. | Draft content may be edited freely and must not imply confirmed availability. |
-| **Generate Itinerary** | Create a proposed Itinerary from the current Trip Request. | Generation produces a draft; it does not create Reservations. |
-| **Regenerate Itinerary** | Replace or revise all or part of an existing draft using updated inputs or feedback. | Preserve explicitly locked or accepted items when the product supports locking. |
-| **Accept Recommendation** | Add a Recommendation to the Trip plan. | Acceptance schedules or selects an item; it does not necessarily reserve or purchase it. |
-| **Conflict** | A condition in which two or more Itinerary Items overlap or cannot jointly satisfy a Constraint. | Excess travel time between consecutive items can also produce a Conflict. |
-| **Feasible Itinerary** | An Itinerary that satisfies all known hard Constraints and has no known scheduling Conflicts. | Feasible does not mean optimal, available, or booked. |
-| **Booking Status** | The current reservation state of a bookable item. | Use explicit values such as **Not booked**, **Pending**, **Confirmed**, **Cancelled**, or **Failed**. |
-| **Trip Status** | The lifecycle state of a Trip. | Recommended values: **Draft**, **Planned**, **In progress**, **Completed**, and **Cancelled**. |
+1. **User vs Traveler.** Early code used "user" for both the account and the person travelling. **Winner:** *User* is only the account (sign-in, ownership: `userId`). *Traveler* is the person travelling and the speaker in the Conversation. The API says `role: "traveler"`, not `"user"`.
+2. **Trip vs thread.** Early `trip.model.js` (`44aa1cb`) stored a `threadId` next to the Trip id for the same conversation, so one thing had two names. **Winner:** *Trip*. `threadId` was removed and the Trip id is sent to the Planning Engine as `trip_id`.
+3. **"travelers" meant a person and a number.** `travelers: 2` was a count named like a person. **Winner:** *Party Size* (`party_size`) for the count and *Traveler* for a person.
+4. **Departure vs Origin.** The code said `departure` and the glossary said *Origin*. **Winner:** *Origin*. "Departure" stays only for a flight's departure airport or time.
+5. **Clarification vs critique.** Asking for missing fields and asking to raise an over-budget Trip could have been split into "clarification" and "critique". **Winner:** *Clarification*, for any question back to the Traveler.
+6. **Days vs nights.** Code mixed `duration_days` with nights when pricing hotels. **Winner:** *Duration* is days; *Nights* is check-out minus check-in, and Hotel cost always uses Nights.
+7. **Budget vs Estimated Cost vs price.** "Budget" was sometimes used for a hotel's nightly price. **Winner:** *Budget* is only the Traveler's total; a Recommendation has a price with a *Price Source*; the total of a plan is its *Estimated Cost*.
+8. **Completed vs Planned.** Early `trip.model.js` (`44aa1cb`) used `completed` to mean "plan ready", but in travel, completed means the Trip already happened. **Winner:** *planned*.
 
-## Actors and System Boundaries
+## Language rules
 
-| Term | Definition |
-|---|---|
-| **Planner** | A user who creates or edits a Trip. The Planner may also be a Traveler. |
-| **External Service** | A system outside VoyAgent that supplies data or performs an operation, such as geocoding, routing, weather lookup, or booking. |
-| **Planning Engine** | The VoyAgent component that evaluates Trip inputs and produces or revises Recommendations and Itineraries. |
+1. Never say *booked*, *confirmed* or *available* for a Recommendation. VoyAgent makes no Reservations.
+2. Every amount has a currency. VoyAgent works in INR and says so.
+3. An `estimated` price is always shown with the label *Estimated Cost*.
+4. A new domain word goes in this table in the same commit as the code that introduces it.
 
-## Important Distinctions
+## Terms from the first glossary that the product does not use
 
-- A **Preference** influences a plan; a **Constraint** must be satisfied.
-- A **Recommendation** is a candidate; an **Itinerary Item** is scheduled in the plan; a **Reservation** represents a booking attempt or result.
-- **Estimated Cost** is projected; **Actual Cost** is incurred.
-- **Availability** is observed at a point in time; **Confirmed** is a Booking Status supported by provider confirmation.
-- A **Destination** is part of the Trip; a **Point of Interest** is a place that may be considered within or near a Destination.
-- A **Route** is the complete path between places; a **Leg** is one segment of that Route.
-
-## Language Rules
-
-1. Use the canonical terms and capitalization in this document in domain documentation and code concepts.
-2. Use **Traveler** for domain behavior and reserve **User** for authentication, authorization, and account-management concerns.
-3. Never use **booked**, **confirmed**, or **available** when the system has only generated a Recommendation.
-4. Every monetary value must include a currency; never assume a currency from the Traveler's location.
-5. Every scheduled date and time must have an associated time zone and should be presented in the relevant Destination's Local Time.
-6. Distinguish hard Constraints from soft Preferences so the Planning Engine can explain trade-offs correctly.
-7. When a new domain term is introduced in requirements or implementation, add it here with one precise meaning and remove or document ambiguous synonyms.
-
-## Terms to Avoid
-
-| Avoid | Use instead | Reason |
-|---|---|---|
-| Journey / Vacation | **Trip** | Keeps the top-level aggregate name consistent. |
-| Customer / Passenger | **Traveler** | These words imply commercial or transport-specific relationships. |
-| Suggestion / Option | **Recommendation** | Provides one canonical name for a proposed candidate. |
-| Schedule (as a noun for the entire plan) | **Itinerary** | Avoids confusion with an individual item's scheduled time. |
-| Price (when not confirmed) | **Estimated Cost** | Makes uncertainty explicit. |
-| Booked (without provider confirmation) | **Pending** or **Not booked** | Prevents false confirmation. |
-
-## Maintaining This Language
-
-This is a living document. Changes to domain meaning should be reviewed with the related requirements, domain model, tests, API names, and user-facing copy. Where legacy names cannot be changed immediately, document the mapping here and use the canonical term for all new work.
+Reservation, Booking Status, Route, Leg, Point of Interest, Availability, Actual Cost, Constraint (as a type) and Local Time came from the first draft of this glossary. VoyAgent does not model them yet, so they were taken out of the table rather than left with no code behind them.

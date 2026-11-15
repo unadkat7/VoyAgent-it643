@@ -20,6 +20,7 @@ __pycache__/
 !.env.example
 
 # Tooling and OS
+.claude/
 .vercel/
 *.log
 .DS_Store
