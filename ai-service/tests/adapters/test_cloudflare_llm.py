@@ -46,6 +46,18 @@ def test_request_uses_bearer_token_and_json_schema():
     assert body["messages"][-1] == {"role": "user", "content": "Plan Shimla"}
 
 
+@respx.mock
+def test_request_allows_a_full_itinerary_length_answer():
+    # Workers AI stops at 256 tokens by default, which cut a 3-day Itinerary mid-JSON.
+    route = respx.post(URL).respond(
+        200, json={"success": True, "result": {"response": {"summary": "ok"}}}
+    )
+
+    make_llm().generate(TripSummary, system="s", prompt="p")
+
+    assert json.loads(route.calls.last.request.content)["max_tokens"] >= 4096
+
+
 @pytest.mark.parametrize(
     "response",
     [

@@ -4,6 +4,8 @@ from adapters.json_output import parse_output, system_prompt_with_schema
 from ports.llm import LLMError, M
 
 CLOUDFLARE_URL = "https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/run/{model}"
+# Workers AI defaults to 256 output tokens, which truncates an Itinerary mid-JSON.
+MAX_OUTPUT_TOKENS = 4096
 
 
 class CloudflareLLM:
@@ -22,6 +24,7 @@ class CloudflareLLM:
                 {"role": "system", "content": system_prompt_with_schema(system, output_type)},
                 {"role": "user", "content": prompt},
             ],
+            "max_tokens": MAX_OUTPUT_TOKENS,
             "response_format": {
                 "type": "json_schema",
                 "json_schema": output_type.model_json_schema(),
