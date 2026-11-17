@@ -21,7 +21,7 @@ Rules are the five in [DESIGN.md](DESIGN.md). Each rule's test was written befor
 - **The planner chat page** (`frontend/src/app/trip/new/page.js`) has no automated test. It was checked by hand in the browser: Clarification, resume from the dashboard, retry after `planning_failed`, and redirect to the Trip Plan.
 - **`AgentProgressCard`** animates on timers, not on real progress from the backend, and is untested.
 - **The quality of LLM output** (is the itinerary sensible?) is not tested. Tests use a `FakeLLM`; only manual smoke runs hit the real Providers.
-- **The Cloudflare adapter** is tested only against stubbed HTTP. A live call has not succeeded yet because we still need a valid API token.
+- **The LLM fallback** is tested automatically only against stubbed HTTP. A manual live run with a deliberately wrong Groq key showed why that is not enough. It fell back to Cloudflare, but Workers AI's default 256-token limit cut the Itinerary off mid-JSON, and the stubbed tests could not have caught this. The limit is now raised, and `ai-service/tests/adapters/test_cloudflare_llm.py:50` (`test_request_allows_a_full_itinerary_length_answer`) pins it.
 
 ## Test doubles used
 
@@ -38,7 +38,7 @@ Rules are the five in [DESIGN.md](DESIGN.md). Each rule's test was written befor
 ## Running the tests
 
 ```bash
-cd ai-service && uv run pytest     # 115 tests
+cd ai-service && uv run pytest     # 116 tests
 cd backend && npm test             # 51 tests
 cd frontend && npm test            # 23 tests
 python scripts/check_doc_refs.py   # every file:line in these docs
