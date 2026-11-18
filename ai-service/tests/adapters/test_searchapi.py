@@ -6,6 +6,7 @@ import respx
 
 from adapters.searchapi import SearchApiSearch
 from ports.search import FlightQuery, HotelQuery, SearchError
+from schemas.geo import GeoPoint
 
 URL = "https://www.searchapi.io/api/v1/search"
 
@@ -37,6 +38,7 @@ HOTELS_PAYLOAD = {
             "images": [{"thumbnail": "https://img.example/1.jpg"}],
             "amenities": ["Pool", "Free Wi-Fi"],
             "nearby_places": [{"name": "Calangute Beach"}],
+            "gps_coordinates": {"latitude": 15.5439, "longitude": 73.7553},
         },
         {"name": "Mystery Inn"},
     ]
@@ -88,6 +90,15 @@ def test_hotels_are_mapped_to_live_recommendations_and_unpriced_ones_skipped():
     assert hotel.booking_url == "https://hotels.example/sea-breeze"
     assert hotel.image_url == "https://img.example/1.jpg"
     assert hotel.price_source == "live"
+    assert hotel.coordinates == GeoPoint(lat=15.5439, lng=73.7553)
+
+
+@respx.mock
+def test_hotel_without_gps_has_no_coordinates():
+    item = {k: v for k, v in HOTELS_PAYLOAD["properties"][0].items() if k != "gps_coordinates"}
+    respx.get(URL).respond(200, json={"properties": [item]})
+
+    assert make_search().search_hotels(HOTEL_QUERY)[0].coordinates is None
 
 
 @respx.mock
