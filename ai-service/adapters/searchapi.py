@@ -3,6 +3,7 @@ from typing import Any
 import httpx
 
 from ports.search import FlightQuery, HotelQuery, SearchError
+from schemas.geo import GeoPoint
 from schemas.recommendations import FlightRecommendation, HotelRecommendation
 
 SEARCHAPI_URL = "https://www.searchapi.io/api/v1/search"
@@ -88,7 +89,15 @@ def _to_hotel(item: dict[str, Any], destination: str) -> HotelRecommendation | N
         image_url=images[0].get("thumbnail") if images else None,
         amenities=item.get("amenities") or [],
         price_source="live",
+        coordinates=_to_point(item.get("gps_coordinates")),
     )
+
+
+def _to_point(gps: dict[str, Any] | None) -> GeoPoint | None:
+    try:
+        return GeoPoint(lat=gps["latitude"], lng=gps["longitude"])
+    except (TypeError, KeyError, ValueError):
+        return None
 
 
 def _to_flight(item: dict[str, Any]) -> FlightRecommendation | None:
