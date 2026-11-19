@@ -1,6 +1,7 @@
 from typing import Literal
 
 from pydantic import BaseModel, Field
+from pydantic.json_schema import SkipJsonSchema
 
 from schemas.geo import GeoPoint
 
@@ -19,7 +20,8 @@ class HotelRecommendation(BaseModel):
     image_url: str | None = None
     amenities: list[str] = Field(default_factory=list)
     price_source: PriceSource = "estimated"
-    coordinates: GeoPoint | None = None
+    # Set from live Provider GPS or the locate step; hidden from the LLM's schema.
+    coordinates: SkipJsonSchema[GeoPoint | None] = None
 
 
 class FlightRecommendation(BaseModel):

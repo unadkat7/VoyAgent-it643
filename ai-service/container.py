@@ -4,6 +4,8 @@ from adapters.estimate_search import EstimateSearch
 from adapters.fallback_llm import FallbackLLM
 from adapters.fallback_search import FallbackSearch
 from adapters.groq_llm import GroqLLM
+from adapters.no_geocoder import NoGeocoder
+from adapters.nominatim import NominatimGeocoder
 from adapters.searchapi import SearchApiSearch
 from graph.engine import PlanningEngine
 from ports.llm import LLMPort
@@ -36,4 +38,9 @@ def build_engine(settings: Settings) -> PlanningEngine:
     if settings.searchapi_key:
         search = FallbackSearch(SearchApiSearch(api_key=settings.searchapi_key), search)
     cached = CachedSearch(search, ttl_seconds=settings.search_cache_ttl_seconds)
-    return PlanningEngine(llm=llm, hotel_search=cached, flight_search=cached)
+    geocoder = (
+        NominatimGeocoder(base_url=settings.nominatim_url)
+        if settings.geocoder_enabled
+        else NoGeocoder()
+    )
+    return PlanningEngine(llm=llm, hotel_search=cached, flight_search=cached, geocoder=geocoder)

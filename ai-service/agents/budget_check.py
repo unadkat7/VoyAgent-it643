@@ -36,4 +36,4 @@ def budget_check(state: PlanningState) -> PlanningState:
 
 
 def route_after_budget_check(state: PlanningState) -> str:
-    return END if state.get("clarification") else "compose"
+    return END if state.get("clarification") else "locate"

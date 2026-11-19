@@ -5,6 +5,7 @@ from domain.budget import BudgetCaps
 from domain.dates import TripDates
 from domain.feasibility import TripCost
 from schemas.api import Clarification, ConversationTurn
+from schemas.geo import GeoPoint
 from schemas.itinerary import ItineraryDay
 from schemas.plan import TripPlan
 from schemas.recommendations import FlightRecommendation, HotelRecommendation
@@ -25,5 +26,6 @@ class PlanningState(TypedDict, total=False):
     # Hotel, flight and itinerary nodes run in parallel and may each add notes.
     notes: Annotated[list[str], operator.add]
     cost: TripCost
+    destination_point: GeoPoint | None
     clarification: Clarification
     plan: TripPlan

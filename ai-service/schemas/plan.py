@@ -2,6 +2,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from schemas.geo import GeoPoint
 from schemas.itinerary import ItineraryDay
 from schemas.recommendations import FlightRecommendation, HotelRecommendation
 from schemas.trip_request import TripRequest
@@ -33,3 +34,4 @@ class TripPlan(BaseModel):
     itinerary: list[ItineraryDay]
     estimated_cost: EstimatedCost
     notes: list[str] = Field(default_factory=list)
+    destination_coordinates: GeoPoint | None = None

@@ -1,8 +1,10 @@
+import json
+
 from agents.locate import MAX_LOOKUPS, make_locate_node
 from ports.geocoder import GeocodeError
 from schemas.geo import GeoPoint
-from schemas.itinerary import Activity, ItineraryDay
-from schemas.recommendations import HotelRecommendation
+from schemas.itinerary import Activity, Itinerary, ItineraryDay
+from schemas.recommendations import HotelRecommendation, HotelRecommendations
 from schemas.trip_request import TripRequest
 from tests.fakes import FakeGeocoder
 
@@ -83,6 +85,11 @@ def test_llm_written_coordinates_are_replaced():
 
     assert result["hotels"][0].coordinates is None
     assert [a.coordinates for a in result["itinerary"][0].activities] == [BAGA, None]
+
+
+def test_llm_is_never_asked_for_coordinates():
+    assert "coordinates" not in json.dumps(Itinerary.model_json_schema())
+    assert "coordinates" not in json.dumps(HotelRecommendations.model_json_schema())
 
 
 def test_same_place_is_looked_up_once_and_destination_is_not_repeated():
