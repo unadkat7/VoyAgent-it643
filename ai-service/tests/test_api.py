@@ -7,7 +7,7 @@ from app import create_app
 from graph.engine import PlanningEngine
 from schemas.trip_request import TripRequest
 from settings import Settings
-from tests.fakes import BrokenLLM, FakeLLM, SequenceSearch
+from tests.fakes import BrokenLLM, FakeGeocoder, FakeLLM, SequenceSearch
 
 KEY = "test-internal-key-123456"
 PLAN_URL = "/planner/plan-trip"
@@ -23,6 +23,7 @@ def client(llm=None, environment="test") -> TestClient:
         llm=llm or FakeLLM({TripRequest: TripRequest(destination="Goa")}),
         hotel_search=SequenceSearch(),
         flight_search=SequenceSearch(),
+        geocoder=FakeGeocoder(),
         today=lambda: date(2026, 11, 22),
     )
     return TestClient(create_app(engine=engine, settings=settings(environment)))
