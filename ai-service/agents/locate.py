@@ -6,7 +6,7 @@ from schemas.recommendations import HotelRecommendation
 
 # Nominatim allows one request a second, so this bounds the extra planning time.
 MAX_LOOKUPS = 20
-OUTAGE_NOTE = "Map Locations could not be found right now, so the Trip map may be empty."
+OUTAGE_NOTE = "Places could not be found on the map right now, so the Trip Map may be empty."
 
 
 class _Lookups:

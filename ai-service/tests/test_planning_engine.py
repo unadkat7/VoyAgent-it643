@@ -159,7 +159,7 @@ def test_recommendations_reach_the_plan_unchanged():
     assert plan.itinerary == ITINERARY.days
 
 
-def test_plan_carries_map_locations():
+def test_plan_carries_coordinates_for_the_trip_map():
     goa, baga = GeoPoint(lat=15.3, lng=74.1), GeoPoint(lat=15.55, lng=73.75)
     engine = make_engine(
         llm_for(GOA_REQUEST),

@@ -41,7 +41,7 @@ def run(geocoder, hotels=(), itinerary=()):
     return node({"request": REQUEST, "hotels": list(hotels), "itinerary": list(itinerary)})
 
 
-def test_destination_hotels_and_activities_get_locations():
+def test_destination_hotels_and_activities_get_coordinates():
     geocoder = FakeGeocoder(
         {"Goa": GOA, "Sea View, Goa": SEA_VIEW, "Baga Beach, Goa": BAGA, "Fort Aguada, Goa": FORT}
     )

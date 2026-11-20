@@ -23,16 +23,18 @@ Citations are `file:line` (`text expected on that line`) and are checked in CI b
 | **Budget** | Total money, in INR, the whole Travel Party wants to spend on the Trip. | Price, Cost (they mean other things) | `ai-service/schemas/trip_request.py:10` (`budget`) |
 | **Budget Caps** | The shares of the Budget one item may use: Hotel 50% per night; Flight 35% per Traveler plus 15% grace. | Limits, Max price | `ai-service/domain/budget.py:11` (`BudgetCaps`) |
 | **Clarification** | The assistant's question listing the missing required fields, or asking to raise the Budget. | Follow-up, Critique | `ai-service/schemas/api.py:25` (`Clarification`), `backend/src/models/trip.model.js:27` (`clarification`) |
-| **Recommendation** | A Hotel or Flight the Planning Engine suggests. Never a booking. | Option, Suggestion, Booking | `ai-service/schemas/recommendations.py:9` (`HotelRecommendation`), `ai-service/schemas/recommendations.py:22` (`FlightRecommendation`) |
-| **Price Source** | Where a Recommendation's price came from: `live` (a Provider search) or `estimated` (the AI). | Real/fake price | `ai-service/schemas/recommendations.py:6` (`PriceSource`) |
-| **Estimated Cost** | A non-final price in INR: the cheapest Hotel for all Nights plus the cheapest Flight for the whole Party. | Price, Total cost, Actual cost | `ai-service/schemas/plan.py:17` (`EstimatedCost`), `ai-service/domain/feasibility.py:15` (`estimate_trip_cost`) |
+| **Recommendation** | A Hotel or Flight the Planning Engine suggests. Never a booking. | Option, Suggestion, Booking | `ai-service/schemas/recommendations.py:12` (`HotelRecommendation`), `ai-service/schemas/recommendations.py:27` (`FlightRecommendation`) |
+| **Price Source** | Where a Recommendation's price came from: `live` (a Provider search) or `estimated` (the AI). | Real/fake price | `ai-service/schemas/recommendations.py:9` (`PriceSource`) |
+| **Estimated Cost** | A non-final price in INR: the cheapest Hotel for all Nights plus the cheapest Flight for the whole Party. | Price, Total cost, Actual cost | `ai-service/schemas/plan.py:18` (`EstimatedCost`), `ai-service/domain/feasibility.py:15` (`estimate_trip_cost`) |
 | **Feasible** | A plan whose Estimated Cost fits the Budget. Says nothing about availability. | Valid, Possible | `ai-service/domain/feasibility.py:28` (`is_within_budget`) |
-| **Itinerary** / **Itinerary Day** / **Activity** | The day-by-day plan / one day of it / one thing to do in a day. | Schedule, Agenda, Event | `ai-service/schemas/itinerary.py:18` (`Itinerary`), `ai-service/schemas/itinerary.py:12` (`ItineraryDay`), `ai-service/schemas/itinerary.py:4` (`Activity`) |
-| **Trip Plan** | The finished result: summary, tips, Recommendations, Itinerary, Estimated Cost and Notes. | Final plan, Final output, Itinerary (for the whole) | `ai-service/schemas/plan.py:24` (`TripPlan`), `backend/src/models/trip.model.js:32` (`plan`) |
-| **Note** | A plain sentence in the Trip Plan explaining something skipped or changed, e.g. "Flights were skipped". | Warning, Error | `ai-service/schemas/plan.py:35` (`notes`) |
+| **Itinerary** / **Itinerary Day** / **Activity** | The day-by-day plan / one day of it / one thing to do in a day. | Schedule, Agenda, Event | `ai-service/schemas/itinerary.py:23` (`Itinerary`), `ai-service/schemas/itinerary.py:17` (`ItineraryDay`), `ai-service/schemas/itinerary.py:7` (`Activity`) |
+| **Trip Plan** | The finished result: summary, tips, Recommendations, Itinerary, Estimated Cost and Notes. | Final plan, Final output, Itinerary (for the whole) | `ai-service/schemas/plan.py:25` (`TripPlan`), `backend/src/models/trip.model.js:32` (`plan`) |
+| **Note** | A plain sentence in the Trip Plan explaining something skipped or changed, e.g. "Flights were skipped". | Warning, Error | `ai-service/schemas/plan.py:36` (`notes`) |
 | **Trip Status** | `draft` (still needs details), `planned` (final), `planning_failed` (the Planning Engine was unavailable; can be retried). | In progress, Completed, Error | `backend/src/domain/trip.js:3` (`TripStatus`) |
-| **Planning Engine** | The ai-service component that turns a Conversation into a Clarification or a Trip Plan. | AI, Agent, Bot, LLM (for the whole engine) | `ai-service/graph/engine.py:10` (`PlanningEngine`) |
-| **Provider** | An outside service VoyAgent depends on: Groq and Cloudflare (LLMs), SearchApi.io (Hotels and Flights). | API, Vendor | `ai-service/adapters/groq_llm.py:11` (`GroqLLM`), `ai-service/adapters/searchapi.py:12` (`SearchApiSearch`) |
+| **Planning Engine** | The ai-service component that turns a Conversation into a Clarification or a Trip Plan. | AI, Agent, Bot, LLM (for the whole engine) | `ai-service/graph/engine.py:11` (`PlanningEngine`) |
+| **Provider** | An outside service VoyAgent depends on: Groq and Cloudflare (LLMs), SearchApi.io (Hotels and Flights), OpenStreetMap Nominatim (Coordinates). | API, Vendor | `ai-service/adapters/groq_llm.py:11` (`GroqLLM`), `ai-service/adapters/searchapi.py:13` (`SearchApiSearch`), `ai-service/adapters/nominatim.py:16` (`NominatimGeocoder`) |
+| **Coordinates** | Latitude and longitude of the Destination, a Hotel or an Activity, found by a geocoder Provider after the plan is Feasible. Never written by the LLM. Missing when a place cannot be found. | Location (that is the place name text), GPS, Lat/long | `ai-service/schemas/geo.py:4` (`GeoPoint`), `ai-service/agents/locate.py:47` (`make_locate_node`) |
+| **Trip Map** | The Map tab of a Trip Plan: one pin per place that has Coordinates, filterable by Itinerary Day. | Map view, Location map | `frontend/src/components/trip/TripMap.jsx:63` (`TripMap`) |
 | **Airport Code** | The IATA code for a known city. Unknown places have none. | Airport id | `ai-service/domain/airports.py:54` (`airport_code`) |
 
 ## Flagged ambiguities
@@ -45,6 +47,7 @@ Citations are `file:line` (`text expected on that line`) and are checked in CI b
 6. **Days vs nights.** Code mixed `duration_days` with nights when pricing hotels. **Winner:** *Duration* is days; *Nights* is check-out minus check-in, and Hotel cost always uses Nights.
 7. **Budget vs Estimated Cost vs price.** "Budget" was sometimes used for a hotel's nightly price. **Winner:** *Budget* is only the Traveler's total; a Recommendation has a price with a *Price Source*; the total of a plan is its *Estimated Cost*.
 8. **Completed vs Planned.** Early `trip.model.js` (`44aa1cb`) used `completed` to mean "plan ready", but in travel, completed means the Trip already happened. **Winner:** *planned*.
+9. **Location vs Coordinates.** An Activity's and a Hotel's `location` is a place name the LLM writes ("Baga"), and the map feature first called its lat/long points "Locations" too. **Winner:** `location` stays the place name; the found lat/long is *Coordinates* (`coordinates`, `destination_coordinates`).
 
 ## Language rules
 
