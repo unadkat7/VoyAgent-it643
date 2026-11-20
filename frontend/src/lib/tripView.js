@@ -40,6 +40,55 @@ export function tripLink(trip) {
   return trip.status === "planned" ? `/trip/${trip._id}` : `/trip/new?tripId=${trip._id}`;
 }
 
+const hasPoint = (coordinates) =>
+  Number.isFinite(coordinates?.lat) && Number.isFinite(coordinates?.lng);
+
+// Pins for the Trip map. `day` is "all" or a day number; Destination and Hotels always show.
+export function mapPoints(plan, day) {
+  const points = [];
+  if (hasPoint(plan?.destination_coordinates)) {
+    points.push({
+      key: "destination",
+      kind: "destination",
+      title: plan.request?.destination ?? "Destination",
+      ...plan.destination_coordinates,
+    });
+  }
+  for (const hotel of plan?.hotels ?? []) {
+    if (!hasPoint(hotel.coordinates)) continue;
+    points.push({
+      key: `hotel-${hotel.name}`,
+      kind: "hotel",
+      title: hotel.name,
+      detail: `${formatInr(hotel.price_per_night)} / night`,
+      ...hotel.coordinates,
+    });
+  }
+  for (const itineraryDay of plan?.itinerary ?? []) {
+    if (day !== "all" && itineraryDay.day !== day) continue;
+    itineraryDay.activities.forEach((activity, index) => {
+      if (!hasPoint(activity.coordinates)) return;
+      points.push({
+        key: `activity-${itineraryDay.day}-${index}`,
+        kind: "activity",
+        title: activity.title,
+        detail: `Day ${itineraryDay.day} · ${activity.time}`,
+        cost: activity.estimated_cost,
+        day: itineraryDay.day,
+        order: index + 1,
+        ...activity.coordinates,
+      });
+    });
+  }
+  return points;
+}
+
+export function mapDays(plan) {
+  return (plan?.itinerary ?? [])
+    .filter((itineraryDay) => itineraryDay.activities.some((a) => hasPoint(a.coordinates)))
+    .map((itineraryDay) => itineraryDay.day);
+}
+
 export function formatDateRange(checkIn, checkOut) {
   const options = { day: "numeric", month: "short", year: "numeric" };
   const start = new Date(checkIn).toLocaleDateString("en-IN", options);
