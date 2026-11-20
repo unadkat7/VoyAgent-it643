@@ -34,10 +34,10 @@ describe("TripMap", () => {
     expect(screen.getByTestId("route")).toBeInTheDocument();
   });
 
-  it("explains an empty map for plans without Locations", () => {
+  it("explains an empty map for plans without Coordinates", () => {
     render(<TripMap plan={PLAN} />);
 
     expect(screen.queryByTestId("pin")).not.toBeInTheDocument();
-    expect(screen.getByText(/no map locations/i)).toBeInTheDocument();
+    expect(screen.getByText(/no map pins/i)).toBeInTheDocument();
   });
 });
