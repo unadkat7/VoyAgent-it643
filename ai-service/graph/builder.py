@@ -9,9 +9,11 @@ from agents.compose import make_compose_node
 from agents.flights import make_flight_node
 from agents.hotels import make_hotel_node
 from agents.itinerary import make_itinerary_node
+from agents.locate import make_locate_node
 from agents.prepare import make_prepare_node
 from agents.understand import make_understand_node, route_after_understand
 from graph.state import PlanningState
+from ports.geocoder import GeocoderPort
 from ports.llm import LLMPort
 from ports.search import FlightSearchPort, HotelSearchPort
 
@@ -21,6 +23,7 @@ def build_planning_graph(
     llm: LLMPort,
     hotel_search: HotelSearchPort,
     flight_search: FlightSearchPort,
+    geocoder: GeocoderPort,
     today: Callable[[], date],
 ):
     graph = StateGraph(PlanningState)
@@ -31,6 +34,7 @@ def build_planning_graph(
     graph.add_node("flights", make_flight_node(flight_search))
     graph.add_node("itinerary", make_itinerary_node(llm))
     graph.add_node("budget_check", budget_check)
+    graph.add_node("locate", make_locate_node(geocoder))
     graph.add_node("compose", make_compose_node(llm))
 
     graph.add_edge(START, "understand")
@@ -41,7 +45,8 @@ def build_planning_graph(
     for step in ("hotels", "flights", "itinerary"):
         graph.add_edge("prepare", step)
     graph.add_edge(["hotels", "flights", "itinerary"], "budget_check")
-    graph.add_conditional_edges("budget_check", route_after_budget_check, ["compose", END])
+    graph.add_conditional_edges("budget_check", route_after_budget_check, ["locate", END])
+    graph.add_edge("locate", "compose")
     graph.add_edge("compose", END)
 
     return graph.compile()

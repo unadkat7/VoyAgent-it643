@@ -47,6 +47,21 @@ class SequenceSearch:
     search_flights = _next
 
 
+class FakeGeocoder:
+    """Fake GeocoderPort: knows a fixed set of places and records every query it is asked."""
+
+    def __init__(self, places: dict | None = None, error: Exception | None = None):
+        self._places = places or {}
+        self._error = error
+        self.queries: list[str] = []
+
+    def locate(self, query: str):
+        self.queries.append(query)
+        if self._error:
+            raise self._error
+        return self._places.get(query)
+
+
 class FakeClock:
     def __init__(self, start: float = 1_000.0):
         self.now = start

@@ -6,11 +6,12 @@ from graph.engine import PlanningEngine
 from ports.llm import LLMError
 from ports.search import SearchError
 from schemas.api import ConversationTurn, PlanTripRequest
+from schemas.geo import GeoPoint
 from schemas.itinerary import Activity, Itinerary, ItineraryDay
 from schemas.plan import TripSummary
 from schemas.recommendations import FlightRecommendation, HotelRecommendation
 from schemas.trip_request import TripRequest
-from tests.fakes import BrokenLLM, FakeLLM, SequenceSearch
+from tests.fakes import BrokenLLM, FakeGeocoder, FakeLLM, SequenceSearch
 
 TODAY = date(2026, 11, 22)
 
@@ -62,11 +63,15 @@ def ask(engine: PlanningEngine, *messages: str):
     return engine.plan(PlanTripRequest(trip_id="trip-1", conversation=turns))
 
 
-def make_engine(llm, hotels=None, flights=None):
+def make_engine(llm, hotels=None, flights=None, geocoder=None):
     hotel_search = SequenceSearch(*hotels) if hotels is not None else SequenceSearch()
     flight_search = SequenceSearch(*flights) if flights is not None else SequenceSearch()
     return PlanningEngine(
-        llm=llm, hotel_search=hotel_search, flight_search=flight_search, today=lambda: TODAY
+        llm=llm,
+        hotel_search=hotel_search,
+        flight_search=flight_search,
+        geocoder=geocoder or FakeGeocoder(),
+        today=lambda: TODAY,
     )
 
 
@@ -152,6 +157,21 @@ def test_recommendations_reach_the_plan_unchanged():
     assert plan.hotels == [estimated]
     assert plan.summary == SUMMARY.summary
     assert plan.itinerary == ITINERARY.days
+
+
+def test_plan_carries_coordinates_for_the_trip_map():
+    goa, baga = GeoPoint(lat=15.3, lng=74.1), GeoPoint(lat=15.55, lng=73.75)
+    engine = make_engine(
+        llm_for(GOA_REQUEST),
+        hotels=[[hotel("Sea View", 6_000, 4.5)]],
+        flights=[[flight("IndiGo", 5_000)]],
+        geocoder=FakeGeocoder({"Goa": goa, "Baga, Goa": baga}),
+    )
+
+    plan = ask(engine, "plan it").plan
+
+    assert plan.destination_coordinates == goa
+    assert plan.itinerary[0].activities[0].coordinates == baga
 
 
 def test_when_no_hotel_fits_the_nightly_cap_traveler_is_asked_to_raise_budget():

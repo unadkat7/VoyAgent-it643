@@ -3,10 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
+import dynamic from "next/dynamic";
 import {
   ArrowLeft,
   Building2,
   Calendar,
+  Map as MapIcon,
   Plane,
   ShieldAlert,
   Sparkles,
@@ -19,6 +21,7 @@ import {
   budgetBreakdown,
   formatDateRange,
   formatInr,
+  mapPoints,
   tripRouteLabel,
   tripTitle,
 } from "@/lib/tripView";
@@ -32,6 +35,12 @@ import ItineraryList from "@/components/trip/ItineraryList";
 import TripOverview from "@/components/trip/TripOverview";
 import ConfirmModal from "@/components/ui/ConfirmModal";
 import Skeleton from "@/components/ui/Skeleton";
+
+// Leaflet needs `window`, so the map only loads in the browser.
+const TripMap = dynamic(() => import("@/components/trip/TripMap"), {
+  ssr: false,
+  loading: () => <Skeleton className="h-[60vh] min-h-[380px] w-full" />,
+});
 
 function errorMessage(status) {
   if (status === 401) return null;
@@ -74,7 +83,10 @@ export default function TripDetailPage() {
     };
   }, [tripId, router]);
 
-  const hasMapPins = false;
+  const hasMapPins = useMemo(
+    () => (trip?.plan ? mapPoints(trip.plan, "all").length > 0 : false),
+    [trip]
+  );
 
   const handleDelete = async () => {
     try {
@@ -166,6 +178,7 @@ export default function TripDetailPage() {
 
   const tabs = [
     { id: "itinerary", label: "Itinerary", icon: Calendar, count: plan.itinerary?.length },
+    { id: "map", label: "Map", icon: MapIcon },
     { id: "hotels", label: "Stays", icon: Building2, count: plan.hotels?.length },
     { id: "flights", label: "Flights", icon: Plane, count: plan.flights?.length },
     { id: "summary", label: "Summary", icon: Sparkles },
@@ -343,7 +356,31 @@ export default function TripDetailPage() {
                     />
                   </div>
 
+                  {/* Desktop Split-Pane Synced Trip Map */}
+                  {hasMapPins && (
+                    <aside
+                      className="hidden lg:block lg:col-span-5 sticky top-24"
+                      aria-label="Synced Trip Map"
+                    >
+                      <TripMap
+                        plan={plan}
+                        selectedDay={selectedDay}
+                        onDayChange={handleSelectDay}
+                        focusedPointKey={focusedPointKey}
+                        compact
+                      />
+                    </aside>
+                  )}
                 </div>
+              )}
+
+              {activeTab === "map" && (
+                <TripMap
+                  plan={plan}
+                  selectedDay={selectedDay}
+                  onDayChange={handleSelectDay}
+                  focusedPointKey={focusedPointKey}
+                />
               )}
 
               {activeTab === "hotels" && (

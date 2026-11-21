@@ -37,6 +37,7 @@ def make_compose_node(llm: LLMPort):
                 total=float(cost.total),
             ),
             notes=notes,
+            destination_coordinates=state.get("destination_point"),
         )
         return {"plan": plan}
 

@@ -3,12 +3,50 @@ import {
   budgetBreakdown,
   composeBriefPrompt,
   formatInr,
+  mapDays,
+  mapPoints,
   statusInfo,
   tripLink,
   tripRouteLabel,
   tripTitle,
 } from "@/lib/tripView";
-import { PLAN } from "./fixtures";
+import { LOCATED_PLAN, PLAN } from "./fixtures";
+
+describe("mapPoints", () => {
+  it("puts the Destination, located Hotels and located Activities on the map", () => {
+    const points = mapPoints(LOCATED_PLAN, "all");
+
+    expect(points.map((p) => [p.kind, p.title])).toEqual([
+      ["destination", "Goa"],
+      ["hotel", "Sea Breeze Resort"],
+      ["activity", "Baga Beach"],
+      ["activity", "Tito's Lane"],
+      ["activity", "Fort Aguada"],
+    ]);
+  });
+
+  it("numbers Activities by their place in the day, so pins match the Itinerary", () => {
+    const titos = mapPoints(LOCATED_PLAN, 1).find((p) => p.title === "Tito's Lane");
+
+    expect(titos).toMatchObject({ day: 1, order: 3, lat: 15.556, lng: 73.752 });
+  });
+
+  it("shows one day's Activities but keeps the Destination and Hotels", () => {
+    const points = mapPoints(LOCATED_PLAN, 2);
+
+    expect(points.map((p) => p.title)).toEqual(["Goa", "Sea Breeze Resort", "Fort Aguada"]);
+  });
+
+  it("is empty for a plan made before Coordinates existed", () => {
+    expect(mapPoints(PLAN, "all")).toEqual([]);
+  });
+});
+
+describe("mapDays", () => {
+  it("lists only days that have a located Activity", () => {
+    expect(mapDays(LOCATED_PLAN)).toEqual([1, 2]);
+  });
+});
 
 describe("formatInr", () => {
   it.each([

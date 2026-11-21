@@ -1,4 +1,7 @@
 from pydantic import BaseModel, Field
+from pydantic.json_schema import SkipJsonSchema
+
+from schemas.geo import GeoPoint
 
 
 class Activity(BaseModel):
@@ -7,6 +10,8 @@ class Activity(BaseModel):
     description: str
     location: str
     estimated_cost: float = Field(0, ge=0, description="Estimated Cost in INR per Traveler")
+    # Filled by the locate step; hidden from the LLM's schema so it never invents pins.
+    coordinates: SkipJsonSchema[GeoPoint | None] = None
 
 
 class ItineraryDay(BaseModel):

@@ -20,3 +20,6 @@ class Settings(BaseSettings):
 
     searchapi_key: str = ""
     search_cache_ttl_seconds: int = 6 * 60 * 60
+
+    geocoder_enabled: bool = True
+    nominatim_url: str = "https://nominatim.openstreetmap.org"

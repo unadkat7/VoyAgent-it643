@@ -2,6 +2,7 @@ from collections.abc import Callable
 from datetime import date
 
 from graph.builder import build_planning_graph
+from ports.geocoder import GeocoderPort
 from ports.llm import LLMPort
 from ports.search import FlightSearchPort, HotelSearchPort
 from schemas.api import PlanTripRequest, PlanTripResponse
@@ -16,10 +17,15 @@ class PlanningEngine:
         llm: LLMPort,
         hotel_search: HotelSearchPort,
         flight_search: FlightSearchPort,
+        geocoder: GeocoderPort,
         today: Callable[[], date] = date.today,
     ):
         self._graph = build_planning_graph(
-            llm=llm, hotel_search=hotel_search, flight_search=flight_search, today=today
+            llm=llm,
+            hotel_search=hotel_search,
+            flight_search=flight_search,
+            geocoder=geocoder,
+            today=today,
         )
 
     def plan(self, request: PlanTripRequest) -> PlanTripResponse:

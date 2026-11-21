@@ -5,7 +5,7 @@ Terms follow [UBIQUITOUS_LANGUAGE.md](UBIQUITOUS_LANGUAGE.md). Citations are `fi
 ```
 frontend (Next.js) --cookie--> backend (Express + MongoDB) --X-Internal-Key--> ai-service (FastAPI + LangGraph)
                                                                                  core: domain/ agents/ graph/
-                                                                                 ports/  <-implemented by-  adapters/ (Groq, Cloudflare, SearchApi.io)
+                                                                                 ports/  <-implemented by-  adapters/ (Groq, Cloudflare, SearchApi.io, Nominatim)
 ```
 
 ## Five rules the product enforces
@@ -25,7 +25,7 @@ frontend (Next.js) --cookie--> backend (Express + MongoDB) --X-Internal-Key--> a
 
 ### 1. The LLM sits behind a port the core owns (DIP and the boundary)
 
-- **Where:** `ai-service/ports/llm.py:12` (`LLMPort`), `ai-service/adapters/fallback_llm.py:8` (`FallbackLLM`), wired only in `ai-service/container.py:29` (`FallbackLLM`).
+- **Where:** `ai-service/ports/llm.py:12` (`LLMPort`), `ai-service/adapters/fallback_llm.py:8` (`FallbackLLM`), wired only in `ai-service/container.py:31` (`FallbackLLM`).
 - **Before:** Calling a vendor SDK directly from each LangGraph agent couples high-level planning steps to one Provider, forces edits across every agent when the model or wire format changes, and requires live API keys to test planning rules.
 - **Why it changed:** Our LLM setup changed repeatedly during development: we added Cloudflare Workers AI as a fallback behind Groq and switched Groq to schema-constrained JSON output with transient-failure retries (`c1dfda1`). Every change stayed inside `adapters/`. Agents accept an `LLMPort` through constructor injection, so tests pass `FakeLLM` (`ai-service/tests/fakes.py:13` (`FakeLLM`)) with no network access.
 
@@ -43,9 +43,11 @@ frontend (Next.js) --cookie--> backend (Express + MongoDB) --X-Internal-Key--> a
 
 ## One boundary
 
-**Where core logic stops:** inside `ai-service`, the core is `domain/`, `agents/` and `graph/`. `domain/` imports nothing from LangGraph, LangChain, HTTP clients or settings (`ai-service/domain/__init__.py:1` (`Pure trip rules`)). Agents and the graph depend only on the ports: `ai-service/ports/llm.py:12` (`LLMPort`), `ai-service/ports/search.py:32` (`HotelSearchPort`), `ai-service/ports/search.py:36` (`FlightSearchPort`).
+**Where core logic stops:** inside `ai-service`, the core is `domain/`, `agents/` and `graph/`. `domain/` imports nothing from LangGraph, LangChain, HTTP clients or settings (`ai-service/domain/__init__.py:1` (`Pure trip rules`)). Agents and the graph depend only on the ports: `ai-service/ports/llm.py:12` (`LLMPort`), `ai-service/ports/search.py:32` (`HotelSearchPort`), `ai-service/ports/search.py:36` (`FlightSearchPort`), `ai-service/ports/geocoder.py:10` (`GeocoderPort`).
 
-**Where the outside world begins:** `adapters/` (Groq, Cloudflare Workers AI, SearchApi.io, plus the cache, fallback and estimate wrappers), `settings.py`, `container.py` and the FastAPI app. Source dependencies point inward: adapters import ports, and the core never imports an adapter. `container.py` is the only file that knows which Providers are plugged in (`ai-service/container.py:32` (`build_engine`)).
+**Where the outside world begins:** `adapters/` (Groq, Cloudflare Workers AI, SearchApi.io, plus the cache, fallback and estimate wrappers), `settings.py`, `container.py` and the FastAPI app. Source dependencies point inward: adapters import ports, and the core never imports an adapter. `container.py` is the only file that knows which Providers are plugged in (`ai-service/container.py:34` (`build_engine`)).
+
+The Trip Map reused this boundary. Coordinates come from a new `GeocoderPort`; the free OpenStreetMap Nominatim adapter (`ai-service/adapters/nominatim.py:16` (`NominatimGeocoder`)) keeps Nominatim's one-request-a-second limit and caches answers. The locate step runs after `budget_check`, so only Feasible plans spend lookups (`ai-service/graph/builder.py:49` (`"locate", "compose"`)). It never fails a plan: an outage leaves Coordinates empty and adds a Note. The LLM is never asked for Coordinates, because `coordinates` is hidden from the JSON Schema it sees (`ai-service/schemas/itinerary.py:14` (`SkipJsonSchema`)); invented lat/long would put pins kilometres away.
 
 **What it protects us from:** volatile external Providers. During development we paired Groq with a Cloudflare Workers AI fallback, adjusted Groq wire handling, and added `EstimateSearch` behind SearchApi.io for when the free quota runs out. None of these changes touched a domain rule or a test of a rule.
 
