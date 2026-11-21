@@ -65,6 +65,16 @@ def test_hotel_falls_back_to_its_area_when_its_name_is_unknown():
     assert result["hotels"][0].coordinates == BAGA
 
 
+def test_place_with_a_region_qualifier_is_retried_by_its_name_only():
+    palolem = GeoPoint(lat=15.01, lng=74.02)
+    geocoder = FakeGeocoder({"Palolem Beach, Goa": palolem})
+
+    result = run(geocoder, itinerary=[day(1, activity("Palolem Beach, South Goa"))])
+
+    assert result["itinerary"][0].activities[0].coordinates == palolem
+    assert geocoder.queries == ["Goa", "Palolem Beach, South Goa", "Palolem Beach, Goa"]
+
+
 def test_live_hotel_coordinates_are_kept_and_not_looked_up():
     geocoder = FakeGeocoder({"Goa": GOA})
 
