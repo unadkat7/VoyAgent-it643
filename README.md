@@ -15,7 +15,7 @@ docker compose up --build   # open http://localhost:3000
 
 SearchApi.io and Cloudflare keys are optional. Without SearchApi.io, Hotels and Flights are AI-suggested and labelled *Estimated Cost*.
 
-Each Trip Plan has a **Map** tab that pins the Destination, Hotels and Activities by day. It needs no key: places are found with free OpenStreetMap Nominatim (set `GEOCODER_ENABLED=false` to skip), and tiles come from CARTO.
+Each Trip Plan has a **Map** tab that pins the Destination, Hotels and Activities by day. It needs no key: places are found with free OpenStreetMap Nominatim (set `GEOCODER_ENABLED=false` to skip), and map tiles come from OpenStreetMap.
 
 ## How it fits together
 

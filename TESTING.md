@@ -23,7 +23,7 @@ Rules are the five in [DESIGN.md](DESIGN.md). Each rule's test was written befor
 - **The quality of LLM output** (is the itinerary sensible?) is not tested. Tests use a `FakeLLM`; only manual smoke runs hit the real Providers.
 - **The LLM fallback** is tested automatically only against stubbed HTTP. A manual live run with a deliberately wrong Groq key showed why that is not enough. It fell back to Cloudflare, but Workers AI's default 256-token limit cut the Itinerary off mid-JSON, and the stubbed tests could not have caught this. The limit is now raised, and `ai-service/tests/adapters/test_cloudflare_llm.py:50` (`test_request_allows_a_full_itinerary_length_answer`) pins it.
 
-- **The Trip Map** is tested for which pins show (`frontend/tests/TripMap.test.jsx:27` (`filters to one day`)) with Leaflet mocked, because jsdom cannot draw map tiles. How the map looks and pans was checked by hand in the browser. The locate step is tested with a `FakeGeocoder` (`ai-service/tests/test_locate.py:103` (`test_lookups_are_capped`)), but whether Nominatim finds the *right* place for an LLM-written name is not tested.
+- **The Trip Map** is tested for which pins show (`frontend/tests/TripMap.test.jsx:27` (`filters to one day`)) with Leaflet mocked, because jsdom cannot draw map tiles. How the map looks and pans was checked by hand in the browser. The locate step is tested with a `FakeGeocoder` (`ai-service/tests/test_locate.py:113` (`test_lookups_are_capped`)), but whether Nominatim finds the *right* place for an LLM-written name is not tested. A live Goa run found 6 of 9 Activities; names like "Palolem Beach, South Goa" missed, which led to the retry-by-name rule. The same run showed CARTO tiles now need an API key, so the map uses OpenStreetMap tiles; mocked tests could not have caught either.
 
 ## Test doubles used
 
@@ -41,7 +41,7 @@ Rules are the five in [DESIGN.md](DESIGN.md). Each rule's test was written befor
 ## Running the tests
 
 ```bash
-cd ai-service && uv run pytest     # 135 tests
+cd ai-service && uv run pytest     # 136 tests
 cd backend && npm test             # 51 tests
 cd frontend && npm test            # 31 tests
 python scripts/check_doc_refs.py   # every file:line in these docs
