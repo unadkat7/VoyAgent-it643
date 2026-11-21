@@ -26,9 +26,17 @@ class _Lookups:
         place = place.strip()
         if not place:
             return None
+        point = self.ask(self._with_destination(place))
+        # Nominatim misses names with extra qualifiers ("Palolem Beach, South Goa"); retry the name.
+        name = place.split(",")[0].strip()
+        if point is None and name and name != place:
+            point = self.ask(self._with_destination(name))
+        return point
+
+    def _with_destination(self, place: str) -> str:
         if self._destination.lower() in place.lower():
-            return self.ask(place)
-        return self.ask(f"{place}, {self._destination}")
+            return place
+        return f"{place}, {self._destination}"
 
     def ask(self, query: str) -> GeoPoint | None:
         if query in self._answers:
