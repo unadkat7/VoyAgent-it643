@@ -5,7 +5,7 @@ from collections.abc import Callable
 import httpx
 
 from ports.geocoder import GeocodeError
-from schemas.geo import GeoPoint
+from schemas.geo import GeoPoint, Region, distance_km
 
 NOMINATIM_URL = "https://nominatim.openstreetmap.org"
 USER_AGENT = "VoyAgent/1.0 (trip planner)"
@@ -30,16 +30,20 @@ class NominatimGeocoder:
         self._sleep = sleep
         self._lock = threading.Lock()
         self._last_request: float | None = None
-        self._cache: dict[str, GeoPoint | None] = {}
+        self._cache: dict[str, Region | None] = {}
 
-    def locate(self, query: str) -> GeoPoint | None:
+    def locate(self, query: str, near: Region | None = None) -> GeoPoint | None:
+        area = self.locate_area(query)
+        return area.center if area else None
+
+    def locate_area(self, query: str) -> Region | None:
         with self._lock:
             if query in self._cache:
                 return self._cache[query]
             self._wait_for_turn()
-            point = self._fetch(query)
-            self._cache[query] = point
-            return point
+            area = self._fetch(query)
+            self._cache[query] = area
+            return area
 
     def _wait_for_turn(self) -> None:
         if self._last_request is not None:
@@ -48,7 +52,7 @@ class NominatimGeocoder:
                 self._sleep(wait)
         self._last_request = self._clock()
 
-    def _fetch(self, query: str) -> GeoPoint | None:
+    def _fetch(self, query: str) -> Region | None:
         try:
             response = httpx.get(
                 self._url,
@@ -60,6 +64,17 @@ class NominatimGeocoder:
             matches = response.json()
             if not matches:
                 return None
-            return GeoPoint(lat=float(matches[0]["lat"]), lng=float(matches[0]["lon"]))
+            match = matches[0]
+            center = GeoPoint(lat=float(match["lat"]), lng=float(match["lon"]))
+            return Region(center=center, radius_km=_radius_km(center, match.get("boundingbox")))
         except (httpx.HTTPError, ValueError, KeyError, TypeError) as error:
             raise GeocodeError(f"Nominatim failed for {query!r}: {error}") from error
+
+
+def _radius_km(center: GeoPoint, box: list[str] | None) -> float:
+    # Nominatim's boundingbox is [south, north, west, east]; the farthest corner covers the area.
+    if not box:
+        return 0.0
+    south, north, west, east = (float(edge) for edge in box)
+    corners = [GeoPoint(lat=lat, lng=lng) for lat in (south, north) for lng in (west, east)]
+    return max(distance_km(center, corner) for corner in corners)

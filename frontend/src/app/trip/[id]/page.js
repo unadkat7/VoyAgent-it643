@@ -367,6 +367,7 @@ export default function TripDetailPage() {
                         selectedDay={selectedDay}
                         onDayChange={handleSelectDay}
                         focusedPointKey={focusedPointKey}
+                        onClearFocus={() => setFocusedPointKey(null)}
                         compact
                       />
                     </aside>
@@ -380,6 +381,8 @@ export default function TripDetailPage() {
                   selectedDay={selectedDay}
                   onDayChange={handleSelectDay}
                   focusedPointKey={focusedPointKey}
+                  onClearFocus={() => setFocusedPointKey(null)}
+                  showQuickStrip
                 />
               )}
 

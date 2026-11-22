@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from schemas.geo import GeoPoint
+from schemas.geo import GeoPoint, Region
 
 
 class GeocodeError(Exception):
@@ -8,6 +8,10 @@ class GeocodeError(Exception):
 
 
 class GeocoderPort(Protocol):
-    def locate(self, query: str) -> GeoPoint | None:
-        """The best match for a place name, or None when nothing matches."""
+    def locate(self, query: str, near: Region | None = None) -> GeoPoint | None:
+        """The best match for a place name, or None. `near` is a hint; callers still check it."""
+        ...
+
+    def locate_area(self, query: str) -> Region | None:
+        """A place with a radius covering its whole area (a city, state or country), or None."""
         ...

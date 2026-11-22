@@ -33,8 +33,8 @@ Citations are `file:line` (`text expected on that line`) and are checked in CI b
 | **Trip Status** | `draft` (still needs details), `planned` (final), `planning_failed` (the Planning Engine was unavailable; can be retried). | In progress, Completed, Error | `backend/src/domain/trip.js:3` (`TripStatus`) |
 | **Planning Engine** | The ai-service component that turns a Conversation into a Clarification or a Trip Plan. | AI, Agent, Bot, LLM (for the whole engine) | `ai-service/graph/engine.py:11` (`PlanningEngine`) |
 | **Provider** | An outside service VoyAgent depends on: Groq and Cloudflare (LLMs), SearchApi.io (Hotels and Flights), OpenStreetMap Nominatim (Coordinates). | API, Vendor | `ai-service/adapters/groq_llm.py:11` (`GroqLLM`), `ai-service/adapters/searchapi.py:13` (`SearchApiSearch`), `ai-service/adapters/nominatim.py:16` (`NominatimGeocoder`) |
-| **Coordinates** | Latitude and longitude of the Destination, a Hotel or an Activity, found by a geocoder Provider after the plan is Feasible. Never written by the LLM. Missing when a place cannot be found. | Location (that is the place name text), GPS, Lat/long | `ai-service/schemas/geo.py:4` (`GeoPoint`), `ai-service/agents/locate.py:55` (`make_locate_node`) |
-| **Trip Map** | The Map tab of a Trip Plan: one pin per place that has Coordinates, filterable by Itinerary Day. | Map view, Location map | `frontend/src/components/trip/TripMap.jsx:83` (`TripMap`) |
+| **Coordinates** | Latitude and longitude of the Destination, a Hotel or an Activity, found by a geocoder Provider after the plan is Feasible. Never written by the LLM. Missing when a place cannot be found. | Location (that is the place name text), GPS, Lat/long | `ai-service/schemas/geo.py:8` (`GeoPoint`), `ai-service/agents/locate.py:81` (`make_locate_node`) |
+| **Trip Map** | The Map tab of a Trip Plan: one pin per place that has Coordinates, filterable by Itinerary Day. | Map view, Location map | `frontend/src/components/trip/TripMap.jsx:151` (`TripMap`) |
 | **Airport Code** | The IATA code for a known city. Unknown places have none. | Airport id | `ai-service/domain/airports.py:54` (`airport_code`) |
 
 ## Flagged ambiguities

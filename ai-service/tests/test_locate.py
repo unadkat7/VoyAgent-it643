@@ -2,7 +2,7 @@ import json
 
 from agents.locate import MAX_LOOKUPS, make_locate_node
 from ports.geocoder import GeocodeError
-from schemas.geo import GeoPoint
+from schemas.geo import GeoPoint, Region
 from schemas.itinerary import Activity, Itinerary, ItineraryDay
 from schemas.recommendations import HotelRecommendation, HotelRecommendations
 from schemas.trip_request import TripRequest
@@ -129,3 +129,38 @@ def test_geocoder_outage_stops_lookups_and_leaves_a_note():
     assert result["destination_point"] is None
     assert all(a.coordinates is None for a in result["itinerary"][0].activities)
     assert any("map" in note.lower() for note in result["notes"])
+
+
+def test_out_of_region_pin_far_from_destination_is_discarded():
+    wrong_state = GeoPoint(lat=28.61, lng=77.21)
+    geocoder = FakeGeocoder({"Goa": GOA, "Baga Beach, Goa": wrong_state})
+
+    result = run(geocoder, itinerary=[day(1, activity("Baga Beach"))])
+
+    assert result["itinerary"][0].activities[0].coordinates is None
+
+
+def test_out_of_region_hotel_pin_is_discarded():
+    wrong_state = GeoPoint(lat=28.61, lng=77.21)
+    geocoder = FakeGeocoder({"Goa": GOA, "Sea View, Goa": wrong_state})
+
+    result = run(geocoder, hotels=[stay("Sea View")])
+
+    assert result["hotels"][0].coordinates is None
+
+
+def test_large_destination_keeps_pins_across_its_whole_area():
+    rajasthan = Region(center=GeoPoint(lat=26.81, lng=73.77), radius_km=600)
+    amber_fort = GeoPoint(lat=26.99, lng=75.85)
+    geocoder = FakeGeocoder({"Rajasthan": rajasthan, "Amber Fort, Rajasthan": amber_fort})
+    node = make_locate_node(geocoder)
+
+    result = node(
+        {
+            "request": TripRequest(destination="Rajasthan"),
+            "itinerary": [day(1, activity("Amber Fort"))],
+        }
+    )
+
+    assert result["destination_point"] == rajasthan.center
+    assert result["itinerary"][0].activities[0].coordinates == amber_fort

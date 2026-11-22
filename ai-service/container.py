@@ -1,12 +1,14 @@
 from adapters.cached_search import CachedSearch
 from adapters.cloudflare_llm import CloudflareLLM
 from adapters.estimate_search import EstimateSearch
+from adapters.fallback_geocoder import FallbackGeocoder
 from adapters.fallback_llm import FallbackLLM
 from adapters.fallback_search import FallbackSearch
 from adapters.groq_llm import GroqLLM
 from adapters.no_geocoder import NoGeocoder
 from adapters.nominatim import NominatimGeocoder
 from adapters.searchapi import SearchApiSearch
+from adapters.wikipedia_geocoder import WikipediaGeocoder
 from graph.engine import PlanningEngine
 from ports.llm import LLMPort
 from settings import Settings
@@ -26,9 +28,7 @@ def build_llm(settings: Settings) -> LLMPort:
         )
     if not providers:
         raise RuntimeError("Set GROQ_API_KEY or the CLOUDFLARE_* variables to plan Trips.")
-    if len(providers) == 1:
-        return providers[0]
-    return FallbackLLM(providers[0], providers[1])
+    return providers[0] if len(providers) == 1 else FallbackLLM(providers[0], providers[1])
 
 
 def build_engine(settings: Settings) -> PlanningEngine:
@@ -39,7 +39,7 @@ def build_engine(settings: Settings) -> PlanningEngine:
         search = FallbackSearch(SearchApiSearch(api_key=settings.searchapi_key), search)
     cached = CachedSearch(search, ttl_seconds=settings.search_cache_ttl_seconds)
     geocoder = (
-        NominatimGeocoder(base_url=settings.nominatim_url)
+        FallbackGeocoder(WikipediaGeocoder(), NominatimGeocoder(base_url=settings.nominatim_url))
         if settings.geocoder_enabled
         else NoGeocoder()
     )
