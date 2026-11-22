@@ -36,6 +36,25 @@ def test_first_match_becomes_a_point():
 
 
 @respx.mock
+def test_area_radius_reaches_the_farthest_corner_of_the_bounding_box():
+    # Rajasthan: centre point plus [south, north, west, east].
+    match = {"lat": "26.81", "lon": "73.77", "boundingbox": ["23.06", "30.19", "69.48", "78.27"]}
+    respx.get(URL).respond(200, json=[match])
+
+    area = make_geocoder().locate_area("Rajasthan")
+
+    assert area.center == GeoPoint(lat=26.81, lng=73.77)
+    assert 550 < area.radius_km < 650
+
+
+@respx.mock
+def test_area_without_bounding_box_has_zero_radius():
+    respx.get(URL).respond(200, json=[{"lat": "15.3", "lon": "74.1"}])
+
+    assert make_geocoder().locate_area("Goa").radius_km == 0
+
+
+@respx.mock
 def test_unknown_place_is_none():
     respx.get(URL).respond(200, json=[])
 
