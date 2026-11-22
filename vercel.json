@@ -1,0 +1,16 @@
+{
+  "services": {
+    "frontend": { "root": "frontend/", "framework": "nextjs" },
+    "backend": {
+      "root": "backend/",
+      "framework": "express",
+      "entrypoint": "src/server.js",
+      "bindings": [{ "type": "service", "service": "ai", "format": "url", "env": "AI_SERVICE_URL" }]
+    },
+    "ai": { "root": "ai-service/", "framework": "fastapi", "entrypoint": "index:app" }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": { "service": "backend" } },
+    { "source": "/(.*)", "destination": { "service": "frontend" } }
+  ]
+}
