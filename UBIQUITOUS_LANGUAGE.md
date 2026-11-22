@@ -41,13 +41,13 @@ Citations are `file:line` (`text expected on that line`) and are checked in CI b
 
 1. **User vs Traveler.** Early code used "user" for both the account and the person travelling. **Winner:** *User* is only the account (sign-in, ownership: `userId`). *Traveler* is the person travelling and the speaker in the Conversation. The API says `role: "traveler"`, not `"user"`.
 2. **Trip vs thread.** Early `trip.model.js` (`44aa1cb`) stored a `threadId` next to the Trip id for the same conversation, so one thing had two names. **Winner:** *Trip*. `threadId` was removed and the Trip id is sent to the Planning Engine as `trip_id`.
-3. **"travelers" meant a person and a number.** `travelers: 2` was a count named like a person. **Winner:** *Party Size* (`party_size`) for the count and *Traveler* for a person.
-4. **Departure vs Origin.** The code said `departure` and the glossary said *Origin*. **Winner:** *Origin*. "Departure" stays only for a flight's departure airport or time.
+3. **"travelers" meant a person and a number.** Early domain code used `travelers: 2` as a count named like a person (`6ff456e`). **Winner:** *Party Size* (`party_size`) for the count and *Traveler* for a person.
+4. **Departure vs Origin.** Early domain code said `departure` while the glossary said *Origin* (`6ff456e`). **Winner:** *Origin*. "Departure" stays only for a flight's departure airport or time.
 5. **Clarification vs critique.** Asking for missing fields and asking to raise an over-budget Trip could have been split into "clarification" and "critique". **Winner:** *Clarification*, for any question back to the Traveler.
-6. **Days vs nights.** Code mixed `duration_days` with nights when pricing hotels. **Winner:** *Duration* is days; *Nights* is check-out minus check-in, and Hotel cost always uses Nights.
-7. **Budget vs Estimated Cost vs price.** "Budget" was sometimes used for a hotel's nightly price. **Winner:** *Budget* is only the Traveler's total; a Recommendation has a price with a *Price Source*; the total of a plan is its *Estimated Cost*.
+6. **Days vs nights.** Code risked mixing `duration_days` with nights when pricing hotels. **Winner:** *Duration* is days; *Nights* is check-out minus check-in, and Hotel cost always uses Nights.
+7. **Budget vs Estimated Cost vs price.** "Budget" was sometimes used informally for a hotel's nightly price. **Winner:** *Budget* is only the Traveler's total; a Recommendation has a price with a *Price Source*; the total of a plan is its *Estimated Cost*.
 8. **Completed vs Planned.** Early `trip.model.js` (`44aa1cb`) used `completed` to mean "plan ready", but in travel, completed means the Trip already happened. **Winner:** *planned*.
-9. **Location vs Coordinates.** An Activity's and a Hotel's `location` is a place name the LLM writes ("Baga"), and the map feature first called its lat/long points "Locations" too. **Winner:** `location` stays the place name; the found lat/long is *Coordinates* (`coordinates`, `destination_coordinates`).
+9. **Location vs Coordinates.** An Activity's and a Hotel's `location` is a place name the LLM writes ("Baga"), and the map feature initially called its lat/long points "Locations" too (`68051a4`). **Winner:** `location` stays the place name; the found lat/long is *Coordinates* (`coordinates`, `destination_coordinates`).
 
 ## Language rules
 
