@@ -27,7 +27,7 @@ frontend (Next.js) --cookie--> backend (Express + MongoDB) --X-Internal-Key--> a
 
 - **Where:** `ai-service/ports/llm.py:12` (`LLMPort`), `ai-service/adapters/fallback_llm.py:8` (`FallbackLLM`), wired only in `ai-service/container.py:31` (`FallbackLLM`).
 - **Before:** Calling a vendor SDK directly from each LangGraph agent couples high-level planning steps to one Provider, forces edits across every agent when the model or wire format changes, and requires live API keys to test planning rules.
-- **Why it changed:** Our LLM setup changed repeatedly during development: we added Cloudflare Workers AI as a fallback behind Groq and switched Groq to schema-constrained JSON output with transient-failure retries (`c1dfda1`). Every change stayed inside `adapters/`. Agents accept an `LLMPort` through constructor injection, so tests pass `FakeLLM` (`ai-service/tests/fakes.py:13` (`FakeLLM`)) with no network access.
+- **Why it changed:** Our LLM setup changed repeatedly during development: we added Cloudflare Workers AI as a fallback behind Groq and switched Groq to schema-constrained JSON output with transient-failure retries (`c1dfda1`). Every change stayed inside `adapters/`. Agents accept an `LLMPort` through constructor injection, so tests pass `FakeLLM` (`ai-service/tests/fakes.py:14` (`FakeLLM`)) with no network access.
 
 ### 2. Budget arithmetic moved out of the LLM into one pure module (SRP)
 

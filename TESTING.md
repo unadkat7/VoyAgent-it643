@@ -29,11 +29,11 @@ Rules are the five in [DESIGN.md](DESIGN.md). Each rule's test was written befor
 
 | Double | Kind | Why that kind |
 |---|---|---|
-| `ai-service/tests/fakes.py:13` (`FakeLLM`) | Fake | A working stand-in that answers each output type; the tests assert on the plan, never on calls made. |
-| `ai-service/tests/fakes.py:24` (`BrokenLLM`) | Stub | Gives one canned answer: failure. |
-| `ai-service/tests/fakes.py:34` (`SequenceSearch`) | Stub | Search is a query, so stub it. A stub with no answers left also proves "never called" (Rule 4) without counting calls. |
-| `ai-service/tests/fakes.py:65` (`FakeClock`) | Fake | Lets the cache and Nominatim rate-limit tests move time forward. |
-| `ai-service/tests/fakes.py:50` (`FakeGeocoder`) | Fake | Knows a few places; it records queries so the tests can prove de-duplication, the lookup cap, and that an outage stops further lookups. |
+| `ai-service/tests/fakes.py:14` (`FakeLLM`) | Fake | A working stand-in that answers each output type; the tests assert on the plan, never on calls made. |
+| `ai-service/tests/fakes.py:25` (`BrokenLLM`) | Stub | Gives one canned answer: failure. |
+| `ai-service/tests/fakes.py:35` (`SequenceSearch`) | Stub | Search is a query, so stub it. A stub with no answers left also proves "never called" (Rule 4) without counting calls. |
+| `ai-service/tests/fakes.py:74` (`FakeClock`) | Fake | Lets the cache and Nominatim rate-limit tests move time forward. |
+| `ai-service/tests/fakes.py:51` (`FakeGeocoder`) | Fake | Knows a few places; it records queries so the tests can prove de-duplication, the lookup cap, and that an outage stops further lookups. |
 | `backend/tests/setup.js:9` (`MongoMemoryServer.create`) | Fake | A real MongoDB in memory: fast, isolated, no mocks of Mongoose. |
 | `backend/tests/api/trips.test.js:30` (`function aiAnswers`) | Stub | An incoming answer from the Planning Engine, matched only when the internal key is sent. |
 | `backend/tests/api/trips.test.js:69` (`sentToPlanner = body`) | Spy | Records what the backend sent, because "the whole Conversation is sent" is an outgoing interaction. |
