@@ -3,11 +3,11 @@ import { env } from "../config/env.js";
 
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
-// Frontend (Vercel) and backend (Render) are different sites, so production needs SameSite=None.
+// Vercel serves the frontend and /api on one domain, so the cookie is first-party everywhere.
 export const getAuthCookieOptions = () => ({
   httpOnly: true,
   secure: env.isProduction,
-  sameSite: env.isProduction ? "none" : "lax",
+  sameSite: "lax",
 });
 
 const generateToken = (res, userId) => {

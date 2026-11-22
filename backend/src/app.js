@@ -16,19 +16,19 @@ const app = express();
 
 const allowedOrigins = new Set(["http://localhost:3000", "http://127.0.0.1:3000", ...env.frontendOrigins]);
 
-// Render sits behind one proxy; this makes req.ip the real client for rate limits.
+// Vercel sits in front as one proxy; this makes req.ip the real client for rate limits.
 app.set("trust proxy", 1);
 
 app.use(helmet());
 app.use(
-  cors({
-    origin(origin, callback) {
-      if (!origin || allowedOrigins.has(origin)) {
-        return callback(null, true);
-      }
-      return callback(new HttpError(403, "Origin not allowed"));
-    },
-    credentials: true,
+  cors((req, callback) => {
+    const origin = req.get("origin");
+    // Same-origin covers the production domain and every Vercel preview URL.
+    const sameOrigin = origin === `https://${req.host}`;
+    if (!origin || sameOrigin || allowedOrigins.has(origin)) {
+      return callback(null, { origin: true, credentials: true });
+    }
+    return callback(new HttpError(403, "Origin not allowed"));
   })
 );
 if (env.NODE_ENV !== "test") {
@@ -37,9 +37,11 @@ if (env.NODE_ENV !== "test") {
 app.use(express.json({ limit: "100kb" }));
 app.use(cookieParser());
 
-app.get("/health", (req, res) => {
+const health = (req, res) => {
   res.status(200).json({ status: "ok" });
-});
+};
+app.get("/health", health);
+app.get("/api/health", health);
 
 app.use("/api", requireJson);
 app.use("/api/auth", authRoutes);
