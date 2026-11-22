@@ -1,11 +1,15 @@
+from collections.abc import Callable
+
 from graph.state import PlanningState
 from ports.geocoder import GeocodeError, GeocoderPort
-from schemas.geo import GeoPoint
+from schemas.geo import GeoPoint, Region
 from schemas.itinerary import ItineraryDay
 from schemas.recommendations import HotelRecommendation
 
 # Nominatim allows one request a second, so this bounds the extra planning time.
 MAX_LOOKUPS = 20
+# Pins farther than this from a city's centre are namesakes elsewhere; bigger areas use their size.
+MIN_REGION_KM = 120.0
 OUTAGE_NOTE = "Places could not be found on the map right now, so the Trip Map may be empty."
 
 
@@ -15,6 +19,7 @@ class _Lookups:
     def __init__(self, geocoder: GeocoderPort, destination: str):
         self._geocoder = geocoder
         self._destination = destination
+        self._region: Region | None = None
         self._answers: dict[str, GeoPoint | None] = {}
         self.failed = False
 
@@ -22,15 +27,26 @@ class _Lookups:
         # A pin on the city centre would pretend to be the Hotel's exact spot.
         return place.strip().lower() == self._destination.lower()
 
+    def locate_destination(self) -> GeoPoint | None:
+        def lookup() -> GeoPoint | None:
+            area = self._geocoder.locate_area(self._destination)
+            if area is None:
+                return None
+            radius = max(MIN_REGION_KM, area.radius_km)
+            self._region = Region(center=area.center, radius_km=radius)
+            return area.center
+
+        return self._remember(self._destination, lookup)
+
     def near_destination(self, place: str) -> GeoPoint | None:
         place = place.strip()
         if not place:
             return None
-        point = self.ask(self._with_destination(place))
+        point = self._ask(self._with_destination(place))
         # Nominatim misses names with extra qualifiers ("Palolem Beach, South Goa"); retry the name.
         name = place.split(",")[0].strip()
         if point is None and name and name != place:
-            point = self.ask(self._with_destination(name))
+            point = self._ask(self._with_destination(name))
         return point
 
     def _with_destination(self, place: str) -> str:
@@ -38,13 +54,23 @@ class _Lookups:
             return place
         return f"{place}, {self._destination}"
 
-    def ask(self, query: str) -> GeoPoint | None:
+    def _ask(self, query: str) -> GeoPoint | None:
+        def lookup() -> GeoPoint | None:
+            point = self._geocoder.locate(query, near=self._region)
+            # A hit far outside the Destination is a namesake in another place.
+            if point is None or self._region is None or self._region.contains(point):
+                return point
+            return None
+
+        return self._remember(query, lookup)
+
+    def _remember(self, query: str, lookup: Callable[[], GeoPoint | None]) -> GeoPoint | None:
         if query in self._answers:
             return self._answers[query]
         if self.failed or len(self._answers) >= MAX_LOOKUPS:
             return None
         try:
-            point = self._geocoder.locate(query)
+            point = lookup()
         except GeocodeError:
             self.failed = True
             point = None
@@ -55,7 +81,7 @@ class _Lookups:
 def make_locate_node(geocoder: GeocoderPort):
     def locate(state: PlanningState) -> PlanningState:
         lookups = _Lookups(geocoder, state["request"].destination)
-        destination_point = lookups.ask(state["request"].destination)
+        destination_point = lookups.locate_destination()
         hotels = [_locate_hotel(hotel, lookups) for hotel in state.get("hotels", [])]
         itinerary = [_locate_day(day, lookups) for day in state.get("itinerary", [])]
         update: PlanningState = {

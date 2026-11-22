@@ -6,6 +6,7 @@ from typing import TypeVar
 from pydantic import BaseModel
 
 from ports.llm import LLMError
+from schemas.geo import GeoPoint, Region
 
 M = TypeVar("M", bound=BaseModel)
 
@@ -55,7 +56,15 @@ class FakeGeocoder:
         self._error = error
         self.queries: list[str] = []
 
-    def locate(self, query: str):
+    def locate(self, query: str, near=None):
+        answer = self._answer(query)
+        return answer.center if isinstance(answer, Region) else answer
+
+    def locate_area(self, query: str):
+        answer = self._answer(query)
+        return Region(center=answer, radius_km=0) if isinstance(answer, GeoPoint) else answer
+
+    def _answer(self, query: str):
         self.queries.append(query)
         if self._error:
             raise self._error
