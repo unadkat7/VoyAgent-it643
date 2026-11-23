@@ -10,7 +10,12 @@ describe("POST /api/auth/signup", () => {
     const response = await request(app).post("/api/auth/signup").send(VALID);
 
     expect(response.status).toBe(201);
-    expect(response.body.user).toEqual({ _id: expect.any(String), name: "Asha", email: VALID.email });
+    expect(response.body.user).toEqual({
+      _id: expect.any(String),
+      name: "Asha",
+      email: VALID.email,
+      isAdmin: false,
+    });
     expect(JSON.stringify(response.body)).not.toContain(PASSWORD);
     expect(response.headers["set-cookie"][0]).toMatch(/token=.+HttpOnly/);
   });

@@ -13,7 +13,6 @@ export default defineConfig({
       AI_SERVICE_URL: "http://ai-service.test",
       MONGO_DB_URI: "mongodb://set-by-test-setup",
       FRONTEND_URL: "http://localhost:3000",
-      ADMIN_EMAILS: "admin@voyagent.test",
-    },
+      ADMIN_EMAILS: "admin@voyagent.test",    },
   },
 });

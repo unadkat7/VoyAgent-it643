@@ -1,8 +1,14 @@
-import generateToken, { getAuthCookieOptions } from "../utils/generateToken.js";
+import { env } from "../config/env.js";
+import generateToken,{ getAuthCookieOptions } from "../utils/generateToken.js";
 import { signupService, loginService } from "../services/auth.service.js";
 import { recordEvent } from "../services/telemetry.service.js";
 
-const publicUser = (user) => ({ _id: user._id, name: user.name, email: user.email });
+const publicUser = (user) => ({
+  _id: user._id,
+  name: user.name,
+  email: user.email,
+  isAdmin: env.adminEmails.includes(user.email),
+});
 
 export const signup = async (req, res) => {
   const user = await signupService(req.body);

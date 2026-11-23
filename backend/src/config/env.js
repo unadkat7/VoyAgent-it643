@@ -10,8 +10,7 @@ const schema = z.object({
   INTERNAL_API_KEY: z.string().min(16),
   AI_SERVICE_URL: z.url().default("http://localhost:8000"),
   FRONTEND_URL: z.string().default("http://localhost:3000"),
-  ADMIN_EMAILS: z.string().default(""),
-});
+  ADMIN_EMAILS: z.string().default(""),});
 
 const parsed = schema.safeParse(process.env);
 if (!parsed.success) {
