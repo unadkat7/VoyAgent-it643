@@ -30,6 +30,7 @@ Free tiers: **MongoDB Atlas** (database) and **Vercel** (frontend, backend and a
    | `GROQ_API_KEY` | Groq key (primary LLM) |
    | `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN` | Optional fallback LLM |
    | `SEARCHAPI_KEY` | Optional live Hotels and Flights |
+   | `OSRM_URL` | Optional. Road routing server; defaults to the free public OSRM server |
 
 3. Deploy. Check that `https://<domain>/api/health` returns `{"status":"ok"}`.
 4. Turn on **Analytics** in the Vercel project. The `<Analytics />` component is already in the layout.
@@ -55,4 +56,6 @@ On the Hobby plan a function may run for up to 300 seconds. The backend waits up
 
 - **Rate limits:** login, sign-up and plan limits are counted in memory, so each running copy of the backend counts on its own.
 - **Nominatim:** the one-request-a-second spacing for Nominatim also applies per copy.
+- **OSRM:** the public routing server is for light, fair use, so the ai-service also spaces its calls one second apart and makes at most 3 per plan. For heavier traffic, set `OSRM_URL` to your own OSRM server.
+- **Timetable:** `ai-service/data/timetable.json.gz` (about 1.3 MB) ships with the ai-service and loads in about half a second on first use. It is a snapshot; rebuild it when the source feed updates.
 - **Beta:** Services is in beta. If it stops working, the fallback is to run the backend and ai-service on Render with their Dockerfiles, and add a Next.js rewrite of `/api` to the backend so the cookie stays first-party.

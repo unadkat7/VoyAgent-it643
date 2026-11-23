@@ -17,6 +17,10 @@ SearchApi.io and Cloudflare keys are optional. Without SearchApi.io, Hotels and 
 
 Each Trip Plan has a **Map** tab that pins the Destination, Hotels and Activities by day. It needs no key: places are found with free OpenStreetMap Nominatim (set `GEOCODER_ENABLED=false` to skip), and map tiles come from OpenStreetMap.
 
+The **Travel** tab adds trains there and back (direct, or with one change) and the drive by road, including the last stretch from a railhead to places with no station, like Badrinath. Train times come from a bundled timetable (`ai-service/data/timetable.json.gz`, rebuilt with `uv run python scripts/build_timetable.py <gtfs.zip>`); there are no fares, so it links to IRCTC.
+
+Credits: train timetable from [indianrailways-gtfs](https://github.com/Neo2308/indianrailways-gtfs) by Neo2308; road routes from [OSRM](https://project-osrm.org/) and OpenStreetMap. This is a non-commercial project, and the timetable is removed on request.
+
 Usage evidence: set `ADMIN_EMAILS` and the two `ADMIN_SEED_*` values in `.env`, run `docker compose exec backend npm run seed:admin`, then sign in as the admin and open `/admin`. See [USAGE_EVIDENCE.md](USAGE_EVIDENCE.md).
 
 ## How it fits together
