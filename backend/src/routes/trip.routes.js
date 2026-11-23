@@ -4,6 +4,8 @@ import {
   getTripById,
   getUserTrips,
   planTrip,
+  shareTrip,
+  unshareTrip,
 } from "../controllers/trip.controller.js";
 import protect from "../middleware/auth.middleware.js";
 import { planLimiter } from "../middleware/rateLimit.js";
@@ -17,5 +19,7 @@ router.post("/plan", planLimiter, validateBody(planTripSchema), planTrip);
 router.get("/", getUserTrips);
 router.get("/:id", getTripById);
 router.delete("/:id", deleteTrip);
+router.post("/:id/share", shareTrip);
+router.delete("/:id/share", unshareTrip);
 
 export default router;

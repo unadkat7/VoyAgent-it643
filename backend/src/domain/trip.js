@@ -36,6 +36,11 @@ export function canContinue(status) {
   return (ALLOWED_NEXT[status] ?? []).length > 0;
 }
 
+// Only a finished plan is worth showing to someone else.
+export function canShare(status) {
+  return status === TripStatus.PLANNED;
+}
+
 // Rule 5: a Trip belongs to the account that created it.
 export function isOwnedBy(trip, userId) {
   return trip.userId.toString() === String(userId);

@@ -3,6 +3,7 @@ import {
   TripRuleError,
   TripStatus,
   canContinue,
+  canShare,
   isOwnedBy,
   nextStatus,
 } from "../../src/domain/trip.js";
@@ -52,5 +53,15 @@ describe("isOwnedBy (Rule 5)", () => {
 describe("TripStatus", () => {
   it("cannot be changed at runtime", () => {
     expect(Object.isFrozen(TripStatus)).toBe(true);
+  });
+});
+
+describe("canShare", () => {
+  it.each([
+    [TripStatus.PLANNED, true],
+    [TripStatus.DRAFT, false],
+    [TripStatus.PLANNING_FAILED, false],
+  ])("a %s Trip can be shared: %s", (status, expected) => {
+    expect(canShare(status)).toBe(expected);
   });
 });

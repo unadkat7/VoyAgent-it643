@@ -14,6 +14,8 @@ export const loginLimiter = limiter(15, 10, "Too many login attempts. Try again 
 
 export const signupLimiter = limiter(60, 50, "Too many sign-ups from this network. Try later.");
 
+export const publicLimiter = limiter(15, 300, "Too many requests from this network.");
+
 export const pageviewLimiter = limiter(15, 300, "Too many page views from this network.");
 
 // Planning spends LLM and search quota, so it is limited per account, not per IP.
