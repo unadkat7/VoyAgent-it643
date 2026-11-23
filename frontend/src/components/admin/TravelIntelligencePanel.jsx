@@ -21,7 +21,7 @@ const DestinationsMap = dynamic(() => import("./DestinationsMap"), {
 
 const CARD =
   "bg-white border border-border rounded-2xl p-5 shadow-[0_8px_24px_-20px_rgba(24,20,17,0.16)]";
-const EYEBROW = "text-[11px] font-semibold uppercase tracking-wider text-muted";
+const EYEBROW = "text-label font-semibold uppercase tracking-wider text-muted";
 
 const MISSING_LABELS = {
   origin: "Origin city",
@@ -74,7 +74,7 @@ export function StatusDonut({ planned, draft, failed }) {
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="font-mono text-xl font-semibold text-ink">{completionPct}%</span>
-          <span className="text-[10px] text-muted uppercase tracking-wider">Planned</span>
+          <span className="text-label text-muted uppercase tracking-wider">Planned</span>
         </div>
       </div>
 
@@ -159,7 +159,7 @@ export default function TravelIntelligencePanel({ trips, showMap = true }) {
                     type="button"
                     onClick={() => { setGeoMode(opt.id); setShowAll(false); }}
                     aria-pressed={geoMode === opt.id}
-                    className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg transition-colors ${
+                    className={`min-h-tap text-sm font-semibold px-3 rounded-lg transition-colors ${
                       geoMode === opt.id
                         ? "bg-ink text-white"
                         : "text-muted hover:text-ink"
@@ -281,7 +281,7 @@ export default function TravelIntelligencePanel({ trips, showMap = true }) {
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mb-4">
               <div className="rounded-xl bg-bg border border-border p-3">
-                <p className="text-[10px] uppercase tracking-wider font-semibold text-muted">
+                <p className="text-label uppercase tracking-wider font-semibold text-muted">
                   Avg Budget
                 </p>
                 <p className="font-mono text-base font-semibold text-ink mt-0.5">
@@ -289,7 +289,7 @@ export default function TravelIntelligencePanel({ trips, showMap = true }) {
                 </p>
               </div>
               <div className="rounded-xl bg-bg border border-border p-3">
-                <p className="text-[10px] uppercase tracking-wider font-semibold text-muted">
+                <p className="text-label uppercase tracking-wider font-semibold text-muted">
                   Median Budget
                 </p>
                 <p className="font-mono text-base font-semibold text-ink mt-0.5">
@@ -297,7 +297,7 @@ export default function TravelIntelligencePanel({ trips, showMap = true }) {
                 </p>
               </div>
               <div className="rounded-xl bg-success-light border border-success/15 p-3 col-span-2 sm:col-span-1">
-                <p className="text-[10px] uppercase tracking-wider font-semibold text-success">
+                <p className="text-label uppercase tracking-wider font-semibold text-success">
                   Avg Est. Cost
                 </p>
                 <p className="font-mono text-base font-semibold text-success mt-0.5">
@@ -332,7 +332,7 @@ export default function TravelIntelligencePanel({ trips, showMap = true }) {
                     title={`Buffer: ${formatPercent(budgetAnalysis.avgBufferSharePct)}`}
                   />
                 </div>
-                <div className="flex flex-wrap gap-3 mt-2 text-[11px] text-muted">
+                <div className="flex flex-wrap gap-3 mt-2 text-label text-muted">
                   <span className="inline-flex items-center gap-1.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-primary" />
                     Stays {formatPercent(budgetAnalysis.avgHotelSharePct)}
@@ -452,7 +452,7 @@ export default function TravelIntelligencePanel({ trips, showMap = true }) {
                 AI performance, pricing sources &amp; clarifications
               </h3>
             </div>
-            <span className="inline-flex items-center gap-1 text-[11px] font-mono font-semibold bg-success-light text-success border border-success/15 px-2.5 py-1 rounded-full">
+            <span className="inline-flex items-center gap-1 text-label font-mono font-semibold bg-success-light text-success border border-success/15 px-2.5 py-1 rounded-full">
               <CheckCircle2 className="w-3 h-3" aria-hidden />
               Geocoded {formatPercent(planningHealth.geocodedCoveragePct)}
             </span>
@@ -460,7 +460,7 @@ export default function TravelIntelligencePanel({ trips, showMap = true }) {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             <div className="rounded-xl bg-bg border border-border p-3">
-              <p className="text-[10px] uppercase tracking-wider font-semibold text-muted">
+              <p className="text-label uppercase tracking-wider font-semibold text-muted">
                 P50 Latency
               </p>
               <p className="font-mono text-base font-semibold text-ink mt-0.5">
@@ -468,7 +468,7 @@ export default function TravelIntelligencePanel({ trips, showMap = true }) {
               </p>
             </div>
             <div className="rounded-xl bg-bg border border-border p-3">
-              <p className="text-[10px] uppercase tracking-wider font-semibold text-muted">
+              <p className="text-label uppercase tracking-wider font-semibold text-muted">
                 P95 Latency
               </p>
               <p className="font-mono text-base font-semibold text-warning mt-0.5">
@@ -476,7 +476,7 @@ export default function TravelIntelligencePanel({ trips, showMap = true }) {
               </p>
             </div>
             <div className="rounded-xl bg-bg border border-border p-3">
-              <p className="text-[10px] uppercase tracking-wider font-semibold text-muted">
+              <p className="text-label uppercase tracking-wider font-semibold text-muted">
                 1st-Try Success
               </p>
               <p className="font-mono text-base font-semibold text-success mt-0.5">
@@ -484,7 +484,7 @@ export default function TravelIntelligencePanel({ trips, showMap = true }) {
               </p>
             </div>
             <div className="rounded-xl bg-bg border border-border p-3">
-              <p className="text-[10px] uppercase tracking-wider font-semibold text-muted">
+              <p className="text-label uppercase tracking-wider font-semibold text-muted">
                 Avg Turns
               </p>
               <p className="font-mono text-base font-semibold text-ink mt-0.5">
@@ -531,7 +531,7 @@ export default function TravelIntelligencePanel({ trips, showMap = true }) {
                     style={{ width: `${item.total > 0 ? (item.est / item.total) * 100 : 0}%` }}
                   />
                 </div>
-                <p className="text-[11px] font-mono text-muted">
+                <p className="text-label font-mono text-muted">
                   {item.total} total · {item.live} live · {item.est} estimated
                 </p>
               </div>

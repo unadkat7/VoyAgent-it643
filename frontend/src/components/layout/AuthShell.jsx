@@ -22,7 +22,7 @@ export default function AuthShell({
         <aside className="hidden lg:flex flex-col justify-between w-[46%] xl:w-[44%] bg-atlas-dark text-bg p-12 xl:p-14 relative overflow-hidden">
           <div className="relative z-10 flex items-center justify-between">
             <BrandLogo href="/" theme="dark" />
-            <span className="font-mono text-[11px] uppercase tracking-widest text-bg/45 border border-bg/12 px-2.5 py-1 rounded-full">
+            <span className="font-mono text-label uppercase tracking-widest text-bg/45 border border-bg/12 px-2.5 py-1 rounded-full">
               INR Budget-First
             </span>
           </div>
@@ -43,7 +43,7 @@ export default function AuthShell({
 
             {/* Miniature editorial Trip Dossier artifact */}
             <div className="rounded-2xl bg-bg/[0.05] border border-bg/12 p-5 backdrop-blur-sm max-w-sm">
-              <div className="flex items-center justify-between text-[11px] font-mono text-bg/55 mb-3">
+              <div className="flex items-center justify-between text-label font-mono text-bg/55 mb-3">
                 <span>AMD → GOI</span>
                 <span className="text-[#86EFAC]">Feasible · In Budget</span>
               </div>
@@ -54,10 +54,10 @@ export default function AuthShell({
                 </div>
                 <div className="text-right">
                   <p className="font-mono text-base font-semibold text-bg">₹17,500</p>
-                  <p className="text-[10px] text-bg/50">Estimated Cost</p>
+                  <p className="text-label text-bg/50">Estimated Cost</p>
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-2 pt-3 border-t border-bg/10 text-[11px] text-bg/75">
+              <div className="grid grid-cols-3 gap-2 pt-3 border-t border-bg/10 text-label text-bg/75">
                 <span className="flex items-center gap-1.5">
                   <Building2 className="w-3.5 h-3.5 text-primary-soft" aria-hidden />
                   Stays

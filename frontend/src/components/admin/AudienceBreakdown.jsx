@@ -5,7 +5,7 @@ import { Globe2, Link2, MonitorSmartphone, Share2 } from "lucide-react";
 
 const CARD =
   "bg-white border border-border rounded-2xl p-5 shadow-[0_8px_24px_-20px_rgba(24,20,17,0.16)]";
-const EYEBROW = "text-[11px] font-semibold uppercase tracking-wider text-muted";
+const EYEBROW = "text-label font-semibold uppercase tracking-wider text-muted";
 
 function RankedBars({ rows, empty, barColor = "#CE532D" }) {
   const [expanded, setExpanded] = useState(false);
@@ -61,7 +61,7 @@ export default function AudienceBreakdown({ activity, expanded = false }) {
                   type="button"
                   onClick={() => setGeoTab(tab)}
                   aria-pressed={geoTab === tab}
-                  className={`text-[10px] font-semibold capitalize px-2 py-0.5 rounded-md ${
+                  className={`min-h-tap text-sm font-semibold capitalize px-3 rounded-lg ${
                     geoTab === tab
                       ? "bg-ink text-white"
                       : "text-muted hover:text-ink"
@@ -110,7 +110,7 @@ export default function AudienceBreakdown({ activity, expanded = false }) {
                   type="button"
                   onClick={() => setTechTab(tab.id)}
                   aria-pressed={techTab === tab.id}
-                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${
+                  className={`min-h-tap text-sm font-semibold px-3 rounded-lg ${
                     techTab === tab.id
                       ? "bg-ink text-white"
                       : "text-muted hover:text-ink"

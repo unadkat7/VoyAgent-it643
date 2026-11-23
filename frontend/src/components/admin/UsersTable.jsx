@@ -76,7 +76,7 @@ export default function UsersTable({ users = [] }) {
     <section className="bg-white border border-border rounded-2xl p-5 shadow-[0_8px_24px_-20px_rgba(24,20,17,0.16)]">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted flex items-center gap-1.5">
+          <p className="text-label font-semibold uppercase tracking-wider text-muted flex items-center gap-1.5">
             <Users className="w-3.5 h-3.5 text-primary" aria-hidden />
             Outside Users ({filtered.length}
             {filtered.length !== users.length ? ` of ${users.length}` : ""})
@@ -96,7 +96,7 @@ export default function UsersTable({ users = [] }) {
                   type="button"
                   onClick={() => setTier(opt.id)}
                   aria-pressed={active}
-                  className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border transition-colors ${
+                  className={`min-h-tap min-w-tap text-sm font-semibold px-3 rounded-full border transition-colors ${
                     active
                       ? "bg-ink border-ink text-bg"
                       : "bg-bg border-border text-muted hover:text-ink"
@@ -119,7 +119,7 @@ export default function UsersTable({ users = [] }) {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search email, city, dest..."
               aria-label="Search outside users"
-              className="w-full bg-bg border border-border focus:bg-white focus:border-primary rounded-xl pl-8 pr-3 py-1.5 text-xs text-ink placeholder-faint focus:outline-none transition-all"
+              className="w-full bg-bg border border-border focus:bg-white focus:border-primary rounded-xl pl-8 pr-3 min-h-tap text-base text-ink placeholder-faint focus:outline-none transition-all"
             />
           </div>
         </div>
@@ -162,7 +162,7 @@ export default function UsersTable({ users = [] }) {
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
-            <thead className="text-left text-[10px] uppercase tracking-wider text-muted border-b border-border">
+            <thead className="text-left text-label uppercase tracking-wider text-muted border-b border-border">
               <tr>
                 <th className="py-2.5 pr-3">User &amp; Source</th>
                 <th className="py-2.5 pr-3">Tier</th>
@@ -219,14 +219,14 @@ export default function UsersTable({ users = [] }) {
                     className="hover:bg-bg/70 transition-colors"
                   >
                     <td className="py-2.5 pr-3 whitespace-nowrap">
-                      <p className="font-mono text-[11px] font-medium text-ink">
+                      <p className="font-mono text-label font-medium text-ink">
                         {user.email}
                       </p>
-                      <p className="font-mono text-[10px] text-muted">via {sourceLabel}</p>
+                      <p className="font-mono text-label text-muted">via {sourceLabel}</p>
                     </td>
                     <td className="py-2.5 pr-3">
                       <span
-                        className={`inline-block capitalize text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                        className={`inline-block capitalize text-label font-semibold px-2 py-0.5 rounded-full border ${
                           TIER_BADGE[userTier] ?? TIER_BADGE.explorer
                         }`}
                       >
@@ -250,7 +250,7 @@ export default function UsersTable({ users = [] }) {
                     </td>
                     <td className="py-2.5">
                       <p className="text-ink whitespace-nowrap">{formatPlace(user)}</p>
-                      <p className="text-[11px] text-muted capitalize truncate max-w-[200px]">
+                      <p className="text-label text-muted capitalize truncate max-w-[200px]">
                         {formatDeviceLabel(user.device)}
                       </p>
                     </td>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 
 const VARIANTS = {
   pills: {
@@ -20,7 +20,19 @@ const VARIANTS = {
 // Single-choice buttons (tabs, filters, ranges). Arrow keys move the selection.
 export default function SegmentedControl({ label, options, value, onChange, variant = "pills", className = "" }) {
   const buttons = useRef([]);
+  const group = useRef(null);
   const styles = VARIANTS[variant] ?? VARIANTS.pills;
+
+  // Scroll the row sideways (never the page) so the selected option stays in view.
+  useEffect(() => {
+    const row = group.current;
+    const active = row?.querySelector('[aria-pressed="true"]');
+    if (!row || !active || row.scrollWidth <= row.clientWidth) return;
+    const rowBox = row.getBoundingClientRect();
+    const box = active.getBoundingClientRect();
+    if (box.left < rowBox.left) row.scrollLeft -= rowBox.left - box.left + 16;
+    else if (box.right > rowBox.right) row.scrollLeft += box.right - rowBox.right + 16;
+  }, [value]);
 
   const onKeyDown = (event, index) => {
     const step = { ArrowRight: 1, ArrowLeft: -1 }[event.key];
@@ -32,7 +44,7 @@ export default function SegmentedControl({ label, options, value, onChange, vari
   };
 
   return (
-    <div role="group" aria-label={label} className={`${styles.group} ${className}`}>
+    <div ref={group} role="group" aria-label={label} className={`${styles.group} ${className}`}>
       {options.map((option, index) => {
         const active = option.value === value;
         const Icon = option.icon;

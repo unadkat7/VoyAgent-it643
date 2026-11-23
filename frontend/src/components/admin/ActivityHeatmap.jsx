@@ -38,7 +38,7 @@ export default function ActivityHeatmap({ cells = [] }) {
     <section className="bg-white border border-border rounded-2xl p-5 shadow-[0_8px_24px_-20px_rgba(24,20,17,0.16)]">
       <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted">
+          <p className="text-label font-semibold uppercase tracking-wider text-muted">
             Peak Activity Windows (IST)
           </p>
           <p className="font-display text-lg font-semibold text-ink">
@@ -46,7 +46,7 @@ export default function ActivityHeatmap({ cells = [] }) {
           </p>
         </div>
         {peak ? (
-          <span className="inline-flex items-center gap-1.5 text-[11px] font-mono font-semibold text-primary-hover bg-primary-light border border-primary-border px-2.5 py-1 rounded-full">
+          <span className="inline-flex items-center gap-1.5 text-label font-mono font-semibold text-primary-hover bg-primary-light border border-primary-border px-2.5 py-1 rounded-full">
             <Clock className="w-3 h-3" aria-hidden />
             Peak: {DAYS[peak.dayOfWeek]} {String(peak.hour).padStart(2, "0")}:00 ({peak.count})
           </span>
@@ -73,7 +73,7 @@ export default function ActivityHeatmap({ cells = [] }) {
       <div className="hidden lg:block overflow-x-auto">
         <div className="min-w-[560px] space-y-1.5">
           {/* Hour Header */}
-          <div className="grid grid-cols-[36px_repeat(24,minmax(0,1fr))] gap-1 text-[9px] font-mono text-muted">
+          <div className="grid grid-cols-[36px_repeat(24,minmax(0,1fr))] gap-1 text-label font-mono text-muted">
             <span />
             {HOURS.map((hour) => (
               <span key={hour} className="text-center">
@@ -88,7 +88,7 @@ export default function ActivityHeatmap({ cells = [] }) {
               key={dayLabel}
               className="grid grid-cols-[36px_repeat(24,minmax(0,1fr))] gap-1 items-center"
             >
-              <span className="text-[10px] font-mono text-muted">{dayLabel}</span>
+              <span className="text-label font-mono text-muted">{dayLabel}</span>
               {HOURS.map((hour) => {
                 const count = grid.get(`${dayIdx}-${hour}`) ?? 0;
                 return (
@@ -113,7 +113,7 @@ export default function ActivityHeatmap({ cells = [] }) {
         </div>
       </div>
 
-      <div className="hidden lg:flex flex-wrap items-center justify-between gap-2 mt-4 pt-3 border-t border-bg-subtle text-[11px] text-muted">
+      <div className="hidden lg:flex flex-wrap items-center justify-between gap-2 mt-4 pt-3 border-t border-bg-subtle text-label text-muted">
         <span>
           {hovered
             ? `${hovered.day} ${String(hovered.hour).padStart(2, "0")}:00 IST — ${hovered.count} events`

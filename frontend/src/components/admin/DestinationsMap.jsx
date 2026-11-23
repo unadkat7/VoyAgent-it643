@@ -15,7 +15,7 @@ function clusterIcon(count, maxCount) {
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
     popupAnchor: [0, -(size / 2) - 2],
-    html: `<div style="width:${size}px;height:${size}px;border-radius:9999px;background:#ce532d;color:#fff;border:2.5px solid #fff;box-shadow:0 4px 12px rgba(24,20,17,0.32);display:flex;align-items:center;justify-content:center;font:700 11px ui-monospace,monospace;">${count}</div>`,
+    html: `<div style="width:${size}px;height:${size}px;border-radius:9999px;background:#ce532d;color:#fff;border:2.5px solid #fff;box-shadow:0 4px 12px rgba(24,20,17,0.32);display:flex;align-items:center;justify-content:center;font:700 12px ui-monospace,monospace;">${count}</div>`,
   });
 }
 

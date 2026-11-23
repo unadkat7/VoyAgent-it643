@@ -60,7 +60,7 @@ function DeltaPill({ pct, labelSuffix }) {
 
   return (
     <span
-      className={`inline-flex items-center gap-0.5 text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full border ${toneClass}`}
+      className={`inline-flex items-center gap-0.5 text-label font-mono font-semibold px-2 py-0.5 rounded-full border ${toneClass}`}
     >
       {delta.tone === "positive" && <TrendingUp className="w-2.5 h-2.5" aria-hidden />}
       {delta.tone === "negative" && <TrendingDown className="w-2.5 h-2.5" aria-hidden />}
@@ -151,7 +151,7 @@ export default function KpiGrid({ stats, daily, trips, days }) {
                 <span className="hidden sm:flex w-7 h-7 rounded-lg bg-bg border border-border items-center justify-center text-ink-soft">
                   <Icon className="w-3.5 h-3.5" aria-hidden />
                 </span>
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted">
+                <p className="text-label font-semibold uppercase tracking-wider text-muted">
                   {card.label}
                 </p>
               </div>

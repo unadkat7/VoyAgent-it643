@@ -5,7 +5,7 @@ import { formatPercent } from "@/lib/adminAnalytics";
 
 const CARD =
   "bg-white border border-border rounded-2xl p-5 shadow-[0_8px_24px_-20px_rgba(24,20,17,0.16)]";
-const EYEBROW = "text-[11px] font-semibold uppercase tracking-wider text-muted";
+const EYEBROW = "text-label font-semibold uppercase tracking-wider text-muted";
 
 function cohortTone(pct) {
   if (pct === null || pct === undefined) return "bg-transparent text-[#C7BDB2]";
@@ -32,7 +32,7 @@ export default function RetentionCohortTable({ retention }) {
               Signed-up travelers returning in Weeks 1–4
             </h3>
           </div>
-          <span className="font-mono text-[11px] text-muted">
+          <span className="font-mono text-label text-muted">
             Last {retention.weeks} weeks
           </span>
         </div>
@@ -43,7 +43,7 @@ export default function RetentionCohortTable({ retention }) {
           <div className="max-w-full overflow-x-auto">
             <table className="w-full text-xs">
               <caption className="pb-2 text-left text-xs text-muted">Percent returning by week. A dash means the week is still ahead.</caption>
-              <thead className="text-[10px] uppercase tracking-wider text-muted font-mono">
+              <thead className="text-label uppercase tracking-wider text-muted font-mono">
                 <tr>
                   <th className="text-left py-2 pr-3">Cohort Week</th>
                   <th className="text-right py-2 px-2">Sign-ups</th>
@@ -66,7 +66,7 @@ export default function RetentionCohortTable({ retention }) {
                     {cohort.retention.map((pct, idx) => (
                       <td key={idx} className="py-1 px-1">
                         <div
-                          className={`h-7 rounded-lg font-mono text-[11px] font-semibold flex items-center justify-center ${cohortTone(
+                          className={`h-7 rounded-lg font-mono text-label font-semibold flex items-center justify-center ${cohortTone(
                             pct
                           )}`}
                         >
@@ -101,7 +101,7 @@ export default function RetentionCohortTable({ retention }) {
                 key={item.label}
                 className="rounded-xl bg-bg border border-border p-3 text-center"
               >
-                <p className="font-mono text-[10px] uppercase tracking-wider text-muted">
+                <p className="font-mono text-label uppercase tracking-wider text-muted">
                   {item.label}
                 </p>
                 <p className="font-mono text-xl font-semibold text-ink mt-0.5">
@@ -149,7 +149,7 @@ export default function RetentionCohortTable({ retention }) {
               }}
             />
           </div>
-          <div className="flex justify-between text-[11px] font-mono text-muted mt-1.5">
+          <div className="flex justify-between text-label font-mono text-muted mt-1.5">
             <span>{userSplit7d.returningUsers} returning</span>
             <span>{userSplit7d.newUsers} new</span>
           </div>

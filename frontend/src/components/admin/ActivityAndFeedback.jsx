@@ -11,7 +11,7 @@ import {
 
 const CARD =
   "bg-white border border-border rounded-2xl p-5 shadow-[0_8px_24px_-20px_rgba(24,20,17,0.16)]";
-const EYEBROW = "text-[11px] font-semibold uppercase tracking-wider text-muted";
+const EYEBROW = "text-label font-semibold uppercase tracking-wider text-muted";
 
 const EVENT_LABELS = {
   pageview: "Viewed a page",
@@ -148,7 +148,7 @@ export default function ActivityAndFeedback({
                   type="button"
                   onClick={() => setEventGroup(g.id)}
                   aria-pressed={eventGroup === g.id}
-                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border transition-colors ${
+                  className={`min-h-tap min-w-tap text-sm font-semibold px-3 rounded-full border transition-colors ${
                     eventGroup === g.id
                       ? "bg-ink border-ink text-bg"
                       : "bg-bg border-border text-muted hover:text-ink"
@@ -176,13 +176,13 @@ export default function ActivityAndFeedback({
                         <span className="font-medium text-ink text-xs">
                           {formatEventTitle(event)}
                           {event.path && (
-                            <span className="font-mono text-[11px] text-muted">
+                            <span className="font-mono text-label text-muted">
                               {" "}
                               {event.path}
                             </span>
                           )}
                         </span>
-                        <p className="text-[11px] text-muted mt-0.5">
+                        <p className="text-label text-muted mt-0.5">
                           {event.user ?? "Visitor"} · {formatPlace(event)} ·{" "}
                           {formatDeviceLabel(event.device)}
                           {event.referrer ? ` · via ${event.referrer}` : ""}
@@ -190,11 +190,11 @@ export default function ActivityAndFeedback({
                       </div>
                     </div>
                     <div className="text-right shrink-0 flex flex-col items-end gap-0.5">
-                      <span className="text-[11px] text-muted">
+                      <span className="text-label text-muted">
                         {formatShortDate(event.createdAt)}
                       </span>
                       {Number.isFinite(event.durationMs) && event.durationMs > 0 && (
-                        <span className="font-mono text-[10px] font-semibold text-warning bg-warning-light px-1.5 py-0.2 rounded">
+                        <span className="font-mono text-label font-semibold text-warning bg-warning-light px-1.5 py-0.2 rounded">
                           {formatLatency(event.durationMs)}
                         </span>
                       )}
@@ -215,7 +215,7 @@ export default function ActivityAndFeedback({
             Feedback Intelligence ({filteredFeedback.length})
           </p>
           {feedbackSummary?.npsProxy !== null && feedbackSummary?.npsProxy !== undefined && (
-            <span className="font-mono text-[11px] font-semibold bg-success-light text-success border border-success/15 px-2.5 py-0.5 rounded-full">
+            <span className="font-mono text-label font-semibold bg-success-light text-success border border-success/15 px-2.5 py-0.5 rounded-full">
               NPS {feedbackSummary.npsProxy > 0 ? `+${feedbackSummary.npsProxy}` : feedbackSummary.npsProxy}
             </span>
           )}
@@ -234,7 +234,7 @@ export default function ActivityAndFeedback({
                   type="button"
                   onClick={() => setRatingFilter(active ? "all" : String(star))}
                   aria-pressed={active}
-                  className={`w-full flex items-center gap-2 text-xs px-1.5 py-0.5 rounded-lg transition-colors ${
+                  className={`w-full flex min-h-tap items-center gap-2 text-sm px-2 rounded-lg transition-colors ${
                     active ? "bg-white ring-1 ring-primary" : "hover:bg-white/70"
                   }`}
                 >
@@ -245,7 +245,7 @@ export default function ActivityAndFeedback({
                       style={{ width: `${pct}%` }}
                     />
                   </div>
-                  <span className="font-mono text-[11px] text-muted w-14 text-right">
+                  <span className="font-mono text-label text-muted w-14 text-right">
                     {count} ({pct}%)
                   </span>
                 </button>
@@ -267,7 +267,7 @@ export default function ActivityAndFeedback({
               type="button"
               onClick={() => setCategoryFilter("all")}
               aria-pressed={categoryFilter === "all"}
-              className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-full border ${
+              className={`min-h-tap min-w-tap text-sm font-semibold px-3 rounded-full border ${
                 categoryFilter === "all"
                   ? "bg-ink border-ink text-white"
                   : "bg-bg border-border text-muted"
@@ -283,7 +283,7 @@ export default function ActivityAndFeedback({
                   setCategoryFilter(categoryFilter === row.category ? "all" : row.category)
                 }
                 aria-pressed={categoryFilter === row.category}
-                className={`text-[10px] font-semibold capitalize px-2.5 py-0.5 rounded-full border ${
+                className={`min-h-tap text-sm font-semibold capitalize px-3 rounded-full border ${
                   categoryFilter === row.category
                     ? "bg-primary border-primary text-white"
                     : "bg-bg border-border text-ink-soft hover:border-border-strong"
@@ -308,12 +308,12 @@ export default function ActivityAndFeedback({
                       <span className="text-border">{"★".repeat(5 - item.rating)}</span>
                     </span>
                     {item.category && (
-                      <span className="capitalize text-[10px] font-semibold bg-bg border border-border text-muted px-2 py-0.5 rounded-full">
+                      <span className="capitalize text-label font-semibold bg-bg border border-border text-muted px-2 py-0.5 rounded-full">
                         {item.category}
                       </span>
                     )}
                   </div>
-                  <span className="text-[11px] text-muted">
+                  <span className="text-label text-muted">
                     {formatShortDate(item.createdAt)}
                   </span>
                 </div>
@@ -321,7 +321,7 @@ export default function ActivityAndFeedback({
                   <p className="text-xs text-ink-soft mt-1 leading-relaxed">{item.message}</p>
                 )}
                 {item.page && (
-                  <p className="font-mono text-[10px] text-muted mt-0.5">{item.page}</p>
+                  <p className="font-mono text-label text-muted mt-0.5">{item.page}</p>
                 )}
               </li>
             ))}

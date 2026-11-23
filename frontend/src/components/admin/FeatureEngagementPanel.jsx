@@ -14,7 +14,7 @@ import { formatPercent } from "@/lib/adminAnalytics";
 
 const CARD =
   "bg-white border border-border rounded-2xl p-5 shadow-[0_8px_24px_-20px_rgba(24,20,17,0.16)]";
-const EYEBROW = "text-[11px] font-semibold uppercase tracking-wider text-muted";
+const EYEBROW = "text-label font-semibold uppercase tracking-wider text-muted";
 
 const TAB_LABELS = {
   itinerary: "Itinerary",
@@ -86,7 +86,7 @@ export default function FeatureEngagementPanel({ featureEngagement, compact = fa
             </div>
             <div className="flex items-center gap-2">
               <div className="bg-bg border border-border rounded-xl px-3 py-1.5 text-right">
-                <p className="text-[10px] uppercase tracking-wider text-muted font-semibold">
+                <p className="text-label uppercase tracking-wider text-muted font-semibold">
                   Map Adoption
                 </p>
                 <p className="font-mono text-sm font-semibold text-ink">
@@ -94,7 +94,7 @@ export default function FeatureEngagementPanel({ featureEngagement, compact = fa
                 </p>
               </div>
               <div className="bg-primary-light border border-primary-border rounded-xl px-3 py-1.5 text-right">
-                <p className="text-[10px] uppercase tracking-wider text-primary-hover font-semibold">
+                <p className="text-label uppercase tracking-wider text-primary-hover font-semibold">
                   Interactions
                 </p>
                 <p className="font-mono text-sm font-semibold text-primary-hover">
@@ -111,7 +111,7 @@ export default function FeatureEngagementPanel({ featureEngagement, compact = fa
                 <Layers className="w-3.5 h-3.5 text-muted" aria-hidden />
                 Map style switches
               </span>
-              <span className="font-mono text-[11px] text-muted">
+              <span className="font-mono text-label text-muted">
                 {totalStyles} total switches
               </span>
             </div>
@@ -133,7 +133,7 @@ export default function FeatureEngagementPanel({ featureEngagement, compact = fa
                     );
                   })}
                 </div>
-                <div className="flex flex-wrap gap-3 mt-2 text-[11px] text-ink-soft">
+                <div className="flex flex-wrap gap-3 mt-2 text-label text-ink-soft">
                   {tripMap.styles.map((s) => {
                     const cfg = STYLE_COLORS[s.style] ?? { label: s.style, color: "#73685E" };
                     return (
@@ -177,7 +177,7 @@ export default function FeatureEngagementPanel({ featureEngagement, compact = fa
           </div>
 
           {/* Highlight Pills */}
-          <div className="flex flex-wrap gap-2 pt-3 border-t border-bg-subtle text-[11px]">
+          <div className="flex flex-wrap gap-2 pt-3 border-t border-bg-subtle text-label">
             <span className="inline-flex items-center gap-1.5 bg-bg border border-border px-2.5 py-1 rounded-full text-ink-soft">
               <Maximize2 className="w-3 h-3 text-primary" aria-hidden />
               Fullscreen opens: <strong className="font-mono">{tripMap.fullscreenOpens}</strong>
@@ -206,7 +206,7 @@ export default function FeatureEngagementPanel({ featureEngagement, compact = fa
                 </h3>
               </div>
               {hotelOutbound.staysTabCtrPct !== null && (
-                <span className="font-mono text-[11px] font-semibold bg-success-light text-success border border-success/15 px-2.5 py-0.5 rounded-full">
+                <span className="font-mono text-label font-semibold bg-success-light text-success border border-success/15 px-2.5 py-0.5 rounded-full">
                   Stays CTR {formatPercent(hotelOutbound.staysTabCtrPct)}
                 </span>
               )}
@@ -242,7 +242,7 @@ export default function FeatureEngagementPanel({ featureEngagement, compact = fa
 
             <div className="grid grid-cols-2 gap-2.5 pt-3 border-t border-bg-subtle">
               <div className="rounded-xl bg-bg border border-border px-3 py-2">
-                <p className="text-[10px] uppercase tracking-wider font-semibold text-muted">
+                <p className="text-label uppercase tracking-wider font-semibold text-muted">
                   Hotel Deal Clicks
                 </p>
                 <p className="font-mono text-lg font-semibold text-success">
@@ -250,7 +250,7 @@ export default function FeatureEngagementPanel({ featureEngagement, compact = fa
                 </p>
               </div>
               <div className="rounded-xl bg-bg border border-border px-3 py-2">
-                <p className="text-[10px] uppercase tracking-wider font-semibold text-muted">
+                <p className="text-label uppercase tracking-wider font-semibold text-muted">
                   Hotel Map Lookups
                 </p>
                 <p className="font-mono text-lg font-semibold text-ink">
