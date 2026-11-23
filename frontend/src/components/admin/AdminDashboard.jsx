@@ -2,20 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Activity,
-  ArrowLeft,
-  Compass,
-  Globe2,
-  LayoutDashboard,
-  Map as MapIcon,
-  ShieldAlert,
-  Users,
-} from "lucide-react";
+import { ArrowLeft, ShieldAlert } from "lucide-react";
 import { getAdminOverview } from "@/services/admin.service";
 import { normalizeAdminOverview } from "@/lib/adminAnalytics";
 import AppHeader from "@/components/layout/AppHeader";
+import BottomNav from "@/components/layout/BottomNav";
 import BrandLogo from "@/components/layout/BrandLogo";
+import SegmentedControl from "@/components/ui/SegmentedControl";
 import Skeleton from "@/components/ui/Skeleton";
 import ActivityAndFeedback from "./ActivityAndFeedback";
 import ActivityHeatmap from "./ActivityHeatmap";
@@ -30,12 +23,12 @@ import TravelIntelligencePanel, { StatusDonut } from "./TravelIntelligencePanel"
 import UsersTable from "./UsersTable";
 
 const WORKSPACE_TABS = [
-  { id: "overview", label: "Overview", icon: LayoutDashboard },
-  { id: "traffic", label: "Traffic & stages", icon: Activity },
-  { id: "product", label: "TripMap & Product", icon: MapIcon },
-  { id: "travel", label: "Travel Intelligence", icon: Compass },
-  { id: "audience", label: "Audience & Retention", icon: Globe2 },
-  { id: "users", label: "Users & Feedback", icon: Users },
+  { value: "overview", label: "Overview" },
+  { value: "traffic", label: "Traffic & stages" },
+  { value: "product", label: "TripMap & Product" },
+  { value: "travel", label: "Travel Intelligence" },
+  { value: "audience", label: "Audience & Retention" },
+  { value: "users", label: "Users & Feedback" },
 ];
 
 // Usage evidence & analytics command center for outside users, TripMap, Travel Intelligence and feedback.
@@ -53,6 +46,18 @@ export default function AdminPage() {
     setRefreshing(true);
     setRevision((value) => value + 1);
   };
+  // A new section starts at its top when the tab row is already stuck under the header.
+  const selectTab = (tab) => {
+    setActiveTab(tab);
+    const tabs = document.querySelector('[aria-label="Analytics sections"]')?.parentElement;
+    const headerHeight = document.querySelector("header")?.offsetHeight ?? 0;
+    if (tabs && tabs.getBoundingClientRect().top <= headerHeight + 1) {
+      const masthead = document.querySelector("main section");
+      const target = masthead ? masthead.getBoundingClientRect().bottom + window.scrollY - headerHeight : 0;
+      if (window.scrollY > target) window.scrollTo({ top: target, behavior: "instant" });
+    }
+  };
+
   const changePeriod = (value) => {
     if (value === days) return;
     setRefreshing(true);
@@ -89,10 +94,11 @@ export default function AdminPage() {
         <button
           type="button"
           onClick={() => router.push("/dashboard")}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#73685E] hover:text-[#181411] bg-white border border-[#E7E0D5] hover:border-[#D6CCC0] px-3 py-1.5 rounded-xl transition-colors"
+          aria-label="Back to trips"
+          className="inline-flex min-h-tap min-w-tap items-center justify-center gap-1.5 rounded-xl text-sm font-semibold text-ink-soft hover:bg-bg-subtle hover:text-ink sm:px-3"
         >
-          <ArrowLeft className="w-3.5 h-3.5" aria-hidden />
-          Dashboard
+          <ArrowLeft className="h-5 w-5" aria-hidden />
+          <span className="hidden sm:inline">Trips</span>
         </button>
       }
       center={<BrandLogo href="/dashboard" size="sm" subtitle="Admin" />}
@@ -101,12 +107,12 @@ export default function AdminPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#FAF8F4] font-sans">
+      <div className="min-h-screen bg-bg font-sans">
         {header}
-        <div className="max-w-md mx-auto mt-24 bg-white border border-[#E7E0D5] rounded-3xl p-8 text-center shadow-sm">
-          <ShieldAlert className="w-7 h-7 text-[#B45309] mx-auto mb-3" aria-hidden />
-          <h2 className="font-display text-2xl font-semibold text-[#181411]">{error}</h2>
-          <p className="text-xs text-[#73685E] mt-2">
+        <div className="max-w-md mx-auto mt-24 bg-white border border-border rounded-3xl p-8 text-center shadow-sm">
+          <ShieldAlert className="w-7 h-7 text-warning mx-auto mb-3" aria-hidden />
+          <h2 className="font-display text-2xl font-semibold text-ink">{error}</h2>
+          <p className="text-xs text-muted mt-2">
             {error === "Admins only" ? "Sign in with an admin account to view analytics." : "Check your connection and try again."}
           </p>
           {error !== "Admins only" && <button type="button" disabled={refreshing} onClick={refresh} className="mt-4 rounded-xl bg-ink px-4 py-3 text-sm text-white">Try again</button>}
@@ -117,7 +123,7 @@ export default function AdminPage() {
 
   if (!rawData) {
     return (
-      <div className="min-h-screen bg-[#FAF8F4] font-sans">
+      <div className="min-h-screen bg-bg font-sans">
         {header}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8 space-y-5">
           <Skeleton className="h-44 w-full rounded-3xl" />
@@ -136,7 +142,7 @@ export default function AdminPage() {
   const { stats, users, activity, feedback, feedbackSummary, trips, retention } = data;
 
   return (
-    <div className="min-h-screen bg-[#FAF8F4] font-sans pb-24">
+    <div className="min-h-screen bg-bg font-sans pb-nav">
       {header}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 space-y-6">
         <AdminMasthead
@@ -148,37 +154,17 @@ export default function AdminPage() {
           lastUpdatedAt={lastUpdatedAt}
         />
 
-        {/* Workspace Switcher */}
-        <label className="grid gap-1 text-sm font-semibold lg:hidden">
-          Analytics section
-          <select className="min-h-11 w-full rounded-xl border border-border bg-white px-3" value={activeTab} onChange={(e) => setActiveTab(e.target.value)}>
-            {WORKSPACE_TABS.map(({ id, label }) => <option key={id} value={id}>{label}</option>)}
-          </select>
-        </label>
-        <nav
-          className="hidden lg:flex flex-wrap items-center gap-1 border-b border-[#E7E0D5]"
-          aria-label="Analytics sections"
-        >
-          {WORKSPACE_TABS.map(({ id, label, icon: Icon }) => {
-            const active = activeTab === id;
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setActiveTab(id)}
-                aria-current={active ? "page" : undefined}
-                className={`inline-flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold border-b-2 whitespace-nowrap transition-colors -mb-px ${
-                  active
-                    ? "border-[#CE532D] text-[#CE532D]"
-                    : "border-transparent text-[#73685E] hover:text-[#181411]"
-                }`}
-              >
-                <Icon className="w-3.5 h-3.5" aria-hidden />
-                {label}
-              </button>
-            );
-          })}
-        </nav>
+        {/* Section tabs: one sticky row that scrolls sideways on phones */}
+        <div className="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-20 -mx-4 bg-bg sm:top-[calc(4rem+env(safe-area-inset-top))] sm:-mx-6">
+          <SegmentedControl
+            label="Analytics sections"
+            variant="tabs"
+            options={WORKSPACE_TABS}
+            value={activeTab}
+            onChange={selectTab}
+            className="px-4 sm:px-6"
+          />
+        </div>
 
         {/* ── OVERVIEW (Executive Suite) ── */}
         {activeTab === "overview" && (
@@ -256,6 +242,7 @@ export default function AdminPage() {
           </div>
         )}
       </main>
+      <BottomNav page="/admin" isAdmin />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import TripMap from "@/components/trip/TripMap";
@@ -13,6 +13,7 @@ vi.mock("react-leaflet", () => ({
   Popup: ({ children }) => <div>{children}</div>,
   Polyline: () => <div data-testid="route" />,
   useMap: () => ({ fitBounds: vi.fn(), setView: vi.fn() }),
+  useMapEvents: () => null,
 }));
 
 describe("TripMap", () => {
@@ -41,8 +42,21 @@ describe("TripMap", () => {
     expect(screen.getByText(/no map pins/i)).toBeInTheDocument();
   });
 
+  it("keeps map style, layers and places in an options sheet on phones", async () => {
+    const user = userEvent.setup();
+    render(<TripMap plan={LOCATED_PLAN} />);
+
+    expect(screen.queryByRole("button", { name: "Satellite" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Map options" }));
+    const sheet = screen.getByRole("dialog", { name: "Map options" });
+    expect(sheet).toContainElement(screen.getByRole("button", { name: "Satellite" }));
+    await user.click(screen.getByRole("button", { name: /Fort Aguada/ }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  });
+
   it("reports map interactions when onTrack is provided", async () => {
     const onTrack = vi.fn();
+    vi.stubGlobal("matchMedia", (query) => ({ matches: query.includes("min-width"), addEventListener() {}, removeEventListener() {} }));
     render(<TripMap plan={LOCATED_PLAN} onTrack={onTrack} />);
 
     await userEvent.click(screen.getByRole("button", { name: "Satellite" }));
@@ -52,5 +66,6 @@ describe("TripMap", () => {
     expect(onTrack).toHaveBeenCalledWith("map_style_changed", "satellite");
     expect(onTrack).toHaveBeenCalledWith("map_day_filtered", "day");
     expect(onTrack).toHaveBeenCalledWith("map_fullscreen_opened");
+    vi.unstubAllGlobals();
   });
 });

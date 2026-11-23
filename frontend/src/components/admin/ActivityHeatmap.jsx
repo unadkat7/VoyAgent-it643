@@ -9,10 +9,10 @@ const HOURS = Array.from({ length: 24 }, (_, i) => i);
 function cellTone(count, max) {
   if (!count || max <= 0) return "bg-[#F5F1EA]";
   const ratio = count / max;
-  if (ratio <= 0.25) return "bg-[#FCEEE8]";
-  if (ratio <= 0.5) return "bg-[#F3CFC0]";
-  if (ratio <= 0.78) return "bg-[#CE532D]/85";
-  return "bg-[#181411]";
+  if (ratio <= 0.25) return "bg-primary-light";
+  if (ratio <= 0.5) return "bg-primary-border";
+  if (ratio <= 0.78) return "bg-primary/85";
+  return "bg-ink";
 }
 
 export default function ActivityHeatmap({ cells = [] }) {
@@ -35,18 +35,18 @@ export default function ActivityHeatmap({ cells = [] }) {
   }, [cells]);
 
   return (
-    <section className="bg-white border border-[#E7E0D5] rounded-2xl p-5 shadow-[0_8px_24px_-20px_rgba(24,20,17,0.16)]">
+    <section className="bg-white border border-border rounded-2xl p-5 shadow-[0_8px_24px_-20px_rgba(24,20,17,0.16)]">
       <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-[#73685E]">
+          <p className="text-label font-semibold uppercase tracking-wider text-muted">
             Peak Activity Windows (IST)
           </p>
-          <p className="font-display text-lg font-semibold text-[#181411]">
+          <p className="font-display text-lg font-semibold text-ink">
             7 × 24 hourly engagement heatmap
           </p>
         </div>
         {peak ? (
-          <span className="inline-flex items-center gap-1.5 text-[11px] font-mono font-semibold text-[#B54320] bg-[#FCEEE8] border border-[#F3CFC0] px-2.5 py-1 rounded-full">
+          <span className="inline-flex items-center gap-1.5 text-label font-mono font-semibold text-primary-hover bg-primary-light border border-primary-border px-2.5 py-1 rounded-full">
             <Clock className="w-3 h-3" aria-hidden />
             Peak: {DAYS[peak.dayOfWeek]} {String(peak.hour).padStart(2, "0")}:00 ({peak.count})
           </span>
@@ -73,7 +73,7 @@ export default function ActivityHeatmap({ cells = [] }) {
       <div className="hidden lg:block overflow-x-auto">
         <div className="min-w-[560px] space-y-1.5">
           {/* Hour Header */}
-          <div className="grid grid-cols-[36px_repeat(24,minmax(0,1fr))] gap-1 text-[9px] font-mono text-[#73685E]">
+          <div className="grid grid-cols-[36px_repeat(24,minmax(0,1fr))] gap-1 text-label font-mono text-muted">
             <span />
             {HOURS.map((hour) => (
               <span key={hour} className="text-center">
@@ -88,7 +88,7 @@ export default function ActivityHeatmap({ cells = [] }) {
               key={dayLabel}
               className="grid grid-cols-[36px_repeat(24,minmax(0,1fr))] gap-1 items-center"
             >
-              <span className="text-[10px] font-mono text-[#73685E]">{dayLabel}</span>
+              <span className="text-label font-mono text-muted">{dayLabel}</span>
               {HOURS.map((hour) => {
                 const count = grid.get(`${dayIdx}-${hour}`) ?? 0;
                 return (
@@ -113,7 +113,7 @@ export default function ActivityHeatmap({ cells = [] }) {
         </div>
       </div>
 
-      <div className="hidden lg:flex flex-wrap items-center justify-between gap-2 mt-4 pt-3 border-t border-[#F2EDE4] text-[11px] text-[#73685E]">
+      <div className="hidden lg:flex flex-wrap items-center justify-between gap-2 mt-4 pt-3 border-t border-bg-subtle text-label text-muted">
         <span>
           {hovered
             ? `${hovered.day} ${String(hovered.hour).padStart(2, "0")}:00 IST — ${hovered.count} events`
@@ -122,10 +122,10 @@ export default function ActivityHeatmap({ cells = [] }) {
         <div className="flex items-center gap-1.5">
           <span>Quiet</span>
           <span className="w-3 h-3 rounded-[3px] bg-[#F5F1EA]" />
-          <span className="w-3 h-3 rounded-[3px] bg-[#FCEEE8]" />
-          <span className="w-3 h-3 rounded-[3px] bg-[#F3CFC0]" />
-          <span className="w-3 h-3 rounded-[3px] bg-[#CE532D]/85" />
-          <span className="w-3 h-3 rounded-[3px] bg-[#181411]" />
+          <span className="w-3 h-3 rounded-[3px] bg-primary-light" />
+          <span className="w-3 h-3 rounded-[3px] bg-primary-border" />
+          <span className="w-3 h-3 rounded-[3px] bg-primary/85" />
+          <span className="w-3 h-3 rounded-[3px] bg-ink" />
           <span>Peak</span>
         </div>
       </div>

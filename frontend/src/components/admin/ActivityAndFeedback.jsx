@@ -10,8 +10,8 @@ import {
 } from "@/lib/adminAnalytics";
 
 const CARD =
-  "bg-white border border-[#E7E0D5] rounded-2xl p-5 shadow-[0_8px_24px_-20px_rgba(24,20,17,0.16)]";
-const EYEBROW = "text-[11px] font-semibold uppercase tracking-wider text-[#73685E]";
+  "bg-white border border-border rounded-2xl p-5 shadow-[0_8px_24px_-20px_rgba(24,20,17,0.16)]";
+const EYEBROW = "text-label font-semibold uppercase tracking-wider text-muted";
 
 const EVENT_LABELS = {
   pageview: "Viewed a page",
@@ -76,13 +76,13 @@ function matchesEventGroup(event, group) {
 }
 
 function eventToneDot(type) {
-  if (type === "trip_planned" || type === "signup") return "bg-[#15803D]";
-  if (type === "trip_plan_failed") return "bg-[#C82828]";
+  if (type === "trip_planned" || type === "signup") return "bg-success";
+  if (type === "trip_plan_failed") return "bg-danger";
   if (type === "trip_clarification_requested" || type === "feedback_submitted") {
-    return "bg-[#D97706]";
+    return "bg-star";
   }
-  if (type === "feature_interaction" || type === "trip_shared") return "bg-[#CE532D]";
-  return "bg-[#181411]/45";
+  if (type === "feature_interaction" || type === "trip_shared") return "bg-primary";
+  return "bg-ink/45";
 }
 
 function formatEventTitle(event) {
@@ -138,7 +138,7 @@ export default function ActivityAndFeedback({
         <div className={CARD}>
           <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
             <p className={`${EYEBROW} flex items-center gap-1.5`}>
-              <Activity className="w-3.5 h-3.5 text-[#CE532D]" aria-hidden />
+              <Activity className="w-3.5 h-3.5 text-primary" aria-hidden />
               Recent Activity ({filteredEvents.length})
             </p>
             <div className="flex flex-wrap gap-1" role="group" aria-label="Filter activity events">
@@ -148,10 +148,10 @@ export default function ActivityAndFeedback({
                   type="button"
                   onClick={() => setEventGroup(g.id)}
                   aria-pressed={eventGroup === g.id}
-                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border transition-colors ${
+                  className={`min-h-tap min-w-tap text-sm font-semibold px-3 rounded-full border transition-colors ${
                     eventGroup === g.id
-                      ? "bg-[#181411] border-[#181411] text-[#FAF8F4]"
-                      : "bg-[#FAF8F4] border-[#E7E0D5] text-[#73685E] hover:text-[#181411]"
+                      ? "bg-ink border-ink text-bg"
+                      : "bg-bg border-border text-muted hover:text-ink"
                   }`}
                 >
                   {g.label}
@@ -161,9 +161,9 @@ export default function ActivityAndFeedback({
           </div>
 
           {filteredEvents.length === 0 ? (
-            <p className="text-sm text-[#73685E] py-4">No matching events yet.</p>
+            <p className="text-sm text-muted py-4">No matching events yet.</p>
           ) : (
-            <ul className="divide-y divide-[#F2EDE4] text-sm max-h-[440px] overflow-y-auto pr-1">
+            <ul className="divide-y divide-bg-subtle text-sm max-h-[440px] overflow-y-auto pr-1">
               {filteredEvents.map((event, index) => (
                 <li key={`${event.createdAt}-${index}`} className="py-2.5">
                   <div className="flex items-start justify-between gap-3">
@@ -173,16 +173,16 @@ export default function ActivityAndFeedback({
                         aria-hidden
                       />
                       <div className="min-w-0">
-                        <span className="font-medium text-[#181411] text-xs">
+                        <span className="font-medium text-ink text-xs">
                           {formatEventTitle(event)}
                           {event.path && (
-                            <span className="font-mono text-[11px] text-[#73685E]">
+                            <span className="font-mono text-label text-muted">
                               {" "}
                               {event.path}
                             </span>
                           )}
                         </span>
-                        <p className="text-[11px] text-[#73685E] mt-0.5">
+                        <p className="text-label text-muted mt-0.5">
                           {event.user ?? "Visitor"} · {formatPlace(event)} ·{" "}
                           {formatDeviceLabel(event.device)}
                           {event.referrer ? ` · via ${event.referrer}` : ""}
@@ -190,11 +190,11 @@ export default function ActivityAndFeedback({
                       </div>
                     </div>
                     <div className="text-right shrink-0 flex flex-col items-end gap-0.5">
-                      <span className="text-[11px] text-[#73685E]">
+                      <span className="text-label text-muted">
                         {formatShortDate(event.createdAt)}
                       </span>
                       {Number.isFinite(event.durationMs) && event.durationMs > 0 && (
-                        <span className="font-mono text-[10px] font-semibold text-[#B45309] bg-[#FEF7E6] px-1.5 py-0.2 rounded">
+                        <span className="font-mono text-label font-semibold text-warning bg-warning-light px-1.5 py-0.2 rounded">
                           {formatLatency(event.durationMs)}
                         </span>
                       )}
@@ -211,11 +211,11 @@ export default function ActivityAndFeedback({
       <div className={CARD}>
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
           <p className={`${EYEBROW} flex items-center gap-1.5`}>
-            <MessageSquareHeart className="w-3.5 h-3.5 text-[#CE532D]" aria-hidden />
+            <MessageSquareHeart className="w-3.5 h-3.5 text-primary" aria-hidden />
             Feedback Intelligence ({filteredFeedback.length})
           </p>
           {feedbackSummary?.npsProxy !== null && feedbackSummary?.npsProxy !== undefined && (
-            <span className="font-mono text-[11px] font-semibold bg-[#ECFDF3] text-[#15803D] border border-[#15803D]/15 px-2.5 py-0.5 rounded-full">
+            <span className="font-mono text-label font-semibold bg-success-light text-success border border-success/15 px-2.5 py-0.5 rounded-full">
               NPS {feedbackSummary.npsProxy > 0 ? `+${feedbackSummary.npsProxy}` : feedbackSummary.npsProxy}
             </span>
           )}
@@ -223,7 +223,7 @@ export default function ActivityAndFeedback({
 
         {/* 5★ to 1★ Distribution Histogram */}
         {totalFeedback > 0 && (
-          <div className="bg-[#FAF8F4] border border-[#E7E0D5] rounded-xl p-3.5 mb-3 space-y-1.5">
+          <div className="bg-bg border border-border rounded-xl p-3.5 mb-3 space-y-1.5">
             {[5, 4, 3, 2, 1].map((star) => {
               const count = dist[star] ?? 0;
               const pct = totalFeedback > 0 ? Math.round((count / totalFeedback) * 100) : 0;
@@ -234,18 +234,18 @@ export default function ActivityAndFeedback({
                   type="button"
                   onClick={() => setRatingFilter(active ? "all" : String(star))}
                   aria-pressed={active}
-                  className={`w-full flex items-center gap-2 text-xs px-1.5 py-0.5 rounded-lg transition-colors ${
-                    active ? "bg-white ring-1 ring-[#CE532D]" : "hover:bg-white/70"
+                  className={`w-full flex min-h-tap items-center gap-2 text-sm px-2 rounded-lg transition-colors ${
+                    active ? "bg-white ring-1 ring-primary" : "hover:bg-white/70"
                   }`}
                 >
-                  <span className="font-mono w-6 text-left text-[#3B342E]">{star}★</span>
-                  <div className="flex-1 h-2 bg-[#E7E0D5] rounded-full overflow-hidden">
+                  <span className="font-mono w-6 text-left text-ink-soft">{star}★</span>
+                  <div className="flex-1 h-2 bg-border rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-[#CE532D] rounded-full"
+                      className="h-full bg-primary rounded-full"
                       style={{ width: `${pct}%` }}
                     />
                   </div>
-                  <span className="font-mono text-[11px] text-[#73685E] w-14 text-right">
+                  <span className="font-mono text-label text-muted w-14 text-right">
                     {count} ({pct}%)
                   </span>
                 </button>
@@ -267,10 +267,10 @@ export default function ActivityAndFeedback({
               type="button"
               onClick={() => setCategoryFilter("all")}
               aria-pressed={categoryFilter === "all"}
-              className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-full border ${
+              className={`min-h-tap min-w-tap text-sm font-semibold px-3 rounded-full border ${
                 categoryFilter === "all"
-                  ? "bg-[#181411] border-[#181411] text-white"
-                  : "bg-[#FAF8F4] border-[#E7E0D5] text-[#73685E]"
+                  ? "bg-ink border-ink text-white"
+                  : "bg-bg border-border text-muted"
               }`}
             >
               All topics
@@ -283,10 +283,10 @@ export default function ActivityAndFeedback({
                   setCategoryFilter(categoryFilter === row.category ? "all" : row.category)
                 }
                 aria-pressed={categoryFilter === row.category}
-                className={`text-[10px] font-semibold capitalize px-2.5 py-0.5 rounded-full border ${
+                className={`min-h-tap text-sm font-semibold capitalize px-3 rounded-full border ${
                   categoryFilter === row.category
-                    ? "bg-[#CE532D] border-[#CE532D] text-white"
-                    : "bg-[#FAF8F4] border-[#E7E0D5] text-[#3B342E] hover:border-[#D6CCC0]"
+                    ? "bg-primary border-primary text-white"
+                    : "bg-bg border-border text-ink-soft hover:border-border-strong"
                 }`}
               >
                 {row.category} ({row.count})
@@ -296,32 +296,32 @@ export default function ActivityAndFeedback({
         )}
 
         {filteredFeedback.length === 0 ? (
-          <p className="text-sm text-[#73685E] py-4">No feedback matching this filter.</p>
+          <p className="text-sm text-muted py-4">No feedback matching this filter.</p>
         ) : (
-          <ul className="divide-y divide-[#F2EDE4] text-sm max-h-[340px] overflow-y-auto pr-1">
+          <ul className="divide-y divide-bg-subtle text-sm max-h-[340px] overflow-y-auto pr-1">
             {filteredFeedback.map((item, index) => (
               <li key={`${item.createdAt}-${index}`} className="py-2.5">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
-                    <span className="text-[#CE532D]" aria-label={`${item.rating} out of 5`}>
+                    <span className="text-primary" aria-label={`${item.rating} out of 5`}>
                       {"★".repeat(item.rating)}
-                      <span className="text-[#E7E0D5]">{"★".repeat(5 - item.rating)}</span>
+                      <span className="text-border">{"★".repeat(5 - item.rating)}</span>
                     </span>
                     {item.category && (
-                      <span className="capitalize text-[10px] font-semibold bg-[#FAF8F4] border border-[#E7E0D5] text-[#73685E] px-2 py-0.5 rounded-full">
+                      <span className="capitalize text-label font-semibold bg-bg border border-border text-muted px-2 py-0.5 rounded-full">
                         {item.category}
                       </span>
                     )}
                   </div>
-                  <span className="text-[11px] text-[#73685E]">
+                  <span className="text-label text-muted">
                     {formatShortDate(item.createdAt)}
                   </span>
                 </div>
                 {item.message && (
-                  <p className="text-xs text-[#3B342E] mt-1 leading-relaxed">{item.message}</p>
+                  <p className="text-xs text-ink-soft mt-1 leading-relaxed">{item.message}</p>
                 )}
                 {item.page && (
-                  <p className="font-mono text-[10px] text-[#73685E] mt-0.5">{item.page}</p>
+                  <p className="font-mono text-label text-muted mt-0.5">{item.page}</p>
                 )}
               </li>
             ))}

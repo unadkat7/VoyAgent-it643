@@ -2,18 +2,21 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
-import { MapContainer, Marker, Polyline, Popup, TileLayer, useMap } from "react-leaflet";
+import { MapContainer, Marker, Polyline, Popup, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import {
-  Compass,
   ExternalLink,
   Layers,
   LocateFixed,
   Map as MapIcon,
   Maximize2,
   Minimize2,
+  MousePointerClick,
 } from "lucide-react";
 import { formatInr, mapDays, mapPoints } from "@/lib/tripView";
+import useWideLayout from "@/lib/useWideLayout";
+import SegmentedControl from "@/components/ui/SegmentedControl";
+import Sheet from "@/components/ui/Sheet";
 import EmptyState from "./EmptyState";
 
 // Free, zero-API-key tile styles. Atlas uses OpenStreetMap with a warm CSS tint.
@@ -43,6 +46,8 @@ const MAP_STYLES = {
   },
 };
 
+const STYLE_OPTIONS = Object.values(MAP_STYLES).map(({ id, label }) => ({ value: id, label }));
+
 const BED_SVG =
   '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M2 19v-9M22 19v-5H2M6 14v-3h6v3"/></svg>';
 
@@ -51,6 +56,9 @@ const PIN_STYLE = {
   hotel: "background:#181411;color:#fff;border-radius:9px;border:2px solid #fff",
   destination: "background:#fff;color:#ce532d;border:2.5px solid #ce532d;border-radius:9999px",
 };
+
+const FLOATING_BUTTON =
+  "flex size-tap items-center justify-center rounded-xl border border-border bg-surface/95 text-ink shadow-lg backdrop-blur-md transition-colors hover:border-primary/40 hover:text-primary";
 
 // Leaflet's default marker images break under bundlers, so pins are plain HTML.
 function pinIcon(point, focused) {
@@ -131,18 +139,39 @@ function MapViewportController({ points, focusedPoint, fitTrigger, expanded }) {
   return null;
 }
 
-function DayChip({ active, onClick, children }) {
+// The page keeps the mouse wheel until the map is clicked, so scrolling past the map never gets stuck.
+function WheelZoomAfterClick() {
+  const map = useMapEvents({
+    click: () => map.scrollWheelZoom.enable(),
+    mouseout: () => map.scrollWheelZoom.disable(),
+  });
+  return null;
+}
+
+function StopBadge({ stop, active }) {
+  return (
+    <span
+      className={`flex size-6 shrink-0 items-center justify-center rounded-full font-mono text-label font-bold ${
+        stop.kind === "hotel" ? (active ? "bg-bg text-ink" : "bg-ink text-bg") : "bg-primary text-white"
+      }`}
+      aria-hidden
+    >
+      {stop.kind === "hotel" ? "H" : stop.order}
+    </span>
+  );
+}
+
+function LayerToggle({ pressed, onClick, swatch, children }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      aria-pressed={active}
-      className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all whitespace-nowrap ${
-        active
-          ? "bg-[#CE532D] border-[#CE532D] text-white shadow-xs"
-          : "bg-white/95 border-[#E7E0D5] text-[#3B342E] hover:text-[#181411] hover:border-[#D6CCC0]"
+      aria-pressed={pressed}
+      className={`flex min-h-tap items-center gap-2 rounded-xl px-3 text-sm transition-all ${
+        pressed ? "font-medium text-ink" : "text-muted line-through opacity-60"
       }`}
     >
+      <span className={`size-3 ${swatch}`} aria-hidden />
       {children}
     </button>
   );
@@ -157,6 +186,7 @@ export default function TripMap({
   compact = false,
   showQuickStrip = false,
   onTrack = null,
+  belowButton = false,
 }) {
   const [internalDay, setInternalDay] = useState("all");
   const [mapStyle, setMapStyle] = useState("atlas");
@@ -165,7 +195,10 @@ export default function TripMap({
   const [localFocusKey, setLocalFocusKey] = useState(null);
   const [fitTrigger, setFitTrigger] = useState(0);
   const [expanded, setExpanded] = useState(false);
+  const [optionsOpen, setOptionsOpen] = useState(false);
 
+  const wide = useWideLayout();
+  const phone = !wide && !compact && !expanded;
   const markerRefs = useRef({});
 
   const day = selectedDay ?? internalDay;
@@ -211,13 +244,12 @@ export default function TripMap({
     [points, day, showActivities]
   );
 
-  // Auto-open the marker's popup whenever a stop is focused from the Itinerary or quick strip.
+  // Auto-open the marker's popup whenever a stop is focused from the Itinerary or the places list.
   useEffect(() => {
     if (!activeFocusKey) return;
-    const marker = markerRefs.current[activeFocusKey];
-    if (marker && typeof marker.openPopup === "function") {
-      marker.openPopup();
-    }
+    // Wait a frame: on first mount the popup is bound to its marker after this effect runs.
+    const frame = requestAnimationFrame(() => markerRefs.current[activeFocusKey]?.openPopup?.());
+    return () => cancelAnimationFrame(frame);
   }, [activeFocusKey]);
 
   // Allow Escape key to exit fullscreen immersive mode.
@@ -242,6 +274,9 @@ export default function TripMap({
   const activityCount = points.filter((p) => p.kind === "activity").length;
   const stayCount = points.filter((p) => p.kind === "hotel").length;
   const quickStops = points.filter((p) => p.kind !== "destination");
+  const pinSummary = `${activityCount} ${activityCount === 1 ? "activity" : "activities"}${
+    stayCount > 0 ? ` · ${stayCount} ${stayCount === 1 ? "stay" : "stays"}` : ""
+  }`;
 
   const handleResetView = () => {
     setLocalFocusKey(null);
@@ -253,12 +288,23 @@ export default function TripMap({
   const handleSelectQuickStop = (key, kind) => {
     onClearFocus?.();
     setLocalFocusKey(key);
+    setOptionsOpen(false);
     onTrack?.("map_pin_focused", kind || "activity");
   };
 
   const handleStyleChange = (styleId) => {
     setMapStyle(styleId);
     onTrack?.("map_style_changed", styleId);
+  };
+
+  const toggleActivities = () => {
+    setShowActivities((v) => !v);
+    onTrack?.("map_layer_toggled", "activities");
+  };
+
+  const toggleStays = () => {
+    setShowStays((v) => !v);
+    onTrack?.("map_layer_toggled", "stays");
   };
 
   const handleToggleFullscreen = () => {
@@ -268,65 +314,98 @@ export default function TripMap({
     });
   };
 
+  const dayOptions = [
+    { value: "all", label: "All days" },
+    ...days.map((d) => ({ value: d, label: `Day ${d}` })),
+  ];
+
+  const layerToggles = (
+    <>
+      <LayerToggle pressed={showActivities} onClick={toggleActivities} swatch="rounded-full bg-primary">
+        Activities (numbered by day)
+      </LayerToggle>
+      <LayerToggle pressed={showStays} onClick={toggleStays} swatch="rounded bg-ink">
+        Stays
+      </LayerToggle>
+    </>
+  );
+
+  const placeButton = (stop) => {
+    const active = activeFocusKey === stop.key;
+    return (
+      <button
+        key={stop.key}
+        type="button"
+        onClick={() => handleSelectQuickStop(stop.key, stop.kind)}
+        aria-pressed={active}
+        className={`inline-flex min-h-tap shrink-0 items-center gap-2 rounded-xl border px-3 text-left text-sm font-medium transition-all ${
+          active
+            ? "border-ink bg-ink text-bg"
+            : "border-border bg-surface text-ink-soft hover:border-primary/50 hover:text-primary"
+        }`}
+      >
+        <StopBadge stop={stop} active={active} />
+        <span className="min-w-0">{stop.title}</span>
+        {stop.kind === "activity" && <span className={active ? "text-bg/70" : "text-muted"}>Day {stop.day}</span>}
+      </button>
+    );
+  };
+
+  const canvasHeight = expanded
+    ? "flex-1 min-h-0"
+    : phone
+    ? belowButton
+      ? "h-[calc(100dvh-18.5rem-env(safe-area-inset-bottom))] min-h-64"
+      : "h-[calc(100dvh-15rem-env(safe-area-inset-bottom))] min-h-72"
+    : compact
+    ? "h-[calc(100vh-14.5rem)] min-h-[440px]"
+    : "h-[70vh] min-h-[440px]";
+
   const mapBody = (
     <div
       className={
         expanded
-          ? "fixed inset-3 sm:inset-5 z-50 bg-[#FAF8F4] border border-[#E7E0D5] rounded-3xl shadow-2xl p-3 sm:p-4 flex flex-col gap-3"
+          ? "fixed inset-3 z-50 flex flex-col gap-3 rounded-3xl border border-border bg-bg p-3 shadow-2xl sm:inset-5 sm:p-4"
           : "space-y-3"
       }
     >
-      {/* Top Bar: Day Filter Chips + Pin Counter + Fullscreen Close */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      {/* Day filter + pin counter */}
+      <div className="flex items-center justify-between gap-2">
         {days.length > 0 && (
-          <div className="flex flex-wrap gap-1.5" aria-label="Show day on map">
-            <DayChip active={day === "all"} onClick={() => setDay("all")}>
-              All days
-            </DayChip>
-            {days.map((d) => (
-              <DayChip key={d} active={day === d} onClick={() => setDay(d)}>
-                {`Day ${d}`}
-              </DayChip>
-            ))}
-          </div>
+          <SegmentedControl
+            label="Show day on map"
+            options={dayOptions}
+            value={day}
+            onChange={setDay}
+            className="min-w-0 flex-1"
+          />
         )}
-        <div className="flex items-center gap-2 ml-auto">
-          <span className="font-mono text-[11px] text-[#73685E]">
-            {activityCount} {activityCount === 1 ? "activity" : "activities"}
-            {stayCount > 0 ? ` · ${stayCount} ${stayCount === 1 ? "stay" : "stays"}` : ""}
-          </span>
-          {expanded && (
-            <button
-              type="button"
-              onClick={() => setExpanded(false)}
-              className="inline-flex items-center gap-1 text-xs font-semibold bg-[#181411] text-[#FAF8F4] px-3 py-1.5 rounded-full hover:bg-[#2C2520] transition-colors"
-            >
-              <Minimize2 className="w-3.5 h-3.5" aria-hidden />
-              Exit
-            </button>
-          )}
-        </div>
+        {!phone && <span className="shrink-0 font-mono text-label text-muted">{pinSummary}</span>}
+        {expanded && (
+          <button
+            type="button"
+            onClick={() => setExpanded(false)}
+            className="inline-flex min-h-tap shrink-0 items-center gap-1 rounded-full bg-ink px-4 text-sm font-semibold text-bg hover:bg-ink-hover"
+          >
+            <Minimize2 className="h-4 w-4" aria-hidden />
+            Exit
+          </button>
+        )}
       </div>
 
-      {/* Interactive Map Canvas with Floating Glassmorphic Controls */}
+      {/* Map canvas with floating controls */}
       <div
-        className={`relative isolate rounded-2xl overflow-hidden border border-[#E7E0D5] bg-[#EFEAE1] shadow-[0_14px_36px_-22px_rgba(24,20,17,0.24)] ${
+        className={`relative isolate overflow-hidden rounded-2xl border border-border bg-[#EFEAE1] ${
           mapStyle === "atlas" ? "atlas-map-tiles" : ""
-        } ${
-          expanded
-            ? "flex-1 min-h-0"
-            : compact
-            ? "h-[calc(100vh-14.5rem)] min-h-[440px]"
-            : "h-[60dvh] min-h-64 sm:h-[70vh] sm:min-h-[440px]"
-        }`}
+        } ${canvasHeight}`}
       >
         <MapContainer
           center={[framed[0].lat, framed[0].lng]}
           zoom={12}
           zoomSnap={0.5}
           wheelPxPerZoomLevel={90}
-          scrollWheelZoom={true}
-          className="h-full w-full z-0"
+          scrollWheelZoom={false}
+          className="z-0 h-full w-full"
         >
           <TileLayer
             key={tileStyle.id}
@@ -334,6 +413,7 @@ export default function TripMap({
             attribution={tileStyle.attribution}
             maxZoom={tileStyle.maxZoom}
           />
+          <WheelZoomAfterClick />
           <MapViewportController
             points={framed}
             focusedPoint={focusedPoint}
@@ -368,12 +448,12 @@ export default function TripMap({
                 <Popup>
                   <div className="min-w-[180px] space-y-1.5">
                     <span
-                      className={`inline-block font-mono text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                      className={`inline-block rounded-full px-2 py-0.5 font-mono text-label font-semibold uppercase tracking-wider ${
                         point.kind === "hotel"
-                          ? "bg-[#181411] text-[#FAF8F4]"
+                          ? "bg-ink text-bg"
                           : point.kind === "activity"
-                          ? "bg-[#FCEEE8] text-[#B54320]"
-                          : "bg-[#F2EDE4] text-[#3B342E]"
+                          ? "bg-primary-light text-primary-hover"
+                          : "bg-bg-subtle text-ink-soft"
                       }`}
                     >
                       {point.kind === "hotel"
@@ -382,12 +462,10 @@ export default function TripMap({
                         ? `Stop #${point.order}`
                         : "Destination"}
                     </span>
-                    <p className="font-semibold text-[#181411] text-sm leading-snug">
-                      {point.title}
-                    </p>
-                    {point.detail && <p className="text-xs text-[#73685E]">{point.detail}</p>}
+                    <p className="text-sm font-semibold leading-snug text-ink">{point.title}</p>
+                    {point.detail && <p className="text-sm text-muted">{point.detail}</p>}
                     {point.kind === "activity" && (
-                      <p className="text-xs font-semibold text-[#15803D]">
+                      <p className="text-sm font-semibold text-success">
                         {point.cost > 0 ? `Est. ${formatInr(point.cost)} per traveller` : "Free"}
                       </p>
                     )}
@@ -396,10 +474,10 @@ export default function TripMap({
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={() => onTrack?.("map_google_maps_opened", point.kind)}
-                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#CE532D] hover:underline pt-1"
+                      className="inline-flex min-h-tap items-center gap-1 text-sm font-semibold text-primary hover:underline"
                     >
                       Open in Google Maps
-                      <ExternalLink className="w-3 h-3" aria-hidden />
+                      <ExternalLink className="h-3.5 w-3.5" aria-hidden />
                     </a>
                   </div>
                 </Popup>
@@ -408,142 +486,83 @@ export default function TripMap({
           })}
         </MapContainer>
 
-        {/* Top-Right Floating Map Style Switcher (above Leaflet's z-1000 controls) */}
-        <div
-          className="absolute top-3 right-3 z-[1001] flex items-center gap-1 bg-white/95 backdrop-blur-md border border-[#E7E0D5] rounded-full p-1 shadow-lg"
-          role="group"
-          aria-label="Map style"
-        >
-          <Layers className="w-3.5 h-3.5 text-[#73685E] ml-2 mr-0.5 hidden sm:block" aria-hidden />
-          {Object.values(MAP_STYLES).map((styleOption) => {
-            const active = mapStyle === styleOption.id;
-            return (
-              <button
-                key={styleOption.id}
-                type="button"
-                onClick={() => handleStyleChange(styleOption.id)}
-                aria-pressed={active}
-                className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all ${
-                  active
-                    ? "bg-[#181411] text-[#FAF8F4] shadow-xs"
-                    : "text-[#73685E] hover:text-[#181411]"
-                }`}
-              >
-                {styleOption.label}
-              </button>
-            );
-          })}
-        </div>
+        {/* Map style switcher (wide screens; phones use the options sheet) */}
+        {!phone && (
+          <div className="absolute right-3 top-3 z-[1001] rounded-full border border-border bg-surface/95 p-1 shadow-lg backdrop-blur-md">
+            <SegmentedControl label="Map style" options={STYLE_OPTIONS} value={mapStyle} onChange={handleStyleChange} />
+          </div>
+        )}
 
-        {/* Bottom-Right Floating Action Dock (Fit All + Fullscreen) */}
-        <div className="absolute bottom-8 right-3 z-[1001] flex flex-col gap-1.5">
+        {/* Phone: one button opens style, layers and the places list */}
+        {phone && (
           <button
             type="button"
-            onClick={handleResetView}
-            title="Fit all pins in view"
-            aria-label="Fit all pins in view"
-            className="w-9 h-9 rounded-xl bg-white/95 backdrop-blur-md border border-[#E7E0D5] text-[#181411] hover:text-[#CE532D] hover:border-[#CE532D]/40 shadow-lg flex items-center justify-center transition-colors"
+            onClick={() => setOptionsOpen(true)}
+            className="absolute bottom-3 left-3 z-[1001] inline-flex min-h-tap items-center gap-2 rounded-full border border-border bg-surface/95 px-4 text-sm font-semibold text-ink shadow-lg backdrop-blur-md"
           >
-            <LocateFixed className="w-4 h-4" aria-hidden />
+            <Layers className="h-4 w-4" aria-hidden />
+            Map options
+          </button>
+        )}
+
+        <div className="absolute bottom-8 right-3 z-[1001] flex flex-col gap-2">
+          <button type="button" onClick={handleResetView} aria-label="Fit all pins in view" className={FLOATING_BUTTON}>
+            <LocateFixed className="h-5 w-5" aria-hidden />
           </button>
           <button
             type="button"
             onClick={handleToggleFullscreen}
-            title={expanded ? "Close fullscreen map" : "Expand immersive fullscreen map"}
             aria-label={expanded ? "Close fullscreen map" : "Expand immersive fullscreen map"}
-            className="w-9 h-9 rounded-xl bg-white/95 backdrop-blur-md border border-[#E7E0D5] text-[#181411] hover:text-[#CE532D] hover:border-[#CE532D]/40 shadow-lg flex items-center justify-center transition-colors"
+            className={FLOATING_BUTTON}
           >
-            {expanded ? (
-              <Minimize2 className="w-4 h-4" aria-hidden />
-            ) : (
-              <Maximize2 className="w-4 h-4" aria-hidden />
-            )}
+            {expanded ? <Minimize2 className="h-5 w-5" aria-hidden /> : <Maximize2 className="h-5 w-5" aria-hidden />}
           </button>
         </div>
 
-        {/* Subtle Scroll-to-Zoom Hint Pill (bottom-left) */}
-        <div className="pointer-events-none absolute bottom-3 left-3 z-[1001] hidden sm:inline-flex items-center gap-1.5 bg-[#181411]/82 backdrop-blur-sm text-[#FAF8F4] text-[10px] font-mono px-2.5 py-1 rounded-full shadow-md">
-          <Compass className="w-3 h-3 text-[#F29674]" aria-hidden />
-          Scroll to zoom · Drag to pan
-        </div>
+        {!phone && (
+          <div className="pointer-events-none absolute bottom-3 left-3 z-[1001] inline-flex items-center gap-1.5 rounded-full bg-ink/80 px-3 py-1 text-label text-bg shadow-md">
+            <MousePointerClick className="h-3.5 w-3.5 text-primary-soft" aria-hidden />
+            Click the map, then scroll to zoom
+          </div>
+        )}
       </div>
 
-      {/* Quick-Jump Place Strip in Full Map Tab or Fullscreen Immersive Mode */}
-      {(showQuickStrip || expanded) && quickStops.length > 0 && (
-        <div
-          className="flex items-center gap-2 overflow-x-auto pb-1"
-          aria-label="Jump to pinned place"
-        >
-          {quickStops.map((stop) => {
-            const active = activeFocusKey === stop.key;
-            return (
-              <button
-                key={stop.key}
-                type="button"
-                onClick={() => handleSelectQuickStop(stop.key, stop.kind)}
-                className={`shrink-0 inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${
-                  active
-                    ? "bg-[#181411] border-[#181411] text-[#FAF8F4] shadow-xs"
-                    : "bg-white border-[#E7E0D5] text-[#3B342E] hover:border-[#CE532D]/50 hover:text-[#CE532D]"
-                }`}
-              >
-                <span
-                  className={`w-4 h-4 rounded-full font-mono text-[10px] font-bold flex items-center justify-center ${
-                    stop.kind === "hotel"
-                      ? active
-                        ? "bg-[#FAF8F4] text-[#181411]"
-                        : "bg-[#181411] text-[#FAF8F4]"
-                      : "bg-[#CE532D] text-white"
-                  }`}
-                >
-                  {stop.kind === "hotel" ? "H" : stop.order}
-                </span>
-                <span className="max-w-[160px] truncate">{stop.title}</span>
-              </button>
-            );
-          })}
+      {/* Wide screens: places strip and layer legend under the map */}
+      {!phone && (showQuickStrip || expanded) && quickStops.length > 0 && (
+        <div className="flex items-center gap-2 overflow-x-auto pb-1" aria-label="Jump to pinned place">
+          {quickStops.map(placeButton)}
+        </div>
+      )}
+      {!phone && (
+        <div className="flex flex-wrap items-center gap-1 rounded-xl border border-border bg-surface px-2">
+          {layerToggles}
+          <span className="flex min-h-tap items-center gap-2 px-3 text-sm text-muted">
+            <span className="size-3 rounded-full border-2 border-primary bg-surface" aria-hidden />
+            Destination
+          </span>
         </div>
       )}
 
-      {/* Interactive Filterable Editorial Legend */}
-      <ul className="flex flex-wrap items-center gap-2 text-xs text-[#73685E] bg-white border border-[#E7E0D5] rounded-xl px-3.5 py-2">
-        <li>
-          <button
-            type="button"
-            onClick={() => {
-              setShowActivities((v) => !v);
-              onTrack?.("map_layer_toggled", "activities");
-            }}
-            aria-pressed={showActivities}
-            className={`flex items-center gap-1.5 px-2 py-0.5 rounded-lg transition-all ${
-              showActivities ? "text-[#181411] font-medium" : "opacity-45 line-through"
-            }`}
-          >
-            <span className="w-3 h-3 rounded-full bg-[#CE532D]" aria-hidden />
-            Activity (numbered by day)
-          </button>
-        </li>
-        <li>
-          <button
-            type="button"
-            onClick={() => {
-              setShowStays((v) => !v);
-              onTrack?.("map_layer_toggled", "stays");
-            }}
-            aria-pressed={showStays}
-            className={`flex items-center gap-1.5 px-2 py-0.5 rounded-lg transition-all ${
-              showStays ? "text-[#181411] font-medium" : "opacity-45 line-through"
-            }`}
-          >
-            <span className="w-3 h-3 rounded bg-[#181411]" aria-hidden />
-            Stay
-          </button>
-        </li>
-        <li className="flex items-center gap-1.5 px-2 py-0.5">
-          <span className="w-3 h-3 rounded-full border-2 border-[#CE532D] bg-white" aria-hidden />
-          Destination
-        </li>
-      </ul>
+      {phone && (
+        <Sheet open={optionsOpen} onClose={() => setOptionsOpen(false)} title="Map options" description={pinSummary}>
+          <div className="space-y-5">
+            <div>
+              <p className="mb-2 text-sm font-semibold text-ink-soft">Map style</p>
+              <SegmentedControl label="Map style" options={STYLE_OPTIONS} value={mapStyle} onChange={handleStyleChange} />
+            </div>
+            <div>
+              <p className="mb-1 text-sm font-semibold text-ink-soft">Show</p>
+              <div className="-mx-3 flex flex-wrap">{layerToggles}</div>
+            </div>
+            {quickStops.length > 0 && (
+              <div>
+                <p className="mb-2 text-sm font-semibold text-ink-soft">Places</p>
+                <div className="flex flex-col gap-2">{quickStops.map(placeButton)}</div>
+              </div>
+            )}
+          </div>
+        </Sheet>
+      )}
     </div>
   );
 
@@ -551,7 +570,7 @@ export default function TripMap({
     return (
       <>
         <div
-          className="fixed inset-0 z-40 bg-[#181411]/45 backdrop-blur-xs"
+          className="fixed inset-0 z-40 bg-ink/45 backdrop-blur-xs"
           onClick={() => setExpanded(false)}
           aria-hidden="true"
         />

@@ -34,8 +34,8 @@ export default function BrandLogo({
       <span
         className={`${boxSize} flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:rotate-12 ${
           isDark
-            ? "bg-[#CE532D] text-[#FAF8F4] shadow-md shadow-[#CE532D]/30"
-            : "bg-[#181411] text-[#FAF8F4] shadow-sm"
+            ? "bg-primary text-bg shadow-md shadow-primary/30"
+            : "bg-ink text-bg shadow-sm"
         }`}
       >
         <CompassMark className={iconSize} />
@@ -43,15 +43,15 @@ export default function BrandLogo({
       <span className="flex flex-col leading-none">
         <span
           className={`font-display font-semibold tracking-tight ${textSize} ${
-            isDark ? "text-[#FAF8F4]" : "text-[#181411]"
+            isDark ? "text-bg" : "text-ink"
           }`}
         >
           VoyAgent
         </span>
         {subtitle && (
           <span
-            className={`text-[10px] font-medium tracking-wider uppercase mt-0.5 ${
-              isDark ? "text-[#FAF8F4]/55" : "text-[#73685E]"
+            className={`text-label font-medium tracking-wider uppercase mt-0.5 ${
+              isDark ? "text-bg/55" : "text-muted"
             }`}
           >
             {subtitle}
@@ -63,7 +63,7 @@ export default function BrandLogo({
 
   if (href) {
     return (
-      <Link href={href} className="inline-flex items-center rounded-lg">
+      <Link href={href} className="inline-flex min-h-tap items-center rounded-lg">
         {content}
       </Link>
     );

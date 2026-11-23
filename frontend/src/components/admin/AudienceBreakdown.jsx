@@ -4,28 +4,28 @@ import { useState } from "react";
 import { Globe2, Link2, MonitorSmartphone, Share2 } from "lucide-react";
 
 const CARD =
-  "bg-white border border-[#E7E0D5] rounded-2xl p-5 shadow-[0_8px_24px_-20px_rgba(24,20,17,0.16)]";
-const EYEBROW = "text-[11px] font-semibold uppercase tracking-wider text-[#73685E]";
+  "bg-white border border-border rounded-2xl p-5 shadow-[0_8px_24px_-20px_rgba(24,20,17,0.16)]";
+const EYEBROW = "text-label font-semibold uppercase tracking-wider text-muted";
 
 function RankedBars({ rows, empty, barColor = "#CE532D" }) {
   const [expanded, setExpanded] = useState(false);
   const max = Math.max(1, ...rows.map((r) => r.value));
   if (rows.length === 0) {
-    return <p className="text-sm text-[#73685E]">{empty}</p>;
+    return <p className="text-sm text-muted">{empty}</p>;
   }
   return (
     <>
     <ul className="space-y-2.5">
       {(expanded ? rows : rows.slice(0, 5)).map((row) => (
         <li key={row.key ?? row.label} className="text-xs">
-          <div className="flex items-center justify-between gap-2 text-[#3B342E] mb-1">
+          <div className="flex items-center justify-between gap-2 text-ink-soft mb-1">
             <span className="min-w-0 break-words font-medium">{row.label}</span>
-            <span className="font-mono text-[#73685E] shrink-0">
+            <span className="font-mono text-muted shrink-0">
               {row.meta ? `${row.meta} · ` : ""}
-              <strong className="text-[#181411]">{row.value}</strong>
+              <strong className="text-ink">{row.value}</strong>
             </span>
           </div>
-          <div className="h-1.5 bg-[#F2EDE4] rounded-full overflow-hidden">
+          <div className="h-1.5 bg-bg-subtle rounded-full overflow-hidden">
             <div
               className="h-full rounded-full"
               style={{ width: `${(row.value / max) * 100}%`, backgroundColor: barColor }}
@@ -51,20 +51,20 @@ export default function AudienceBreakdown({ activity, expanded = false }) {
         <div className={CARD}>
           <div className="flex items-center justify-between gap-2 mb-3">
             <p className={`${EYEBROW} flex items-center gap-1.5`}>
-              <Globe2 className="w-3.5 h-3.5 text-[#CE532D]" aria-hidden />
+              <Globe2 className="w-3.5 h-3.5 text-primary" aria-hidden />
               Geography
             </p>
-            <div className="flex gap-1 bg-[#FAF8F4] border border-[#E7E0D5] rounded-lg p-0.5">
+            <div className="flex gap-1 bg-bg border border-border rounded-lg p-0.5">
               {["countries", "cities"].map((tab) => (
                 <button
                   key={tab}
                   type="button"
                   onClick={() => setGeoTab(tab)}
                   aria-pressed={geoTab === tab}
-                  className={`text-[10px] font-semibold capitalize px-2 py-0.5 rounded-md ${
+                  className={`min-h-tap text-sm font-semibold capitalize px-3 rounded-lg ${
                     geoTab === tab
-                      ? "bg-[#181411] text-white"
-                      : "text-[#73685E] hover:text-[#181411]"
+                      ? "bg-ink text-white"
+                      : "text-muted hover:text-ink"
                   }`}
                 >
                   {tab}
@@ -97,10 +97,10 @@ export default function AudienceBreakdown({ activity, expanded = false }) {
         <div className={CARD}>
           <div className="flex items-center justify-between gap-2 mb-3">
             <p className={`${EYEBROW} flex items-center gap-1.5`}>
-              <MonitorSmartphone className="w-3.5 h-3.5 text-[#CE532D]" aria-hidden />
+              <MonitorSmartphone className="w-3.5 h-3.5 text-primary" aria-hidden />
               Devices &amp; Tech
             </p>
-            <div className="flex gap-1 bg-[#FAF8F4] border border-[#E7E0D5] rounded-lg p-0.5">
+            <div className="flex gap-1 bg-bg border border-border rounded-lg p-0.5">
               {[
                 { id: "browsers", label: "Browsers" },
                 { id: "os", label: "OS" },
@@ -110,10 +110,10 @@ export default function AudienceBreakdown({ activity, expanded = false }) {
                   type="button"
                   onClick={() => setTechTab(tab.id)}
                   aria-pressed={techTab === tab.id}
-                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${
+                  className={`min-h-tap text-sm font-semibold px-3 rounded-lg ${
                     techTab === tab.id
-                      ? "bg-[#181411] text-white"
-                      : "text-[#73685E] hover:text-[#181411]"
+                      ? "bg-ink text-white"
+                      : "text-muted hover:text-ink"
                   }`}
                 >
                   {tab.label}
@@ -127,7 +127,7 @@ export default function AudienceBreakdown({ activity, expanded = false }) {
             .sort((a, b) => b.visitors - a.visitors)
             .map((d) => ({ label: d.type ?? "Unknown", value: d.visitors }))} />
 
-          <div className="pt-3 border-t border-[#F2EDE4]">
+          <div className="pt-3 border-t border-bg-subtle">
             {techTab === "browsers" ? (
               <RankedBars
                 empty="No browser telemetry yet."
@@ -153,7 +153,7 @@ export default function AudienceBreakdown({ activity, expanded = false }) {
         {/* Most Viewed Shared Trips */}
         <div className={CARD}>
           <p className={`${EYEBROW} flex items-center gap-1.5 mb-3`}>
-            <Share2 className="w-3.5 h-3.5 text-[#CE532D]" aria-hidden />
+            <Share2 className="w-3.5 h-3.5 text-primary" aria-hidden />
             Most Viewed Shared Trips
           </p>
           <RankedBars
@@ -174,7 +174,7 @@ export default function AudienceBreakdown({ activity, expanded = false }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className={CARD}>
             <p className={`${EYEBROW} flex items-center gap-1.5 mb-3`}>
-              <Link2 className="w-3.5 h-3.5 text-[#CE532D]" aria-hidden />
+              <Link2 className="w-3.5 h-3.5 text-primary" aria-hidden />
               Acquisition Sources (Referrers)
             </p>
             <RankedBars

@@ -5,7 +5,7 @@ import AdminPage from "@/components/admin/AdminDashboard";
 import { getAdminOverview } from "@/services/admin.service";
 
 const replace = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ replace, push: vi.fn() }) }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ replace, push: vi.fn() }), usePathname: () => "/admin" }));
 vi.mock("next/dynamic", () => ({ default: () => () => <div data-testid="destinations-map" /> }));
 vi.mock("@/services/admin.service", () => ({ getAdminOverview: vi.fn() }));
 
@@ -66,12 +66,32 @@ describe("Admin page", () => {
     render(<AdminPage />);
 
     expect(await screen.findByTestId("stat-outside-accounts")).toHaveTextContent("2");
-    const section = screen.getByRole("combobox", { name: "Analytics section" });
-    await userEvent.selectOptions(section, "users");
+    await userEvent.click(screen.getByRole("button", { name: /users & feedback/i }));
     expect(screen.getByText("Planned my Goa trip in minutes")).toBeInTheDocument();
     expect(screen.getAllByText("as***@example.com").length).toBeGreaterThan(0);
-    await userEvent.selectOptions(section, "audience");
+    await userEvent.click(screen.getByRole("button", { name: /audience & retention/i }));
     expect(screen.getByText("Goa")).toBeInTheDocument();
+  });
+
+  it("switches sections with one tab row on every screen size", async () => {
+    getAdminOverview.mockResolvedValue(OVERVIEW);
+    render(<AdminPage />);
+
+    const sections = await screen.findByRole("group", { name: "Analytics sections" });
+    expect(screen.queryByRole("combobox", { name: /analytics section/i })).not.toBeInTheDocument();
+    expect(sections.querySelectorAll("button")).toHaveLength(6);
+    expect(screen.getByRole("button", { name: /overview/i })).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("offers the exports in a sheet", async () => {
+    getAdminOverview.mockResolvedValue(OVERVIEW);
+    const user = userEvent.setup();
+    render(<AdminPage />);
+
+    await user.click(await screen.findByRole("button", { name: /export/i }));
+    const sheet = screen.getByRole("dialog", { name: "Export analytics" });
+    expect(sheet).toContainElement(screen.getByRole("button", { name: /export users csv/i }));
+    expect(sheet).toContainElement(screen.getByRole("button", { name: /download full snapshot/i }));
   });
 
   it("tells a non-admin the page is for admins only", async () => {

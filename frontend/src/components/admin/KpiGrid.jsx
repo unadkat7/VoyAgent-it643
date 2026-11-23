@@ -53,14 +53,14 @@ function DeltaPill({ pct, labelSuffix }) {
   if (!delta) return null;
   const toneClass =
     delta.tone === "positive"
-      ? "bg-[#ECFDF3] text-[#15803D] border-[#15803D]/15"
+      ? "bg-success-light text-success border-success/15"
       : delta.tone === "negative"
-      ? "bg-[#FEF2F2] text-[#C82828] border-[#C82828]/15"
-      : "bg-[#F2EDE4] text-[#73685E] border-[#E7E0D5]";
+      ? "bg-danger-light text-danger border-danger/15"
+      : "bg-bg-subtle text-muted border-border";
 
   return (
     <span
-      className={`inline-flex items-center gap-0.5 text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full border ${toneClass}`}
+      className={`inline-flex items-center gap-0.5 text-label font-mono font-semibold px-2 py-0.5 rounded-full border ${toneClass}`}
     >
       {delta.tone === "positive" && <TrendingUp className="w-2.5 h-2.5" aria-hidden />}
       {delta.tone === "negative" && <TrendingDown className="w-2.5 h-2.5" aria-hidden />}
@@ -144,14 +144,14 @@ export default function KpiGrid({ stats, daily, trips, days }) {
           <article
             key={card.label}
             data-testid={card.testId}
-            className="bg-white border border-[#E7E0D5] hover:border-[#D6CCC0] rounded-2xl p-3 sm:p-5 shadow-[0_8px_24px_-20px_rgba(24,20,17,0.16)] transition-all flex flex-col justify-between gap-3"
+            className="bg-white border border-border hover:border-border-strong rounded-2xl p-3 sm:p-5 shadow-[0_8px_24px_-20px_rgba(24,20,17,0.16)] transition-all flex flex-col justify-between gap-3"
           >
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div className="flex items-center gap-2">
-                <span className="hidden sm:flex w-7 h-7 rounded-lg bg-[#FAF8F4] border border-[#E7E0D5] items-center justify-center text-[#3B342E]">
+                <span className="hidden sm:flex w-7 h-7 rounded-lg bg-bg border border-border items-center justify-center text-ink-soft">
                   <Icon className="w-3.5 h-3.5" aria-hidden />
                 </span>
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#73685E]">
+                <p className="text-label font-semibold uppercase tracking-wider text-muted">
                   {card.label}
                 </p>
               </div>
@@ -160,10 +160,10 @@ export default function KpiGrid({ stats, daily, trips, days }) {
 
             <div className="flex items-end justify-between gap-3">
               <div className="min-w-0">
-                <p className="font-mono text-xl sm:text-3xl font-semibold text-[#181411] tracking-tight">
+                <p className="font-mono text-xl sm:text-3xl font-semibold text-ink tracking-tight">
                   {card.value}
                 </p>
-                <p className="text-xs text-[#73685E] mt-1 break-words">{card.sub}</p>
+                <p className="text-xs text-muted mt-1 break-words">{card.sub}</p>
               </div>
               {card.sparkline && <Sparkline values={card.sparkline} color={card.accent} />}
             </div>

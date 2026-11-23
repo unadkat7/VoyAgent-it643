@@ -2,15 +2,18 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Link2, MoreHorizontal, ShieldAlert, Trash2 } from "lucide-react";
+import { ArrowLeft, Link2, MoreHorizontal, Share2, ShieldAlert, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { deleteTrip, getTripById, shareTrip } from "@/services/trip.service";
 import FeedbackWidget from "@/components/feedback/FeedbackWidget";
 import AppHeader from "@/components/layout/AppHeader";
+import BottomNav from "@/components/layout/BottomNav";
 import BrandLogo from "@/components/layout/BrandLogo";
 import PageWrapper from "@/components/layout/PageWrapper";
 import TripPlanView from "@/components/trip/TripPlanView";
 import ConfirmModal from "@/components/ui/ConfirmModal";
+import Sheet from "@/components/ui/Sheet";
+import { tripTitle } from "@/lib/tripView";
 import Skeleton from "@/components/ui/Skeleton";
 
 function errorMessage(status) {
@@ -30,6 +33,8 @@ export default function TripDetailPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [shareId, setShareId] = useState(null);
+  const [showActions, setShowActions] = useState(false);
 
   useEffect(() => {
     // Ignore a late answer if the user has already moved to another Trip.
@@ -64,18 +69,32 @@ export default function TripDetailPage() {
     }
   };
 
+  const giveLink = async (link) => {
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: `${tripTitle(trip)} trip plan`, url: link });
+        return;
+      } catch (shareError) {
+        if (shareError?.name === "AbortError") return;
+        // Some browsers refuse the share sheet after a network wait; fall back to copying.
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(link);
+      toast.success("Share link copied");
+    } catch {
+      // Clipboard can be blocked (e.g. insecure origin); still give the link.
+      toast.success(`Share link: ${link}`, { duration: 8000 });
+    }
+  };
+
   const handleShare = async () => {
+    setShowActions(false);
     try {
       setSharing(true);
-      const { shareId } = await shareTrip(tripId);
-      const link = `${window.location.origin}/share/${shareId}`;
-      try {
-        await navigator.clipboard.writeText(link);
-        toast.success("Share link copied");
-      } catch {
-        // Clipboard can be blocked (e.g. insecure origin); still give the link.
-        toast.success(`Share link: ${link}`, { duration: 8000 });
-      }
+      const id = shareId ?? (await shareTrip(tripId)).shareId;
+      setShareId(id);
+      await giveLink(`${window.location.origin}/share/${id}`);
     } catch {
       toast.error("Could not create a share link. Please try again.");
     } finally {
@@ -85,8 +104,8 @@ export default function TripDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#FAF8F4] font-sans">
-        <div className="bg-[#FAF8F4]/90 border-b border-[#E7E0D5] px-6 h-16 flex items-center">
+      <div className="min-h-screen bg-bg font-sans">
+        <div className="bg-bg/90 border-b border-border px-6 h-16 flex items-center">
           <div className="max-w-6xl w-full mx-auto flex justify-between">
             <Skeleton className="w-24 h-6" />
             <Skeleton className="w-24 h-6" />
@@ -107,15 +126,15 @@ export default function TripDetailPage() {
 
   if (error || !trip?.plan) {
     return (
-      <div className="min-h-screen bg-[#FAF8F4] flex flex-col items-center justify-center text-center p-8">
-        <div className="bg-white border border-[#E7E0D5] rounded-3xl p-8 max-w-md w-full shadow-sm">
-          <div className="w-12 h-12 rounded-2xl bg-[#FEF7E6] border border-[#D97706]/20 flex items-center justify-center mx-auto mb-4">
-            <ShieldAlert className="w-6 h-6 text-[#B45309]" aria-hidden />
+      <div className="min-h-screen bg-bg flex flex-col items-center justify-center text-center p-8">
+        <div className="bg-white border border-border rounded-3xl p-8 max-w-md w-full shadow-sm">
+          <div className="w-12 h-12 rounded-2xl bg-warning-light border border-star/20 flex items-center justify-center mx-auto mb-4">
+            <ShieldAlert className="w-6 h-6 text-warning" aria-hidden />
           </div>
-          <h2 className="font-display text-2xl font-semibold text-[#181411] mb-2">
+          <h2 className="font-display text-2xl font-semibold text-ink mb-2">
             {error ?? "This Trip is not planned yet"}
           </h2>
-          <p className="text-sm text-[#73685E] mb-6">
+          <p className="text-sm text-muted mb-6">
             {error
               ? "Return to your Dashboard to view your saved Trips."
               : "Pick up the Conversation where you left off to finish planning."}
@@ -125,7 +144,7 @@ export default function TripDetailPage() {
               <button
                 type="button"
                 onClick={() => router.push(`/trip/new?tripId=${trip._id}`)}
-                className="bg-[#CE532D] hover:bg-[#B54320] text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors"
+                className="bg-primary hover:bg-primary-hover text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors"
               >
                 Continue planning
               </button>
@@ -133,7 +152,7 @@ export default function TripDetailPage() {
             <button
               type="button"
               onClick={() => router.push("/dashboard")}
-              className="bg-[#181411] hover:bg-[#2C2520] text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors"
+              className="bg-ink hover:bg-ink-hover text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors"
             >
               Back to Dashboard
             </button>
@@ -145,17 +164,18 @@ export default function TripDetailPage() {
 
   return (
     <PageWrapper>
-      <div className="min-h-screen bg-[#FAF8F4] font-sans pb-24">
+      <div className="min-h-screen bg-bg font-sans pb-nav">
         <AppHeader
           maxWidth="max-w-7xl"
           left={
             <button
               type="button"
               onClick={() => router.push("/dashboard")}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#73685E] hover:text-[#181411] bg-white border border-[#E7E0D5] hover:border-[#D6CCC0] px-3 py-1.5 rounded-xl transition-colors"
+              aria-label="Back to trips"
+              className="inline-flex min-h-tap min-w-tap items-center justify-center gap-1.5 rounded-xl text-sm font-semibold text-ink-soft hover:bg-bg-subtle hover:text-ink sm:px-3"
             >
-              <ArrowLeft className="w-3.5 h-3.5" aria-hidden />
-              Dashboard
+              <ArrowLeft className="h-5 w-5" aria-hidden />
+              <span className="hidden sm:inline">Trips</span>
             </button>
           }
           center={<BrandLogo href="/dashboard" size="sm" />}
@@ -165,29 +185,49 @@ export default function TripDetailPage() {
                 type="button"
                 onClick={handleShare}
                 disabled={sharing}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#181411] bg-white hover:bg-[#F2EDE4]/70 px-3 py-1.5 rounded-xl border border-[#E7E0D5] transition-colors disabled:opacity-60"
+                className="inline-flex min-h-tap items-center gap-1.5 rounded-xl border border-border bg-surface px-4 text-sm font-semibold text-ink hover:bg-bg-subtle disabled:opacity-60"
               >
-                <Link2 className="w-3.5 h-3.5" aria-hidden />
+                <Share2 className="h-4 w-4" aria-hidden />
                 Share
               </button>
-              <details className="relative">
-                <summary aria-label="More trip actions" className="flex size-11 cursor-pointer list-none items-center justify-center rounded-xl border border-border bg-white">
-                  <MoreHorizontal size={18} aria-hidden />
-                </summary>
-                <button type="button" onClick={(event) => {
-                  const menu = event.currentTarget.closest("details");
-                  menu.open = false;
-                  menu.querySelector("summary").focus();
-                  setShowConfirm(true);
-                }} className="absolute right-0 top-full mt-1 flex min-h-11 w-40 items-center gap-2 rounded-xl border border-border bg-white px-4 text-sm font-semibold text-danger shadow-lg">
-                  <Trash2 size={16} aria-hidden /> Delete trip
-                </button>
-              </details>
+              <button
+                type="button"
+                onClick={() => setShowActions(true)}
+                aria-label="More trip actions"
+                className="flex size-tap items-center justify-center rounded-xl border border-border bg-surface text-ink hover:bg-bg-subtle"
+              >
+                <MoreHorizontal className="h-5 w-5" aria-hidden />
+              </button>
             </>
           }
         />
 
         <TripPlanView trip={trip} />
+
+        <Sheet open={showActions} onClose={() => setShowActions(false)} title="Trip actions">
+          <div className="-mx-2 flex flex-col">
+            <button
+              type="button"
+              onClick={handleShare}
+              disabled={sharing}
+              className="flex min-h-12 items-center gap-3 rounded-xl px-3 text-base font-semibold text-ink hover:bg-bg disabled:opacity-60"
+            >
+              <Link2 className="h-5 w-5 text-muted" aria-hidden />
+              Share link
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowActions(false);
+                setShowConfirm(true);
+              }}
+              className="flex min-h-12 items-center gap-3 rounded-xl px-3 text-base font-semibold text-danger hover:bg-danger-light"
+            >
+              <Trash2 className="h-5 w-5" aria-hidden />
+              Delete trip
+            </button>
+          </div>
+        </Sheet>
 
         <ConfirmModal
           isOpen={showConfirm}
@@ -199,6 +239,7 @@ export default function TripDetailPage() {
           onCancel={() => setShowConfirm(false)}
         />
         <FeedbackWidget page={`/trip/${trip._id}`} />
+        <BottomNav page={`/trip/${trip._id}`} />
       </div>
     </PageWrapper>
   );

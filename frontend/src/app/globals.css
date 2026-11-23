@@ -11,6 +11,7 @@
   --color-primary-hover: #b54320;
   --color-primary-light: #fceee8;
   --color-primary-border: #f3cfc0;
+  --color-primary-soft: #f29674;
 
   /* Editorial paper & surfaces */
   --color-bg: #faf8f4;
@@ -26,14 +27,25 @@
   --color-ink: #181411;
   --color-ink-soft: #3b342e;
   --color-muted: #73685e;
+  --color-faint: #a89e94;
+  --color-ink-hover: #2c2520;
 
   /* Semantic status palette */
   --color-success: #15803d;
   --color-success-light: #ecfdf3;
   --color-warning: #b45309;
   --color-warning-light: #fef7e6;
+  --color-star: #d97706;
   --color-danger: #c82828;
+  --color-danger-hover: #a91f1f;
   --color-danger-light: #fef2f2;
+
+  /* Mobile-first type floor and touch size */
+  --text-label: 0.75rem;
+  --text-label--line-height: 1rem;
+  --text-body: 0.9375rem;
+  --text-body--line-height: 1.5rem;
+  --spacing-tap: 2.75rem;
 }
 
 :root {
@@ -161,9 +173,9 @@ body {
   color: #181411 !important;
   background-color: #ffffff !important;
   border-bottom-color: #e7e0d5 !important;
-  width: 32px !important;
-  height: 32px !important;
-  line-height: 32px !important;
+  width: 44px !important;
+  height: 44px !important;
+  line-height: 44px !important;
 }
 
 .leaflet-control-zoom a:hover {
@@ -197,3 +209,18 @@ body {
 }
 
 .safe-footer { padding-bottom: max(0.875rem, env(safe-area-inset-bottom)); }
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Room for the mobile bottom nav so it never covers the last content */
+@utility pb-nav {
+  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  @media (min-width: 64rem) {
+    padding-bottom: 6rem;
+  }
+}

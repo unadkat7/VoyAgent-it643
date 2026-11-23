@@ -12,7 +12,7 @@ import TripPlanView from "@/components/trip/TripPlanView";
 import Skeleton from "@/components/ui/Skeleton";
 
 const PLAN_YOUR_OWN =
-  "inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-[#CE532D] hover:bg-[#B54320] px-3.5 py-2 rounded-xl transition-colors";
+  "inline-flex min-h-tap items-center gap-1.5 text-sm font-semibold text-white bg-primary hover:bg-primary-hover px-4 rounded-xl transition-colors";
 
 // Public, read-only view of a Trip its owner chose to share. No account needed.
 export default function SharedTripPage() {
@@ -54,15 +54,15 @@ export default function SharedTripPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#FAF8F4] font-sans">
+      <div className="min-h-screen bg-bg font-sans">
         {header}
         <div className="flex flex-col items-center justify-center text-center p-8 pt-24">
-          <div className="bg-white border border-[#E7E0D5] rounded-3xl p-8 max-w-md w-full shadow-sm">
-            <div className="w-12 h-12 rounded-2xl bg-[#FEF7E6] border border-[#D97706]/20 flex items-center justify-center mx-auto mb-4">
-              <ShieldAlert className="w-6 h-6 text-[#B45309]" aria-hidden />
+          <div className="bg-white border border-border rounded-3xl p-8 max-w-md w-full shadow-sm">
+            <div className="w-12 h-12 rounded-2xl bg-warning-light border border-star/20 flex items-center justify-center mx-auto mb-4">
+              <ShieldAlert className="w-6 h-6 text-warning" aria-hidden />
             </div>
-            <h2 className="font-display text-2xl font-semibold text-[#181411] mb-2">{error}</h2>
-            <p className="text-sm text-[#73685E]">VoyAgent can plan a Trip like this for you too.</p>
+            <h2 className="font-display text-2xl font-semibold text-ink mb-2">{error}</h2>
+            <p className="text-sm text-muted">VoyAgent can plan a Trip like this for you too.</p>
           </div>
         </div>
       </div>
@@ -71,7 +71,7 @@ export default function SharedTripPage() {
 
   if (!trip) {
     return (
-      <div className="min-h-screen bg-[#FAF8F4] font-sans">
+      <div className="min-h-screen bg-bg font-sans">
         {header}
         <div className="max-w-6xl mx-auto px-6 pt-8 space-y-5">
           <Skeleton className="w-72 h-10" />
@@ -84,12 +84,12 @@ export default function SharedTripPage() {
 
   return (
     <PageWrapper>
-      <div className="min-h-screen bg-[#FAF8F4] font-sans pb-24">
+      <div className="min-h-screen bg-bg font-sans pb-24">
         {header}
         <TripPlanView trip={trip} />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-12">
-          <div className="bg-white border border-[#E7E0D5] rounded-3xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <p className="text-sm text-[#3B342E]">
+          <div className="bg-white border border-border rounded-3xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <p className="text-sm text-ink-soft">
               Create your own itinerary with stays, flights, and a budget for your group.
             </p>
             <Link href="/signup?source=share" className={PLAN_YOUR_OWN}>

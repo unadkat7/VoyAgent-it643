@@ -7,7 +7,7 @@ export default function AppHeader({
   maxWidth = "max-w-6xl",
 }) {
   return (
-    <header className="sticky top-0 z-30 bg-[#FAF8F4]/88 backdrop-blur-md border-b border-[#E7E0D5]">
+    <header className="sticky top-0 z-30 bg-bg border-b border-border pt-[env(safe-area-inset-top)]">
       <div
         className={`${maxWidth} mx-auto px-4 sm:px-6 min-h-14 sm:min-h-16 flex items-center justify-between gap-2 sm:gap-4`}
       >

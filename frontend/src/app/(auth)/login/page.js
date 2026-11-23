@@ -47,9 +47,9 @@ export default function LoginPage() {
       title="Welcome back"
       subtitle="Sign in to access your saved Trip Plans and drafts."
       footer={
-        <p className="text-center text-sm text-[#73685E]">
+        <p className="text-center text-sm text-muted">
           No account yet?{" "}
-          <Link href="/signup" className="text-[#CE532D] font-semibold hover:underline">
+          <Link href="/signup" className="inline-flex min-h-tap items-center px-1 text-primary font-semibold hover:underline">
             Create one
           </Link>
         </p>
@@ -83,7 +83,7 @@ export default function LoginPage() {
               type="button"
               aria-label={showPassword ? "Hide password" : "Show password"}
               onClick={() => setShowPassword(!showPassword)}
-              className="text-[#73685E] hover:text-[#181411] transition-colors inline-grid size-11 place-items-center rounded-lg"
+              className="text-muted hover:text-ink transition-colors inline-grid size-11 place-items-center rounded-lg"
             >
               {showPassword ? <EyeOff size={16} aria-hidden /> : <Eye size={16} aria-hidden />}
             </button>
