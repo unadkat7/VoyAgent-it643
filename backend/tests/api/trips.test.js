@@ -2,6 +2,7 @@ import nock from "nock";
 import request from "supertest";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import app from "../../src/app.js";
+import Event from "../../src/models/event.model.js";
 import Trip from "../../src/models/trip.model.js";
 import { signedInAgent } from "../helpers.js";
 
@@ -111,6 +112,26 @@ describe("POST /api/trips/plan", () => {
     expect(response.status).toBe(503);
     const saved = await Trip.findById(response.body.tripId);
     expect(saved.status).toBe("planning_failed");
+  });
+
+  it("records each planning step as an Event", async () => {
+    const agent = await signedInAgent();
+    aiAnswers(PLANNED);
+    const planned = await agent.post("/api/trips/plan").send({ prompt: "Goa" });
+    aiAnswers({ detail: "planning_unavailable" }, 503);
+    await agent.post("/api/trips/plan").send({ prompt: "Manali" });
+    await agent.get(`/api/trips/${planned.body.trip._id}`);
+
+    const types = (await Event.find({ type: { $ne: "signup" } }).sort({ _id: 1 }).lean()).map(
+      (event) => event.type
+    );
+    expect(types).toEqual([
+      "trip_plan_requested",
+      "trip_planned",
+      "trip_plan_requested",
+      "trip_plan_failed",
+      "trip_viewed",
+    ]);
   });
 
   it.each([
