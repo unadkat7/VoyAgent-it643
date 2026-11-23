@@ -28,4 +28,33 @@ describe("TripBriefBuilder", () => {
       "3 days in Jaipur, from Pune, 2 travelers, total budget ₹40,000, culture travel style"
     );
   });
+
+  it("says which fields are still missing next to the disabled button", async () => {
+    const user = userEvent.setup();
+    render(<TripBriefBuilder onSubmitPrompt={vi.fn()} />);
+
+    expect(screen.getByText("2 fields left: Origin city, Destination")).toBeInTheDocument();
+    await user.type(screen.getByRole("textbox", { name: /origin city/i }), "Pune");
+    expect(screen.getByText("1 field left: Destination")).toBeInTheDocument();
+    await user.type(screen.getByRole("textbox", { name: /destination/i }), "Goa");
+    expect(screen.queryByText(/left:/)).not.toBeInTheDocument();
+  });
+
+  it("takes the budget on a number keypad and shows it grouped in rupees", async () => {
+    const user = userEvent.setup();
+    const onSubmitPrompt = vi.fn();
+    render(<TripBriefBuilder onSubmitPrompt={onSubmitPrompt} />);
+
+    const budget = screen.getByRole("textbox", { name: /total budget/i });
+    expect(budget).toHaveAttribute("inputmode", "numeric");
+    expect(budget).toHaveValue("40,000");
+    await user.clear(budget);
+    await user.type(budget, "75000");
+    expect(budget).toHaveValue("75,000");
+
+    await user.type(screen.getByRole("textbox", { name: /origin city/i }), "Pune");
+    await user.type(screen.getByRole("textbox", { name: /destination/i }), "Goa");
+    await user.click(screen.getByRole("button", { name: /start planning/i }));
+    expect(onSubmitPrompt).toHaveBeenCalledWith(expect.stringContaining("total budget ₹75,000"));
+  });
 });
