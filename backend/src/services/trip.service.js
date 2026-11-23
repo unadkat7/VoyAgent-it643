@@ -26,7 +26,9 @@ export async function planTrip({ userId, prompt, tripId }) {
     throw new HttpError(409, "This Trip is already planned. Start a new Trip to change it.");
   }
   trip.conversation.push({ role: "traveler", content: prompt });
+  trip.planningAttempts = (trip.planningAttempts ?? 0) + 1;
 
+  const startedAt = Date.now();
   let result;
   try {
     result = await requestPlan({ tripId: trip.id, conversation: trip.conversation });
@@ -35,6 +37,8 @@ export async function planTrip({ userId, prompt, tripId }) {
       throw error;
     }
     console.error(error.message);
+    trip.planningLatencyMs = Math.max(0, Date.now() - startedAt);
+    trip.lastError = "planner_unavailable";
     trip.status = nextStatus(trip.status, "failed");
     await trip.save();
     throw new HttpError(503, "The planner is unavailable right now. Please try again shortly.", {
@@ -42,6 +46,8 @@ export async function planTrip({ userId, prompt, tripId }) {
     });
   }
 
+  trip.planningLatencyMs = Math.max(0, Date.now() - startedAt);
+  trip.lastError = undefined;
   trip.status = nextStatus(trip.status, result.outcome);
   if (result.outcome === "needs_clarification") {
     trip.conversation.push({ role: "assistant", content: result.clarification.question });
@@ -69,6 +75,7 @@ export async function shareTrip(tripId, userId) {
   }
   if (!trip.shareId) {
     trip.shareId = crypto.randomBytes(12).toString("base64url");
+    trip.sharedAt = new Date();
     await trip.save();
   }
   return trip;
@@ -77,6 +84,7 @@ export async function shareTrip(tripId, userId) {
 export async function unshareTrip(tripId, userId) {
   const trip = await findOwnedTrip(tripId, userId);
   trip.shareId = undefined;
+  trip.sharedAt = undefined;
   await trip.save();
 }
 

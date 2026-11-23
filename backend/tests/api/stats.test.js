@@ -1,6 +1,8 @@
 import request from "supertest";
 import { describe, expect, it } from "vitest";
 import app from "../../src/app.js";
+import Feedback from "../../src/models/feedback.model.js";
+import Trip from "../../src/models/trip.model.js";
 import User from "../../src/models/user.model.js";
 import { seedAdmin } from "../../src/services/admin.service.js";
 import { ADMIN_EMAIL, PASSWORD, adminAgent, signedInAgent } from "../helpers.js";
@@ -46,7 +48,14 @@ describe("admin accounts", () => {
   });
 });
 
-describe.each(["/api/stats", "/api/stats/users", "/api/stats/activity", "/api/stats/feedback"])(
+describe.each([
+  "/api/stats",
+  "/api/stats/users",
+  "/api/stats/activity",
+  "/api/stats/trips",
+  "/api/stats/feedback",
+  "/api/stats/retention",
+])(
   "GET %s",
   (path) => {
     it("is only for admins", async () => {
@@ -107,10 +116,109 @@ describe("usage stats for an admin", () => {
   it("shows the outside feedback log without who wrote it", async () => {
     const { admin } = await mixedUsage();
 
-    const { feedback } = (await admin.get("/api/stats/feedback")).body;
+    const { feedback, summary } = (await admin.get("/api/stats/feedback")).body;
 
     expect(feedback).toHaveLength(1);
     expect(feedback[0]).toMatchObject({ rating: 4, message: "Loved it", page: "/dashboard" });
     expect(feedback[0].userId).toBeUndefined();
+    expect(summary).toMatchObject({ total: 1, averageRating: 4, npsProxy: 100 });
+  });
+
+  it("aggregates Travel Intelligence, TripMap engagement, and handles legacy docs safely", async () => {
+    const { asha, admin } = await mixedUsage();
+    const ashaUser = await User.findOne({ email: "asha@example.com" });
+    const adminUser = await User.findOne({ email: ADMIN_EMAIL });
+
+    // One rich planned Trip + one legacy draft Trip missing new optional fields + one admin Trip.
+    await Trip.create([
+      {
+        userId: ashaUser._id,
+        status: "planned",
+        destination: "Goa",
+        planningAttempts: 1,
+        planningLatencyMs: 2400,
+        plan: {
+          nights: 3,
+          destination_coordinates: { lat: 15.2993, lng: 74.124 },
+          request: {
+            origin: "Ahmedabad",
+            destination: "Goa",
+            duration_days: 4,
+            budget: 40000,
+            party_size: 2,
+            travel_style: "relaxed",
+          },
+          estimated_cost: { hotel_total: 12000, flight_total: 10000, total: 22000 },
+          hotels: [{ name: "Sea Breeze", price_source: "live" }],
+          flights: [{ airline: "IndiGo", price_source: "estimated" }],
+        },
+      },
+      {
+        userId: ashaUser._id,
+        status: "draft",
+        clarification: { missingFields: ["budget", "travel_style"], question: "Budget?" },
+      },
+      {
+        userId: adminUser._id,
+        status: "planned",
+        destination: "SecretAdminCity",
+        plan: { request: { origin: "Delhi", destination: "SecretAdminCity", budget: 99999 } },
+      },
+    ]);
+
+    // Legacy feedback document without category field.
+    await Feedback.collection.insertOne({
+      userId: ashaUser._id,
+      rating: 5,
+      message: "Legacy entry",
+      createdAt: new Date(),
+    });
+
+    await asha
+      .post("/api/events/interaction")
+      .send({ action: "map_style_changed", value: "satellite", path: "/trip/1" });
+    await asha
+      .post("/api/events/interaction")
+      .send({ action: "trip_tab_viewed", value: "hotels", path: "/trip/1" });
+    await asha
+      .post("/api/events/interaction")
+      .send({ action: "hotel_deal_clicked", value: "booking_url", path: "/trip/1" });
+    await asha
+      .post("/api/events/interaction")
+      .send({ action: "brief_builder_submitted", path: "/trip/new" });
+
+    const tripsRes = await admin.get("/api/stats/trips?days=30");
+    expect(tripsRes.status).toBe(200);
+    expect(tripsRes.body.trips.totalTrips).toBe(2);
+    expect(tripsRes.body.trips.topDestinations[0]).toMatchObject({
+      destination: "Goa",
+      count: 1,
+      avgBudgetInr: 40000,
+    });
+    expect(JSON.stringify(tripsRes.body.trips)).not.toContain("SecretAdminCity");
+    expect(tripsRes.body.trips.destinationPins).toHaveLength(1);
+    expect(tripsRes.body.trips.priceSourceCoverage).toMatchObject({
+      liveHotels: 1,
+      estimatedFlights: 1,
+      liveOverallPct: 50,
+    });
+    expect(tripsRes.body.trips.planningHealth.topMissingFields.map((f) => f.field)).toEqual(
+      expect.arrayContaining(["budget", "travel_style"])
+    );
+
+    const activityRes = await admin.get("/api/stats/activity?days=7");
+    expect(activityRes.body.activity.featureEngagement.tripMap.totalInteractions).toBe(1);
+    expect(activityRes.body.activity.featureEngagement.hotelOutbound).toMatchObject({
+      bookingUrlClicks: 1,
+      staysTabViews: 1,
+      staysTabCtrPct: 100,
+    });
+    expect(activityRes.body.activity.featureEngagement.creationFlow.briefBuilderSubmitted).toBe(1);
+
+    const retentionRes = await admin.get("/api/stats/retention?weeks=4");
+    expect(retentionRes.status).toBe(200);
+    expect(retentionRes.body.retention.cohorts).toHaveLength(4);
+    expect((await admin.get("/api/stats/retention?weeks=1")).status).toBe(400);
+    expect((await admin.get("/api/stats/retention?weeks=20")).status).toBe(400);
   });
 });

@@ -1,7 +1,7 @@
 import { env } from "../config/env.js";
 import generateToken,{ getAuthCookieOptions } from "../utils/generateToken.js";
 import { signupService, loginService } from "../services/auth.service.js";
-import { recordEvent } from "../services/telemetry.service.js";
+import { recordEvent, referrerHost } from "../services/telemetry.service.js";
 
 const publicUser = (user) => ({
   _id: user._id,
@@ -11,9 +11,11 @@ const publicUser = (user) => ({
 });
 
 export const signup = async (req, res) => {
-  const user = await signupService(req.body);
+  const signupSource =
+    referrerHost(req.body.signupSource ?? req.get("referer"), req.get("host")) ?? "direct";
+  const user = await signupService({ ...req.body, signupSource });
   generateToken(res, user._id);
-  await recordEvent(req, "signup", { userId: user._id });
+  await recordEvent(req, "signup", { userId: user._id, referrer: signupSource });
   res.status(201).json({ success: true, message: "Account created", user: publicUser(user) });
 };
 

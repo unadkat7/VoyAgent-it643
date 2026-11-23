@@ -25,6 +25,16 @@ const userSchema = new mongoose.Schema(
       minlength: 8,
       select: false,
     },
+
+    lastLoginAt: {
+      type: Date,
+    },
+
+    signupSource: {
+      type: String,
+      trim: true,
+      maxlength: 120,
+    },
   },
   {
     timestamps: true,

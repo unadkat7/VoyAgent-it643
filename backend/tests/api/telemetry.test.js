@@ -2,7 +2,9 @@ import request from "supertest";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import app from "../../src/app.js";
 import Event from "../../src/models/event.model.js";
-import { deviceFrom, ipPrefix } from "../../src/services/telemetry.service.js";
+import Feedback from "../../src/models/feedback.model.js";
+import User from "../../src/models/user.model.js";
+import { deviceFrom, ipPrefix, referrerHost } from "../../src/services/telemetry.service.js";
 import { signedInAgent } from "../helpers.js";
 
 const PHONE_UA =
@@ -107,5 +109,68 @@ describe("POST /api/events/pageview", () => {
       .send({ path: "/" });
 
     expect(await Event.countDocuments()).toBe(0);
+  });
+
+  it("strips referrer paths and ignores same-origin referrers", async () => {
+    await request(app)
+      .post("/api/events/pageview")
+      .set("Host", "voyagent.test")
+      .send({ path: "/", referrer: "https://www.google.com/search?q=goa+trip&secret=1" });
+
+    const event = await Event.findOne({ type: "pageview" }).lean();
+    expect(event.referrer).toBe("google.com");
+    expect(referrerHost("https://voyagent.test/dashboard", "voyagent.test")).toBeNull();
+    expect(referrerHost("share_link", "voyagent.test")).toBe("share_link");
+    expect(referrerHost("javascript:alert(1)", "voyagent.test")).toBeNull();
+  });
+});
+
+describe("POST /api/events/interaction", () => {
+  it("records whitelisted TripMap and dossier interactions without PII", async () => {
+    const response = await request(app).post("/api/events/interaction").send({
+      action: "map_style_changed",
+      value: "satellite",
+      path: "/share/abc1234567890123",
+    });
+
+    expect(response.status).toBe(204);
+    const event = await Event.findOne({ type: "feature_interaction" }).lean();
+    expect(event).toMatchObject({
+      type: "feature_interaction",
+      path: "/share/abc1234567890123",
+      meta: { action: "map_style_changed", value: "satellite" },
+    });
+  });
+
+  it("rejects unknown actions or free-text values", async () => {
+    expect(
+      (await request(app).post("/api/events/interaction").send({ action: "raw_prompt" })).status
+    ).toBe(400);
+    expect(
+      (
+        await request(app)
+          .post("/api/events/interaction")
+          .send({ action: "map_style_changed", value: "has spaces & chars" })
+      ).status
+    ).toBe(400);
+  });
+
+  it("persists feedback category and signup source safely", async () => {
+    const agent = request.agent(app);
+    await agent.post("/api/auth/signup").send({
+      name: "Meera",
+      email: "meera@example.com",
+      password: "correct-horse-battery",
+      signupSource: "share_link",
+    });
+    await agent
+      .post("/api/feedback")
+      .send({ rating: 5, message: "Love the map", page: "/trip/1", category: "map" });
+
+    const user = await User.findOne({ email: "meera@example.com" }).lean();
+    const feedback = await Feedback.findOne({ userId: user._id }).lean();
+    expect(user.signupSource).toBe("share_link");
+    expect(user.lastLoginAt).toBeDefined();
+    expect(feedback.category).toBe("map");
   });
 });

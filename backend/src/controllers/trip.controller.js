@@ -6,6 +6,7 @@ const PLANNER_UNAVAILABLE = 503;
 
 export const planTrip = async (req, res) => {
   await recordEvent(req, "trip_plan_requested", { tripId: req.body.tripId });
+  const startedAt = Date.now();
   let trip;
   try {
     trip = await tripService.planTrip({
@@ -15,12 +16,32 @@ export const planTrip = async (req, res) => {
     });
   } catch (error) {
     if (error.status === PLANNER_UNAVAILABLE) {
-      await recordEvent(req, "trip_plan_failed", { tripId: error.body?.tripId });
+      await recordEvent(req, "trip_plan_failed", {
+        tripId: error.body?.tripId,
+        durationMs: Date.now() - startedAt,
+        meta: { outcome: "failed", statusCode: PLANNER_UNAVAILABLE },
+      });
     }
     throw error;
   }
   if (trip.status === TripStatus.PLANNED) {
-    await recordEvent(req, "trip_planned", { tripId: trip._id });
+    await recordEvent(req, "trip_planned", {
+      tripId: trip._id,
+      durationMs: trip.planningLatencyMs,
+      meta: {
+        outcome: "planned",
+        ...(trip.destination ? { destination: trip.destination } : {}),
+      },
+    });
+  } else if (trip.status === TripStatus.DRAFT) {
+    await recordEvent(req, "trip_clarification_requested", {
+      tripId: trip._id,
+      durationMs: trip.planningLatencyMs,
+      meta: {
+        outcome: "needs_clarification",
+        missingFields: trip.clarification?.missingFields ?? [],
+      },
+    });
   }
   res.status(200).json({ success: true, trip });
 };

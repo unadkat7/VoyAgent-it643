@@ -4,7 +4,7 @@ import { HttpError } from "../utils/httpError.js";
 
 const DUPLICATE_KEY = 11000;
 
-export const signupService = async ({ name, email, password }) => {
+export const signupService = async ({ name, email, password, signupSource }) => {
   // Otherwise whoever signs up first with an admin email would become an admin.
   if (env.adminEmails.includes(email)) {
     throw new HttpError(403, "This email cannot be used to sign up");
@@ -17,7 +17,13 @@ export const signupService = async ({ name, email, password }) => {
 
   try {
     // The model hook hashes the password before this is stored.
-    return await User.create({ name, email, password });
+    return await User.create({
+      name,
+      email,
+      password,
+      lastLoginAt: new Date(),
+      ...(signupSource ? { signupSource } : {}),
+    });
   } catch (error) {
     // Two sign-ups can race past the check above; the unique index settles it.
     if (error.code === DUPLICATE_KEY) {
@@ -36,5 +42,6 @@ export const loginService = async ({ email, password }) => {
     throw new HttpError(401, "Invalid email or password");
   }
 
+  await User.updateOne({ _id: user._id }, { $set: { lastLoginAt: new Date() } });
   return user;
 };

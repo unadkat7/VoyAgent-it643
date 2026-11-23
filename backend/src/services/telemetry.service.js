@@ -5,6 +5,33 @@ import { env } from "../config/env.js";
 import Event from "../models/event.model.js";
 
 const BOT_PATTERN = /bot|crawl|spider|slurp|headless|lighthouse/i;
+const SAFE_SOURCE_TOKENS = new Set(["share_link", "direct"]);
+
+function normalizeHost(raw) {
+  if (!raw || typeof raw !== "string") return "";
+  return raw.trim().toLowerCase().split(":")[0].replace(/^www\./, "");
+}
+
+// Keep only the external referrer hostname (never paths or query parameters).
+export function referrerHost(rawReferrer, reqHost = "") {
+  if (!rawReferrer || typeof rawReferrer !== "string") return null;
+  const trimmed = rawReferrer.trim();
+  if (!trimmed) return null;
+  if (SAFE_SOURCE_TOKENS.has(trimmed.toLowerCase())) {
+    return trimmed.toLowerCase();
+  }
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
+    const host = normalizeHost(parsed.hostname);
+    if (!host) return null;
+    const ownHost = normalizeHost(reqHost);
+    if (ownHost && host === ownHost) return null;
+    return host.slice(0, 120);
+  } catch {
+    return null;
+  }
+}
 
 function ipv6Groups(ip) {
   const [head, tail] = ip.split("::");
@@ -54,14 +81,25 @@ function header(req, name) {
 }
 
 // Awaited so serverless functions finish the write, but never fails the request.
-export async function recordEvent(req, type, { userId, tripId, path } = {}) {
+export async function recordEvent(
+  req,
+  type,
+  { userId, tripId, path, referrer, durationMs, meta } = {}
+) {
   const userAgent = req.get("user-agent") ?? "";
+  const host = req.get("host") ?? "";
+  const resolvedReferrer = referrerHost(referrer ?? req.get("referer"), host);
+  const safeDuration =
+    Number.isFinite(durationMs) && durationMs >= 0 ? Math.round(durationMs) : undefined;
   try {
     await Event.create({
       type,
       userId: userId ?? req.user?._id,
       tripId,
       path,
+      referrer: resolvedReferrer ?? undefined,
+      durationMs: safeDuration,
+      meta: meta && Object.keys(meta).length > 0 ? meta : undefined,
       visitorHash: visitorHash(req.ip, userAgent),
       ipPrefix: ipPrefix(req.ip),
       country: header(req, "x-vercel-ip-country"),

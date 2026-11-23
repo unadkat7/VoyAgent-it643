@@ -5,6 +5,7 @@ export const EVENT_TYPES = Object.freeze([
   "signup",
   "login",
   "trip_plan_requested",
+  "trip_clarification_requested",
   "trip_planned",
   "trip_plan_failed",
   "trip_viewed",
@@ -12,6 +13,23 @@ export const EVENT_TYPES = Object.freeze([
   "trip_shared",
   "shared_trip_viewed",
   "feedback_submitted",
+  "feature_interaction",
+]);
+
+export const INTERACTION_ACTIONS = Object.freeze([
+  "map_style_changed",
+  "map_fullscreen_opened",
+  "map_pin_focused",
+  "map_day_filtered",
+  "map_layer_toggled",
+  "map_reset_view",
+  "map_google_maps_opened",
+  "trip_tab_viewed",
+  "hotel_deal_clicked",
+  "brief_builder_submitted",
+  "brief_builder_prefilled",
+  "starter_trip_selected",
+  "clarification_inline_submitted",
 ]);
 
 const RETENTION_SECONDS = 90 * 24 * 60 * 60;
@@ -22,6 +40,17 @@ const eventSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   tripId: { type: mongoose.Schema.Types.ObjectId, ref: "Trip" },
   path: { type: String, maxlength: 200 },
+  referrer: { type: String, maxlength: 120 },
+  durationMs: { type: Number, min: 0 },
+  meta: {
+    action: { type: String, maxlength: 60 },
+    value: { type: String, maxlength: 60 },
+    outcome: { type: String, maxlength: 40 },
+    destination: { type: String, maxlength: 120 },
+    missingFields: [{ type: String, maxlength: 40 }],
+    statusCode: { type: Number },
+    category: { type: String, maxlength: 40 },
+  },
   visitorHash: { type: String, required: true },
   ipPrefix: String,
   country: String,
@@ -36,6 +65,8 @@ const eventSchema = new mongoose.Schema({
 
 eventSchema.index({ type: 1, createdAt: -1 });
 eventSchema.index({ userId: 1, createdAt: -1 });
+eventSchema.index({ createdAt: -1 });
+eventSchema.index({ visitorHash: 1, createdAt: -1 });
 
 const Event = mongoose.model("Event", eventSchema);
 

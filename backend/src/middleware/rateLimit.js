@@ -18,6 +18,12 @@ export const publicLimiter = limiter(15, 300, "Too many requests from this netwo
 
 export const pageviewLimiter = limiter(15, 300, "Too many page views from this network.");
 
+export const interactionLimiter = limiter(
+  15,
+  600,
+  "Too many interaction events from this network."
+);
+
 // Planning spends LLM and search quota, so it is limited per account, not per IP.
 export const planLimiter = limiter(60, 30, "Planning limit reached. Try again in an hour.", {
   keyGenerator: (req) => req.user._id.toString(),
