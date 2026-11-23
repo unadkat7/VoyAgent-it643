@@ -33,6 +33,9 @@ const tripSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.Mixed,
       default: null,
     },
+    // Set only while the owner shares the Trip through a public link.
+    shareId: { type: String, unique: true, sparse: true },
+    shareViews: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

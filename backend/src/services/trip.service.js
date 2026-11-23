@@ -1,6 +1,7 @@
+import crypto from "node:crypto";
 import mongoose from "mongoose";
 import { PlannerUnavailableError, requestPlan } from "../clients/aiPlanner.client.js";
-import { canContinue, isOwnedBy, nextStatus } from "../domain/trip.js";
+import { canContinue, canShare, isOwnedBy, nextStatus } from "../domain/trip.js";
 import Trip from "../models/trip.model.js";
 import { HttpError } from "../utils/httpError.js";
 
@@ -57,6 +58,40 @@ export async function planTrip({ userId, prompt, tripId }) {
 
 export function listTrips(userId) {
   return Trip.find({ userId }).sort({ createdAt: -1 });
+}
+
+const SHARE_ID = /^[\w-]{16}$/;
+
+export async function shareTrip(tripId, userId) {
+  const trip = await findOwnedTrip(tripId, userId);
+  if (!canShare(trip.status)) {
+    throw new HttpError(409, "Only a planned Trip can be shared.");
+  }
+  if (!trip.shareId) {
+    trip.shareId = crypto.randomBytes(12).toString("base64url");
+    await trip.save();
+  }
+  return trip;
+}
+
+export async function unshareTrip(tripId, userId) {
+  const trip = await findOwnedTrip(tripId, userId);
+  trip.shareId = undefined;
+  await trip.save();
+}
+
+// The public view: the plan only, never the conversation or the owning account.
+export async function viewSharedTrip(shareId) {
+  const trip = SHARE_ID.test(shareId)
+    ? await Trip.findOneAndUpdate({ shareId }, { $inc: { shareViews: 1 } }, { new: true })
+    : null;
+  if (!trip) {
+    throw new HttpError(404, "This shared Trip does not exist.");
+  }
+  return {
+    tripId: trip._id,
+    view: { destination: trip.destination, plan: trip.plan, createdAt: trip.createdAt },
+  };
 }
 
 export async function deleteTrip(tripId, userId) {

@@ -36,6 +36,23 @@ export const getTripById = async (req, res) => {
   res.status(200).json({ success: true, trip });
 };
 
+export const shareTrip = async (req, res) => {
+  const trip = await tripService.shareTrip(req.params.id, req.user._id);
+  await recordEvent(req, "trip_shared", { tripId: trip._id });
+  res.status(200).json({ success: true, shareId: trip.shareId });
+};
+
+export const unshareTrip = async (req, res) => {
+  await tripService.unshareTrip(req.params.id, req.user._id);
+  res.status(200).json({ success: true, message: "Share link removed" });
+};
+
+export const viewSharedTrip = async (req, res) => {
+  const { tripId, view } = await tripService.viewSharedTrip(req.params.shareId);
+  await recordEvent(req, "shared_trip_viewed", { tripId });
+  res.status(200).json({ success: true, trip: view });
+};
+
 export const deleteTrip = async (req, res) => {
   await tripService.deleteTrip(req.params.id, req.user._id);
   await recordEvent(req, "trip_deleted", { tripId: req.params.id });

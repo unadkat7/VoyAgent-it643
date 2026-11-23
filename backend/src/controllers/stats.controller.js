@@ -133,7 +133,7 @@ export const getActivity = async (req, res) => {
   const since = new Date(now - days * DAY_MS);
   const insiders = await insiderIds();
 
-  const [signups, [events]] = await Promise.all([
+  const [signups, [events], topShared] = await Promise.all([
     User.aggregate([
       { $match: { _id: { $nin: insiders }, createdAt: { $gte: since } } },
       { $group: { _id: dayOf("$createdAt"), count: { $sum: 1 } } },
@@ -181,6 +181,11 @@ export const getActivity = async (req, res) => {
         },
       },
     ]),
+    Trip.find({ shareId: { $exists: true }, userId: { $nin: insiders } })
+      .sort({ shareViews: -1 })
+      .limit(10)
+      .select({ _id: 0, destination: 1, shareViews: 1 })
+      .lean(),
   ]);
 
   const signupsBy = new Map(signups.map((row) => [row._id, row.count]));
@@ -204,6 +209,7 @@ export const getActivity = async (req, res) => {
       daily,
       countries: events.countries,
       devices: events.devices,
+      topShared,
       recentEvents: events.recent.map((event) => ({
         type: event.type,
         path: event.path ?? null,
