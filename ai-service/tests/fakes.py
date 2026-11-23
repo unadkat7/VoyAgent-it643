@@ -71,6 +71,50 @@ class FakeGeocoder:
         return self._places.get(query)
 
 
+class FakeTimetable:
+    """Fake TimetablePort: hands back a prepared Timetable, or raises."""
+
+    def __init__(self, timetable=None, error: Exception | None = None):
+        self._timetable = timetable
+        self._error = error
+
+    def load(self):
+        if self._error:
+            raise self._error
+        return self._timetable
+
+
+class FakePlaces:
+    """Fake PlaceFinderPort: knows a fixed set of names and records every name it is asked."""
+
+    def __init__(self, places: dict | None = None, error: Exception | None = None):
+        self._places = places or {}
+        self._error = error
+        self.queries: list[str] = []
+
+    def find_settlements(self, name: str):
+        self.queries.append(name)
+        if self._error:
+            raise self._error
+        return self._places.get(name, [])
+
+
+class FakeRouter:
+    """Fake RouterPort: answers by end point name from a fixed table, with a default drive."""
+
+    def __init__(self, drives: dict | None = None, default=None, error: Exception | None = None):
+        self._drives = drives or {}
+        self._default = default
+        self._error = error
+        self.calls: list[tuple] = []
+
+    def drive(self, start, end):
+        self.calls.append((start, end))
+        if self._error:
+            raise self._error
+        return self._drives.get((start.lat, start.lng, end.lat, end.lng), self._default)
+
+
 class FakeClock:
     def __init__(self, start: float = 1_000.0):
         self.now = start
