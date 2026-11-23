@@ -23,3 +23,20 @@ export const deleteTrip = async (id) => {
   const response = await api.delete(`/trips/${id}`);
   return response.data;
 };
+
+// Create (or reuse) the public link for a planned Trip
+export const shareTrip = async (id) => {
+  const response = await api.post(`/trips/${id}/share`, {});
+  return response.data;
+};
+
+export const unshareTrip = async (id) => {
+  const response = await api.delete(`/trips/${id}/share`);
+  return response.data;
+};
+
+// Read a shared Trip without an account
+export const getSharedTrip = async (shareId) => {
+  const response = await api.get(`/public/trips/${encodeURIComponent(shareId)}`);
+  return response.data;
+};

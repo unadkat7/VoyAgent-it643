@@ -156,6 +156,10 @@ export default function SignupPage() {
         <Button type="submit" loading={loading} disabled={loading} className="mt-2">
           {loading ? "Creating account..." : "Create Account"}
         </Button>
+        <p className="text-[11px] text-[#73685E] text-center">
+          We record your country, device type and the pages you use to measure usage. We never
+          store your full IP address.
+        </p>
       </form>
     </AuthShell>
   );

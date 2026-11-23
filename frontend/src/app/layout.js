@@ -1,6 +1,7 @@
 import { Fraunces, JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { Toaster } from "react-hot-toast";
+import PageViewTracker from "@/components/analytics/PageViewTracker";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -57,6 +58,7 @@ export default function RootLayout({ children }) {
         {children}
         {/* Cookie-free page-view counts: evidence of outside use for the project ceiling. */}
         <Analytics />
+        <PageViewTracker />
       </body>
     </html>
   );

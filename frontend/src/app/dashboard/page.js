@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
@@ -232,6 +233,14 @@ export default function DashboardPage() {
           left={<BrandLogo href="/dashboard" size="sm" />}
           right={
             <>
+              {user.isAdmin && (
+                <Link
+                  href="/admin"
+                  className="text-xs font-semibold text-[#181411] bg-white border border-[#E7E0D5] hover:bg-[#F2EDE4]/70 px-3 py-1.5 rounded-xl transition-colors"
+                >
+                  Admin
+                </Link>
+              )}
               <div className="hidden sm:flex items-center gap-2 bg-white border border-[#E7E0D5] pl-1.5 pr-3 py-1 rounded-full">
                 <span className="w-6 h-6 rounded-full bg-[#181411] text-[#FAF8F4] text-xs font-semibold flex items-center justify-center">
                   {initial}
