@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import TripMap from "@/components/trip/TripMap";
@@ -51,7 +51,7 @@ describe("TripMap", () => {
     const sheet = screen.getByRole("dialog", { name: "Map options" });
     expect(sheet).toContainElement(screen.getByRole("button", { name: "Satellite" }));
     await user.click(screen.getByRole("button", { name: /Fort Aguada/ }));
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   });
 
   it("reports map interactions when onTrack is provided", async () => {

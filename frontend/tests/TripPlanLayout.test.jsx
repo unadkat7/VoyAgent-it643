@@ -24,7 +24,7 @@ describe("Trip plan layout", () => {
 
   it("shows dates, nights and party size on one line", () => {
     render(<TripPlanView trip={{ plan: PLAN }} />);
-    expect(screen.getByText(/3 nights · 2 travellers/)).toBeInTheDocument();
+    expect(screen.getByText(/3 nights · 2 travelers/)).toBeInTheDocument();
   });
 
   it("opens the summary from the cost chip, with the overview before the cost", async () => {

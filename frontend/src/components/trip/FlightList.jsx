@@ -8,11 +8,11 @@ function stopsLabel(stops) {
   return `${stops} stop${stops > 1 ? "s" : ""}`;
 }
 
-export default function FlightList({ flights, partySize }) {
+export default function FlightList({ flights, partySize, notes = [] }) {
   if (!flights?.length) {
     return (
-      <EmptyState icon={Plane}>
-        No flights to suggest for this Trip. The Summary tab explains why.
+      <EmptyState icon={Plane} notes={notes}>
+        No flights to suggest for this Trip.
       </EmptyState>
     );
   }
@@ -65,7 +65,7 @@ export default function FlightList({ flights, partySize }) {
                 </div>
 
                 <div className="flex-1 flex flex-col items-center px-2 min-w-[96px]">
-                  <p className="font-mono text-[11px] text-muted mb-1.5 text-center">
+                  <p className="font-mono text-label text-muted mb-1.5 text-center">
                     {[flight.duration, stopsLabel(flight.stops)].filter(Boolean).join(" · ")}
                   </p>
                   <div className="w-full flex items-center gap-1.5">
@@ -98,7 +98,7 @@ export default function FlightList({ flights, partySize }) {
                   <p className="text-xs text-muted">per traveller</p>
                 </div>
                 {partyTotal != null && (
-                  <p className="font-mono text-[11px] text-ink-soft bg-white border border-border px-2.5 py-1 rounded-lg md:mt-2">
+                  <p className="font-mono text-label text-ink-soft bg-white border border-border px-2.5 py-1 rounded-lg md:mt-2">
                     {formatInr(partyTotal)} for {partySize}
                   </p>
                 )}

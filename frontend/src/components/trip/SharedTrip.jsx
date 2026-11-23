@@ -12,7 +12,7 @@ import TripPlanView from "@/components/trip/TripPlanView";
 import Skeleton from "@/components/ui/Skeleton";
 
 const PLAN_YOUR_OWN =
-  "inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-primary hover:bg-primary-hover px-3.5 py-2 rounded-xl transition-colors";
+  "inline-flex min-h-tap items-center gap-1.5 text-sm font-semibold text-white bg-primary hover:bg-primary-hover px-4 rounded-xl transition-colors";
 
 // Public, read-only view of a Trip its owner chose to share. No account needed.
 export default function SharedTripPage() {

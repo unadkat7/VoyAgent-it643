@@ -173,9 +173,9 @@ body {
   color: #181411 !important;
   background-color: #ffffff !important;
   border-bottom-color: #e7e0d5 !important;
-  width: 32px !important;
-  height: 32px !important;
-  line-height: 32px !important;
+  width: 44px !important;
+  height: 44px !important;
+  line-height: 44px !important;
 }
 
 .leaflet-control-zoom a:hover {

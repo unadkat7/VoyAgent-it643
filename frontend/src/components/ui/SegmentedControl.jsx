@@ -11,7 +11,7 @@ const VARIANTS = {
   },
   tabs: {
     group: "flex overflow-x-auto no-scrollbar border-b border-border",
-    item: "min-h-tap flex-1 shrink-0 -mb-px border-b-2 px-3 text-sm font-semibold whitespace-nowrap transition-colors sm:flex-none sm:px-4",
+    item: "min-h-tap flex-1 shrink-0 -mb-px border-b-2 px-2 text-sm font-semibold whitespace-nowrap transition-colors sm:flex-none sm:px-4",
     on: "border-primary text-primary",
     off: "border-transparent text-muted hover:text-ink",
   },
