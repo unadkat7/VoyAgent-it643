@@ -17,7 +17,10 @@ GTFS = {
         "RKSH,RISHIKESH,30.1075,78.2878\n"
     ),
     "routes.txt": (
-        "route_id,route_long_name\n12911,BL HARIDWAR EXP\n54483,HW-RKSH PASSENGER\n99999,NO CALENDAR\n"
+        "route_id,route_long_name\n"
+        "12911,BL HARIDWAR EXP\n"
+        "54483,HW-RKSH PASSENGER\n"
+        "99999,NO CALENDAR\n"
     ),
     "trips.txt": (
         "route_id,service_id,trip_id\n"
