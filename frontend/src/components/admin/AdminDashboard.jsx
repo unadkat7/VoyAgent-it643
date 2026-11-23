@@ -15,6 +15,7 @@ import {
 import { getAdminOverview } from "@/services/admin.service";
 import { normalizeAdminOverview } from "@/lib/adminAnalytics";
 import AppHeader from "@/components/layout/AppHeader";
+import BottomNav from "@/components/layout/BottomNav";
 import BrandLogo from "@/components/layout/BrandLogo";
 import Skeleton from "@/components/ui/Skeleton";
 import ActivityAndFeedback from "./ActivityAndFeedback";
@@ -136,7 +137,7 @@ export default function AdminPage() {
   const { stats, users, activity, feedback, feedbackSummary, trips, retention } = data;
 
   return (
-    <div className="min-h-screen bg-bg font-sans pb-24">
+    <div className="min-h-screen bg-bg font-sans pb-nav">
       {header}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 space-y-6">
         <AdminMasthead
@@ -256,6 +257,7 @@ export default function AdminPage() {
           </div>
         )}
       </main>
+      <BottomNav page="/admin" isAdmin />
     </div>
   );
 }

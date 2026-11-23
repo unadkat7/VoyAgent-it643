@@ -19,39 +19,13 @@ import AppHeader from "@/components/layout/AppHeader";
 import BrandLogo from "@/components/layout/BrandLogo";
 import AgentProgressCard from "@/components/trip/AgentProgressCard";
 import TripBriefBuilder from "@/components/trip/TripBriefBuilder";
+import { EXAMPLE_TRIPS } from "@/lib/exampleTrips";
 
 const WELCOME = {
   role: "assistant",
   content:
     "Hi! I'm VoyAgent. Tell me your Origin, Destination, Duration in days, Party Size, total INR Budget, and Travel Style—or fill out the Guided Trip Brief below.",
 };
-
-const STARTER_CARDS = [
-  {
-    route: "Ahmedabad → Goa",
-    title: "North Goa Beaches",
-    meta: "3 days · 2 Travelers · ₹40,000 · Relaxed",
-    prompt: "3 days in Goa from Ahmedabad, 2 people, ₹40,000, relaxed beach trip",
-  },
-  {
-    route: "Delhi → Manali",
-    title: "Manali Mountain Escape",
-    meta: "3 days · 4 Travelers · ₹30,000 · Adventure",
-    prompt: "Weekend in Manali from Delhi, 4 friends, ₹30,000, adventure",
-  },
-  {
-    route: "Mumbai → Kerala",
-    title: "Kerala Backwaters",
-    meta: "4 days · Family of 4 · ₹60,000 · Relaxed",
-    prompt: "4 days Kerala backwaters from Mumbai, family of 4, ₹60,000, relaxed",
-  },
-  {
-    route: "Delhi → Jaipur",
-    title: "Royal Rajasthan",
-    meta: "5 days · 2 Travelers · ₹50,000 · Culture",
-    prompt: "5-day Rajasthan tour from Delhi, 2 people, ₹50,000, culture",
-  },
-];
 
 const FIELD_META = {
   origin: { label: "Origin", placeholder: "e.g. Pune", quick: "Starting from Mumbai" },
@@ -319,7 +293,7 @@ function TripPlanner() {
                   Start from an example
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {STARTER_CARDS.map((card) => (
+                  {EXAMPLE_TRIPS.map((card) => (
                     <button
                       key={card.title}
                       type="button"

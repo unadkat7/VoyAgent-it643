@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle } from "lucide-react";
+import useModalFocus from "@/lib/useModalFocus";
 
 export default function ConfirmModal({
   isOpen,
@@ -15,37 +16,7 @@ export default function ConfirmModal({
 }) {
   const panel = useRef(null);
   const cancelButton = useRef(null);
-  useEffect(() => {
-    if (!isOpen) return;
-    const trigger = document.activeElement;
-    cancelButton.current?.focus();
-    return () => trigger?.focus();
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const onKeyDown = (event) => {
-      if (event.key === "Tab") {
-        const buttons = panel.current?.querySelectorAll("button:enabled");
-        if (!buttons?.length) {
-          event.preventDefault();
-          return;
-        }
-        const first = buttons[0];
-        const last = buttons[buttons.length - 1];
-        if (event.shiftKey && document.activeElement === first) {
-          event.preventDefault();
-          last.focus();
-        } else if (!event.shiftKey && document.activeElement === last) {
-          event.preventDefault();
-          first.focus();
-        }
-      }
-      if (event.key === "Escape" && !loading) onCancel?.();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [isOpen, loading, onCancel]);
+  useModalFocus(panel, isOpen, onCancel, { initialFocusRef: cancelButton, canClose: !loading });
 
   return (
     <AnimatePresence>
@@ -90,7 +61,7 @@ export default function ConfirmModal({
                 ref={cancelButton}
                 onClick={onCancel}
                 disabled={loading}
-                className="flex-1 py-2.5 rounded-xl border border-border text-sm font-semibold text-ink-soft hover:bg-bg transition-colors disabled:opacity-50"
+                className="flex-1 min-h-tap rounded-xl border border-border text-sm font-semibold text-ink-soft hover:bg-bg transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -98,7 +69,7 @@ export default function ConfirmModal({
                 type="button"
                 onClick={onConfirm}
                 disabled={loading}
-                className="flex-1 py-2.5 rounded-xl bg-danger hover:bg-danger-hover text-white text-sm font-semibold transition-colors disabled:opacity-50"
+                className="flex-1 min-h-tap rounded-xl bg-danger hover:bg-danger-hover text-white text-sm font-semibold transition-colors disabled:opacity-50"
               >
                 {loading ? "Deleting..." : confirmLabel}
               </button>

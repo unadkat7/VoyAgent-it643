@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { deleteTrip, getTripById, shareTrip } from "@/services/trip.service";
 import FeedbackWidget from "@/components/feedback/FeedbackWidget";
 import AppHeader from "@/components/layout/AppHeader";
+import BottomNav from "@/components/layout/BottomNav";
 import BrandLogo from "@/components/layout/BrandLogo";
 import PageWrapper from "@/components/layout/PageWrapper";
 import TripPlanView from "@/components/trip/TripPlanView";
@@ -145,7 +146,7 @@ export default function TripDetailPage() {
 
   return (
     <PageWrapper>
-      <div className="min-h-screen bg-bg font-sans pb-24">
+      <div className="min-h-screen bg-bg font-sans pb-nav">
         <AppHeader
           maxWidth="max-w-7xl"
           left={
@@ -199,6 +200,7 @@ export default function TripDetailPage() {
           onCancel={() => setShowConfirm(false)}
         />
         <FeedbackWidget page={`/trip/${trip._id}`} />
+        <BottomNav page={`/trip/${trip._id}`} />
       </div>
     </PageWrapper>
   );

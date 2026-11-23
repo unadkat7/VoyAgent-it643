@@ -33,6 +33,8 @@ import {
 } from "@/lib/tripView";
 import FeedbackWidget from "@/components/feedback/FeedbackWidget";
 import AppHeader from "@/components/layout/AppHeader";
+import BottomNav from "@/components/layout/BottomNav";
+import { EXAMPLE_TRIPS } from "@/lib/exampleTrips";
 import BrandLogo from "@/components/layout/BrandLogo";
 import PageWrapper from "@/components/layout/PageWrapper";
 import ConfirmModal from "@/components/ui/ConfirmModal";
@@ -65,33 +67,6 @@ const MISSING_FIELD_LABELS = {
   party_size: "Party Size",
   travel_style: "Travel Style",
 };
-
-const STARTER_JOURNEYS = [
-  {
-    title: "North Goa Coast",
-    route: "Ahmedabad → Goa",
-    meta: "3 days · 2 Travelers · ₹40,000 · Relaxed",
-    prompt: "3 days in Goa from Ahmedabad, 2 people, ₹40,000, relaxed",
-  },
-  {
-    title: "Manali Mountain Escape",
-    route: "Delhi → Manali",
-    meta: "3 days · 4 Travelers · ₹30,000 · Adventure",
-    prompt: "3 days in Manali from Delhi, 4 friends, ₹30,000, adventure",
-  },
-  {
-    title: "Kerala Backwaters",
-    route: "Mumbai → Kerala",
-    meta: "4 days · Family of 4 · ₹60,000 · Relaxed",
-    prompt: "4 days Kerala backwaters from Mumbai, family of 4, ₹60,000, relaxed",
-  },
-  {
-    title: "Royal Rajasthan Circuit",
-    route: "Delhi → Jaipur",
-    meta: "5 days · 2 Travelers · ₹50,000 · Culture",
-    prompt: "5-day Jaipur & Rajasthan tour from Delhi, 2 people, ₹50,000, culture",
-  },
-];
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -242,7 +217,7 @@ export default function DashboardPage() {
 
   return (
     <PageWrapper>
-      <div className="min-h-screen bg-bg font-sans pb-24">
+      <div className="min-h-screen bg-bg font-sans pb-nav">
         <AppHeader
           left={<BrandLogo href="/dashboard" size="sm" />}
           right={
@@ -250,7 +225,7 @@ export default function DashboardPage() {
               {user.isAdmin && (
                 <Link
                   href="/admin"
-                  className="text-xs font-semibold text-ink bg-white border border-border hover:bg-bg-subtle/70 px-3 py-1.5 rounded-xl transition-colors"
+                  className="hidden lg:inline-flex min-h-tap items-center text-sm font-semibold text-ink bg-white border border-border hover:bg-bg-subtle/70 px-4 rounded-xl transition-colors"
                 >
                   Admin
                 </Link>
@@ -368,7 +343,7 @@ export default function DashboardPage() {
                     Try a starting itinerary
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {STARTER_JOURNEYS.map((item, idx) => (
+                    {EXAMPLE_TRIPS.map((item, idx) => (
                       <div
                         key={item.title}
                         className="group relative p-4 rounded-2xl bg-surface-warm border border-border hover:border-primary/50 hover:bg-white cursor-pointer transition-all flex items-start justify-between gap-3"
@@ -620,6 +595,7 @@ export default function DashboardPage() {
           onCancel={() => setConfirmModal({ open: false, tripId: null })}
         />
         <FeedbackWidget page="/dashboard" />
+        <BottomNav page="/dashboard" isAdmin={user.isAdmin} />
       </div>
     </PageWrapper>
   );

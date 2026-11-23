@@ -209,3 +209,18 @@ body {
 }
 
 .safe-footer { padding-bottom: max(0.875rem, env(safe-area-inset-bottom)); }
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Room for the mobile bottom nav so it never covers the last content */
+@utility pb-nav {
+  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  @media (min-width: 64rem) {
+    padding-bottom: 6rem;
+  }
+}

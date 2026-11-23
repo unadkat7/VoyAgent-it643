@@ -5,7 +5,7 @@ import AdminPage from "@/components/admin/AdminDashboard";
 import { getAdminOverview } from "@/services/admin.service";
 
 const replace = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ replace, push: vi.fn() }) }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ replace, push: vi.fn() }), usePathname: () => "/admin" }));
 vi.mock("next/dynamic", () => ({ default: () => () => <div data-testid="destinations-map" /> }));
 vi.mock("@/services/admin.service", () => ({ getAdminOverview: vi.fn() }));
 
