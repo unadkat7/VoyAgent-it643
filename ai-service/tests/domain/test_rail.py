@@ -133,6 +133,26 @@ def test_no_change_onto_a_train_that_already_stops_at_the_origin():
     assert [[leg.train.number for leg in j.legs] for j in journeys] == [["12911"]]
 
 
+def test_no_change_off_a_train_that_goes_on_to_the_destination():
+    # 22660 calls at Vadodara and then Surat; getting off at Vadodara to change only loses time.
+    through = train(
+        "22660", [("HW", "07:45", "07:45"), ("BRC", "25:15", "25:20"), ("ST", "27:00", "27:00")]
+    )
+    local = train("12833", [("BRC", "26:09", "26:09"), ("ST", "28:26", "28:26")])
+
+    journeys = find_journeys(timetable(through, local), {"HW"}, {"ST"}, [TUE])
+
+    assert [[leg.train.number for leg in j.legs] for j in journeys] == [["22660"]]
+
+
+def test_depart_after_drops_trains_that_leave_too_early():
+    journeys = find_journeys(
+        timetable(SURAT_HARIDWAR), {"ST"}, {"HW"}, [TUE], depart_after=datetime(2026, 12, 15, 17, 0)
+    )
+
+    assert journeys == []
+
+
 def test_arrive_by_drops_late_arrivals():
     journeys = find_journeys(
         timetable(SURAT_HARIDWAR), {"ST"}, {"HW"}, [TUE], arrive_by=datetime(2026, 12, 16, 12, 0)

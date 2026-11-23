@@ -55,6 +55,8 @@ def make_timetable():
         ),
         # Runs only on Tuesdays: the day after check-out (Monday 21 December).
         train("12912", "HW BL EXP", [("HW", "06:00", "06:00"), ("ST", "28:00", "28:00")], [1]),
+        # Leaves Haridwar early on check-out morning, while the Traveler is still at Badrinath.
+        train("22660", "YNRK TVCN EXP", [("HW", "07:45", "07:45"), ("ST", "27:00", "27:00")], [0]),
         # 25 hours to Rishikesh: arrives first only because it leaves a day earlier.
         train("19031", "YOGA EXP", [("ST", "02:00", "02:00"), ("RKSH", "27:00", "27:00")], [0]),
         # Ten local trains a day keep Haridwar and Rishikesh busy enough to be railheads.
@@ -184,6 +186,20 @@ def test_return_trains_may_leave_the_day_after_check_out():
     plan = plan_for("Badrinath")
 
     assert plan.trains_back[0].departs == "2026-12-22T06:00"
+
+
+def test_return_trains_leave_only_after_check_out_and_the_drive_back():
+    # Check-out at 10:00 on Monday, then about 9.5 hours of road back to Haridwar.
+    plan = plan_for("Badrinath")
+
+    assert all(option.departs >= "2026-12-21T19:30" for option in plan.trains_back)
+    assert all(option.legs[0].train_number != "22660" for option in plan.trains_back)
+
+
+def test_return_trains_from_a_station_at_the_destination_leave_after_check_out():
+    plan = plan_for("Haridwar")
+
+    assert all(option.departs >= "2026-12-21T10:00" for option in plan.trains_back)
 
 
 def test_no_trains_when_the_origin_is_already_at_the_railhead():
