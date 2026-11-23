@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import DashboardPage from "@/app/dashboard/page";
 import TripPlanner from "@/app/trip/new/page";
@@ -24,6 +25,7 @@ vi.mock("@/services/event.service", () => ({ trackInteraction: vi.fn() }));
 describe("Example trips", () => {
   it("are the same on the dashboard and the planner", async () => {
     const { unmount } = render(<DashboardPage />);
+    await userEvent.click(await screen.findByRole("button", { name: "See more examples" }));
     for (const trip of EXAMPLE_TRIPS) expect(await screen.findByText(trip.title)).toBeInTheDocument();
     unmount();
 
