@@ -1,9 +1,15 @@
+import { env } from "../config/env.js";
 import User from "../models/user.model.js";
 import { HttpError } from "../utils/httpError.js";
 
 const DUPLICATE_KEY = 11000;
 
 export const signupService = async ({ name, email, password }) => {
+  // Otherwise whoever signs up first with an admin email would become an admin.
+  if (env.adminEmails.includes(email)) {
+    throw new HttpError(403, "This email cannot be used to sign up");
+  }
+
   // Email addresses identify accounts, so duplicates are not allowed.
   if (await User.exists({ email })) {
     throw new HttpError(409, "An account with this email already exists");
