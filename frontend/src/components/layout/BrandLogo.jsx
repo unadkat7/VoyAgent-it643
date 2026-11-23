@@ -50,7 +50,7 @@ export default function BrandLogo({
         </span>
         {subtitle && (
           <span
-            className={`text-[10px] font-medium tracking-wider uppercase mt-0.5 ${
+            className={`text-label font-medium tracking-wider uppercase mt-0.5 ${
               isDark ? "text-bg/55" : "text-muted"
             }`}
           >

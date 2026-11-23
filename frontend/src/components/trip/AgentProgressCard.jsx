@@ -113,7 +113,7 @@ export default function AgentProgressCard({ loading }) {
       exit={{ opacity: 0 }}
       role="status"
       aria-live="polite"
-      className="w-full bg-white border border-border rounded-3xl p-5 sm:p-6 shadow-[0_14px_36px_-26px_rgba(24,20,17,0.2)] my-2"
+      className="w-full bg-white border border-border rounded-3xl p-4 sm:p-6 my-2"
     >
       {/* Masthead */}
       <div className="flex items-center justify-between gap-2 mb-4">
@@ -123,7 +123,7 @@ export default function AgentProgressCard({ loading }) {
             Planning Engine Active
           </span>
         </div>
-        <span className="font-mono text-[10px] uppercase tracking-wider text-muted bg-bg border border-border px-2.5 py-1 rounded-full">
+        <span className="hidden sm:inline font-mono text-label uppercase tracking-wider text-muted bg-bg border border-border px-2.5 py-1 rounded-full">
           3-Way Parallel Graph
         </span>
       </div>
@@ -156,7 +156,7 @@ export default function AgentProgressCard({ loading }) {
       <BranchLines active={phase >= 2} direction="out" />
 
       {/* Stage 2: Parallel Specialist Nodes */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mt-2 sm:mt-0">
+      <div className="grid grid-cols-3 gap-2 mt-2 sm:gap-2.5 sm:mt-0">
         {PARALLEL_NODES.map((node, idx) => {
           const Icon = node.icon;
           const isActive = phase >= 2;
@@ -168,7 +168,7 @@ export default function AgentProgressCard({ loading }) {
               initial={{ opacity: 0.4, scale: 0.98 }}
               animate={isActive ? { opacity: 1, scale: 1 } : { opacity: 0.4, scale: 0.98 }}
               transition={{ delay: idx * 0.1, duration: 0.25 }}
-              className="p-3.5 rounded-2xl border transition-colors"
+              className="p-2.5 sm:p-3.5 rounded-2xl border transition-colors"
               style={{
                 borderColor: isActive ? `${node.border}55` : "#E7E0D5",
                 backgroundColor: isActive ? node.bg : "#FAF8F4",
@@ -187,7 +187,7 @@ export default function AgentProgressCard({ loading }) {
                 )}
                 {isDone && <CheckCircle2 className="w-3.5 h-3.5 text-success" />}
               </div>
-              <p className="text-[11px] leading-relaxed text-ink-soft/85">
+              <p className="hidden sm:block text-label leading-relaxed text-ink-soft/85">
                 {!isActive ? "Queued..." : isDone ? node.done : node.doing}
               </p>
               {isActive && !isDone && (
