@@ -49,7 +49,7 @@ export default function LoginPage() {
       footer={
         <p className="text-center text-sm text-muted">
           No account yet?{" "}
-          <Link href="/signup" className="text-primary font-semibold hover:underline">
+          <Link href="/signup" className="inline-flex min-h-tap items-center px-1 text-primary font-semibold hover:underline">
             Create one
           </Link>
         </p>

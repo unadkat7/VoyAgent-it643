@@ -73,7 +73,7 @@ export default function SignupPage() {
       footer={
         <p className="text-center text-sm text-muted">
           Already have an account?{" "}
-          <Link href="/login" className="text-primary font-semibold hover:underline">
+          <Link href="/login" className="inline-flex min-h-tap items-center px-1 text-primary font-semibold hover:underline">
             Sign in
           </Link>
         </p>
@@ -128,7 +128,7 @@ export default function SignupPage() {
             }
           />
           <p id="password-rule"
-              className={`text-xs flex items-center gap-1.5 ${
+              className={`text-sm flex items-center gap-1.5 ${
                 meetsLength ? "text-success" : "text-muted"
               }`}
             >
@@ -165,7 +165,7 @@ export default function SignupPage() {
         <Button type="submit" loading={loading} disabled={loading} className="mt-2">
           {loading ? "Creating account..." : "Create Account"}
         </Button>
-        <p className="text-[11px] text-muted text-center">
+        <p className="text-label text-muted text-center">
           We record your country, device type and the pages you use to measure usage. We never
           store your full IP address.
         </p>

@@ -11,7 +11,7 @@ export default function Input({
   return (
     <div className="flex flex-col gap-1.5">
       {label && (
-        <label htmlFor={id} className="text-xs font-semibold uppercase tracking-wider text-ink-soft">
+        <label htmlFor={id} className="text-sm font-semibold text-ink-soft">
           {label}
         </label>
       )}
@@ -29,8 +29,8 @@ export default function Input({
           aria-describedby={error || hint ? `${id}-detail` : undefined}
           className={`
             w-full bg-surface-warm border rounded-xl
-            text-sm text-ink placeholder-faint
-            px-4 py-3
+            min-h-12 text-base text-ink placeholder-faint
+            px-4 py-2.5
             ${Icon ? "pl-10" : ""}
             ${rightElement ? "pr-10" : ""}
             ${

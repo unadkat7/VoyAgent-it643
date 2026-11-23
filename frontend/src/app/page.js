@@ -10,6 +10,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import BrandLogo from "@/components/layout/BrandLogo";
+import LandingStickyCta from "@/components/layout/LandingStickyCta";
 
 const PIPELINE_STEPS = [
   {
@@ -65,10 +66,10 @@ export default function LandingPage() {
           <BrandLogo href="/" />
 
           <div className="hidden md:flex items-center gap-7 text-sm font-medium text-muted">
-            <a href="#how-it-works" className="hover:text-ink transition-colors">
+            <a href="#how-it-works" className="inline-flex min-h-tap items-center hover:text-ink transition-colors">
               How it works
             </a>
-            <a href="#why-voyagent" className="hover:text-ink transition-colors">
+            <a href="#why-voyagent" className="inline-flex min-h-tap items-center hover:text-ink transition-colors">
               Honest Travel Math
             </a>
           </div>
@@ -76,13 +77,13 @@ export default function LandingPage() {
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <Link
               href="/login"
-              className="whitespace-nowrap text-xs sm:text-sm font-semibold text-ink-soft hover:text-ink px-2.5 sm:px-3 py-2 rounded-xl transition-colors"
+              className="whitespace-nowrap inline-flex min-h-tap items-center text-sm font-semibold text-ink-soft hover:text-ink px-3 rounded-xl transition-colors"
             >
               Sign In
             </Link>
             <Link
               href="/signup"
-              className="whitespace-nowrap inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-white bg-ink hover:bg-ink-hover px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all shadow-sm"
+              className="whitespace-nowrap inline-flex min-h-tap items-center gap-1.5 text-sm font-semibold text-white bg-ink hover:bg-ink-hover px-4 rounded-xl transition-all shadow-sm"
             >
               Get Started
               <ArrowRight className="w-3.5 h-3.5 shrink-0" aria-hidden />
@@ -104,10 +105,10 @@ export default function LandingPage() {
                 Tell us where you want to go and what you want to spend. Get stays, flights, and a day-by-day itinerary in rupees.
               </p>
 
-              <div className="flex flex-wrap items-center gap-3 pt-1">
+              <div id="hero-cta" className="flex flex-wrap items-center gap-3 pt-1">
                 <Link
                   href="/signup"
-                  className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold text-sm px-6 py-3.5 rounded-2xl shadow-lg shadow-primary/20 transition-all"
+                  className="inline-flex min-h-12 items-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold text-base px-6 rounded-2xl shadow-lg shadow-primary/20 transition-all"
                 >
                   Start planning for free
                   <ArrowRight className="w-4 h-4" aria-hidden />
@@ -121,16 +122,16 @@ export default function LandingPage() {
                 {/* Top Dark Espresso Dossier Masthead */}
                 <div className="bg-atlas-dark text-bg px-5 sm:px-6 py-5">
                   <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-                    <span className="font-mono text-[10px] sm:text-[11px] uppercase tracking-widest text-primary-soft whitespace-nowrap">
+                    <span className="font-mono text-label uppercase tracking-widest text-primary-soft whitespace-nowrap">
                       Sample Trip Plan · Planned
                     </span>
-                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#86EFAC] bg-success/25 border border-[#86EFAC]/25 px-2.5 py-0.5 rounded-full whitespace-nowrap">
+                    <span className="inline-flex items-center gap-1 text-label font-medium text-[#86EFAC] bg-success/25 border border-[#86EFAC]/25 px-2.5 py-0.5 rounded-full whitespace-nowrap">
                       Feasible in Budget
                     </span>
                   </div>
                   <div className="flex flex-wrap items-end justify-between gap-4">
                     <div>
-                      <p className="font-mono text-[11px] sm:text-xs text-bg/55 mb-1">
+                      <p className="font-mono text-label text-bg/55 mb-1">
                         AHMEDABAD → GOA · 10 DEC – 13 DEC
                       </p>
                       <h2 className="font-display text-3xl font-semibold tracking-tight">
@@ -138,11 +139,11 @@ export default function LandingPage() {
                       </h2>
                     </div>
                     <div className="text-left sm:text-right">
-                      <p className="text-[11px] text-bg/55">Estimated Cost</p>
+                      <p className="text-label text-bg/55">Estimated Cost</p>
                       <p className="font-mono text-2xl font-semibold text-bg">
                         ₹17,500
                       </p>
-                      <p className="text-[11px] text-bg/50">of ₹40,000 Budget</p>
+                      <p className="text-label text-bg/50">of ₹40,000 Budget</p>
                     </div>
                   </div>
                 </div>
@@ -153,7 +154,7 @@ export default function LandingPage() {
                   <div>
                     <div className="flex items-center justify-between text-xs mb-1.5">
                       <span className="font-semibold text-ink-soft">INR Budget Allocation</span>
-                      <span className="font-mono text-[11px] text-success">
+                      <span className="font-mono text-label text-success">
                         44% used · ₹22,500 buffer
                       </span>
                     </div>
@@ -161,7 +162,7 @@ export default function LandingPage() {
                       <div className="bg-primary h-full" style={{ width: "19%" }} />
                       <div className="bg-ink h-full" style={{ width: "25%" }} />
                     </div>
-                    <div className="flex items-center gap-4 mt-2 text-[11px] text-muted">
+                    <div className="flex items-center gap-4 mt-2 text-label text-muted">
                       <span className="flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-primary" aria-hidden />
                         Stays ₹7,500
@@ -185,12 +186,12 @@ export default function LandingPage() {
                         <span className="w-7 h-7 rounded-lg bg-warning-light text-warning flex items-center justify-center">
                           <Building2 className="w-3.5 h-3.5" aria-hidden />
                         </span>
-                        <span className="text-[10px] font-semibold text-success bg-success-light px-1.5 py-0.5 rounded">
+                        <span className="text-label font-semibold text-success bg-success-light px-1.5 py-0.5 rounded">
                           Live price
                         </span>
                       </div>
                       <p className="text-xs font-bold text-ink truncate">Sea Breeze Resort</p>
-                      <p className="font-mono text-[11px] text-muted mt-0.5">₹3,200 / night</p>
+                      <p className="font-mono text-label text-muted mt-0.5">₹3,200 / night</p>
                     </div>
 
                     <div className="rounded-2xl bg-surface-warm border border-border p-3.5">
@@ -198,10 +199,10 @@ export default function LandingPage() {
                         <span className="w-7 h-7 rounded-lg bg-[#E0F2FE] text-[#0369A1] flex items-center justify-center">
                           <Plane className="w-3.5 h-3.5" aria-hidden />
                         </span>
-                        <span className="font-mono text-[10px] text-muted">Non-stop</span>
+                        <span className="font-mono text-label text-muted">Non-stop</span>
                       </div>
                       <p className="text-xs font-bold text-ink">AMD → GOI</p>
-                      <p className="font-mono text-[11px] text-muted mt-0.5">₹5,000 / traveler</p>
+                      <p className="font-mono text-label text-muted mt-0.5">₹5,000 / traveler</p>
                     </div>
 
                     <div className="rounded-2xl bg-surface-warm border border-border p-3.5">
@@ -209,10 +210,10 @@ export default function LandingPage() {
                         <span className="w-7 h-7 rounded-lg bg-success-light text-success flex items-center justify-center">
                           <Calendar className="w-3.5 h-3.5" aria-hidden />
                         </span>
-                        <span className="font-mono text-[10px] text-primary">3 Days</span>
+                        <span className="font-mono text-label text-primary">3 Days</span>
                       </div>
                       <p className="text-xs font-bold text-ink truncate">Baga · Aguada</p>
-                      <p className="text-[11px] text-muted mt-0.5 flex items-center gap-1">
+                      <p className="text-label text-muted mt-0.5 flex items-center gap-1">
                         <MapPin className="w-3 h-3 text-primary" aria-hidden />
                         Pinned on Map
                       </p>
@@ -226,9 +227,9 @@ export default function LandingPage() {
       </section>
 
       {/* ── How the Planning Engine Works ── */}
-      <section id="how-it-works" className="bg-white border-b border-border py-18 lg:py-24 px-5 sm:px-6">
+      <section id="how-it-works" className="bg-white border-b border-border py-12 lg:py-24 px-4 sm:px-6">
         <div className="max-w-6xl mx-auto">
-          <div className="max-w-2xl mb-12">
+          <div className="max-w-2xl mb-8 lg:mb-12">
             <p className="font-mono text-xs uppercase tracking-[0.18em] text-primary mb-2.5">
               Planning Engine Pipeline
             </p>
@@ -263,9 +264,9 @@ export default function LandingPage() {
       </section>
 
       {/* ── Honest Travel Math Bento ── */}
-      <section id="why-voyagent" className="py-18 lg:py-24 px-5 sm:px-6 bg-bg">
+      <section id="why-voyagent" className="py-12 lg:py-24 px-4 sm:px-6 bg-bg">
         <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8 lg:mb-12">
             <div className="max-w-xl">
               <p className="font-mono text-xs uppercase tracking-[0.18em] text-primary mb-2.5">
                 Designed for Trust
@@ -290,7 +291,7 @@ export default function LandingPage() {
                   <div className="w-11 h-11 rounded-xl bg-primary-light text-primary flex items-center justify-center mb-5">
                     <Icon className="w-5 h-5" aria-hidden />
                   </div>
-                  <p className="font-mono text-[11px] uppercase tracking-wider text-muted mb-2">
+                  <p className="font-mono text-label uppercase tracking-wider text-muted mb-2">
                     {pillar.tag}
                   </p>
                   <h3 className="font-display text-xl font-semibold text-ink mb-2.5">
@@ -305,7 +306,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Dark Espresso Editorial CTA Strip ── */}
-      <section className="bg-atlas-dark text-bg py-20 px-5 sm:px-6">
+      <section id="final-cta" className="bg-atlas-dark text-bg py-14 sm:py-20 px-4 sm:px-6">
         <div className="max-w-3xl mx-auto text-center">
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary-soft mb-3">
             Ready When You Are
@@ -344,6 +345,7 @@ export default function LandingPage() {
           </p>
         </div>
       </footer>
+      <LandingStickyCta />
     </div>
   );
 }

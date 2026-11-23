@@ -88,14 +88,14 @@ export default function AuthShell({
             </div>
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-muted hover:text-ink transition-colors ml-auto lg:ml-0"
+              className="inline-flex min-h-tap items-center gap-1.5 px-1 text-sm font-medium text-muted hover:text-ink transition-colors ml-auto lg:ml-0"
             >
-              <ArrowLeft className="w-3.5 h-3.5" aria-hidden />
+              <ArrowLeft className="w-4 h-4" aria-hidden />
               Back to home
             </Link>
           </div>
 
-          <div className="w-full max-w-[420px] mx-auto my-auto py-4">
+          <div className="w-full max-w-[420px] mx-auto mt-4 mb-auto py-4 sm:my-auto">
             <div className="bg-white border border-border rounded-2xl p-4 sm:rounded-3xl sm:p-7 shadow-[0_14px_40px_-24px_rgba(24,20,17,0.18)]">
               <div className="mb-5">
                 <h1 className="font-display text-3xl font-semibold text-ink tracking-tight mb-1">
@@ -108,7 +108,7 @@ export default function AuthShell({
             </div>
           </div>
 
-          <p className="text-center text-xs text-muted/70 lg:hidden">
+          <p className="text-center text-label text-muted lg:hidden">
             {`© ${new Date().getFullYear()} VoyAgent`}
           </p>
         </div>
