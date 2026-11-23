@@ -23,3 +23,6 @@ class Settings(BaseSettings):
 
     geocoder_enabled: bool = True
     nominatim_url: str = "https://nominatim.openstreetmap.org"
+    osrm_url: str = "https://router.project-osrm.org"
+    # Relative paths are read from the ai-service folder.
+    timetable_path: str = "data/timetable.json.gz"
