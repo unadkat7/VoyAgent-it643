@@ -12,8 +12,8 @@ import {
   tripRouteLabel,
   tripTitle,
 } from "@/lib/tripView";
-import FlightList from "@/components/trip/FlightList";
 import HotelList from "@/components/trip/HotelList";
+import TravelPanel from "@/components/trip/TravelPanel";
 import ItineraryList from "@/components/trip/ItineraryList";
 import TripOverview from "@/components/trip/TripOverview";
 import SegmentedControl from "@/components/ui/SegmentedControl";
@@ -31,7 +31,8 @@ const TABS = [
   { value: "itinerary", label: "Itinerary" },
   { value: "map", label: "Map" },
   { value: "hotels", label: "Stays" },
-  { value: "flights", label: "Flights" },
+  // The id stays "flights" so tab telemetry keeps counting under the same name.
+  { value: "flights", label: "Travel" },
   { value: "summary", label: "Summary" },
 ];
 
@@ -255,9 +256,7 @@ export default function TripPlanView({ trip }) {
           <HotelList hotels={plan.hotels} nights={plan.nights} notes={plan.notes} onTrack={handleTrack} />
         )}
 
-        {activeTab === "flights" && (
-          <FlightList flights={plan.flights} partySize={partySize} notes={plan.notes} />
-        )}
+        {activeTab === "flights" && <TravelPanel plan={plan} />}
 
         {activeTab === "summary" && <TripOverview plan={plan} />}
       </main>

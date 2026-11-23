@@ -94,7 +94,7 @@ describe("Travel panel", () => {
     render(<TravelPanel plan={TRAVEL_PLAN} />);
 
     expect(screen.getByText("Change at Haridwar Jn · wait 2 h 50 min")).toBeInTheDocument();
-    expect(screen.getByText("Runs daily")).toBeInTheDocument();
+    expect(screen.getByText(/31 h 10 min · Runs daily/)).toBeInTheDocument();
   });
 
   it("lists trains back", () => {

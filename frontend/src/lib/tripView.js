@@ -133,6 +133,64 @@ export function budgetBreakdown(plan) {
   };
 }
 
+// Train and road helpers. Train times are local "YYYY-MM-DDTHH:MM" strings with no time zone,
+// so they are read as text, never through Date parsing that could shift them.
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+function dayParts(isoDate) {
+  const [year, month, day] = isoDate.slice(0, 10).split("-").map(Number);
+  return { year, month, day, weekday: new Date(Date.UTC(year, month - 1, day)).getUTCDay() };
+}
+
+function daysBetween(fromIso, toIso) {
+  const from = dayParts(fromIso);
+  const to = dayParts(toIso);
+  return Math.round(
+    (Date.UTC(to.year, to.month - 1, to.day) - Date.UTC(from.year, from.month - 1, from.day)) /
+      86_400_000
+  );
+}
+
+export function formatShortDate(isoDate) {
+  const { year, month, day } = dayParts(isoDate);
+  return `${day} ${MONTHS[month - 1]} ${year}`;
+}
+
+export function formatTrainDeparture(iso) {
+  const { month, day, weekday } = dayParts(iso);
+  return `${WEEKDAYS[weekday]} ${day} ${MONTHS[month - 1]}, ${iso.slice(11, 16)}`;
+}
+
+// A clock time, with "+1 day" when it falls after the day the journey starts.
+export function formatTrainTime(iso, startIso) {
+  const later = daysBetween(startIso, iso);
+  const suffix = later > 0 ? ` +${later} ${later === 1 ? "day" : "days"}` : "";
+  return `${iso.slice(11, 16)}${suffix}`;
+}
+
+export function formatMinutes(total) {
+  const hours = Math.floor(total / 60);
+  const minutes = total % 60;
+  if (hours === 0) return `${minutes} min`;
+  return minutes === 0 ? `${hours} h` : `${hours} h ${minutes} min`;
+}
+
+export function formatRunningDays(days) {
+  if (!days?.length) return null;
+  return days.length === 7 ? "Runs daily" : `Runs ${days.join(", ")}`;
+}
+
+export function formatRoadSummary(route) {
+  const km = Number(route.distance_km).toLocaleString("en-IN");
+  return `${km} km · about ${route.hours_low}–${route.hours_high} h`;
+}
+
+export function roadEndNote(route) {
+  if (route.road_ends_km_before == null) return null;
+  return `The road ends about ${route.road_ends_km_before} km before ${route.to_place}; the rest is on foot or by other transport.`;
+}
+
 // Turn structured Guided Trip Brief fields into a natural-language prompt for the Planning Engine.
 export function composeBriefPrompt(brief) {
   const parts = [];
