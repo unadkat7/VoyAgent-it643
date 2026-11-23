@@ -19,7 +19,7 @@ frontend (Next.js) --cookie--> backend (Express + MongoDB) --X-Internal-Key--> a
 4. **No silent Destination swap.** A place with no known Airport Code never falls back to another city's airport. Flights are skipped and the Trip Plan carries a Note that says why.
    `ai-service/domain/airports.py:54` (`airport_code`), `ai-service/agents/flights.py:14` (`origin_code`).
 5. **Only the owner can use a Trip.** Reading, continuing or deleting someone else's Trip gives 403, a missing Trip gives 404 and a malformed id gives 400. A `planned` Trip is final and cannot be re-planned (409).
-   `backend/src/domain/trip.js:40` (`isOwnedBy`), `backend/src/services/trip.service.js:8` (`findOwnedTrip`).
+   `backend/src/domain/trip.js:45` (`isOwnedBy`), `backend/src/services/trip.service.js:9` (`findOwnedTrip`).
 
 ## Three design decisions
 
@@ -37,9 +37,9 @@ frontend (Next.js) --cookie--> backend (Express + MongoDB) --X-Internal-Key--> a
 
 ### 3. Trip Status is an explicit state machine (types as design)
 
-- **Where:** `backend/src/domain/trip.js:24` (`nextStatus`), used at `backend/src/services/trip.service.js:44` (`nextStatus`).
+- **Where:** `backend/src/domain/trip.js:24` (`nextStatus`), used at `backend/src/services/trip.service.js:45` (`nextStatus`).
 - **Before:** Early `backend/src/models/trip.model.js` (`44aa1cb`) allowed the raw strings `clarification_needed | completed | error`. The controller assigned them directly, `error` was never set, a completed Trip could be planned again, and the UI checked `status === "completed"` by hand. "Completed" also meant "plan ready", which clashes with the travel meaning (flagged in the glossary).
-- **Why it changed:** Illegal states should be impossible to build, not checked everywhere. `TripStatus` is frozen. Moves are allowed only through a transition table where `planned` is terminal. A Planning Engine outage is now recorded as `planning_failed` so the Traveler can retry the same Trip. All of it is pure code with no Express or Mongoose, tested in `backend/tests/domain/trip.test.js:22` (`a planned Trip never changes`).
+- **Why it changed:** Illegal states should be impossible to build, not checked everywhere. `TripStatus` is frozen. Moves are allowed only through a transition table where `planned` is terminal. A Planning Engine outage is now recorded as `planning_failed` so the Traveler can retry the same Trip. All of it is pure code with no Express or Mongoose, tested in `backend/tests/domain/trip.test.js:23` (`a planned Trip never changes`).
 
 ## One boundary
 
@@ -52,6 +52,15 @@ The Trip Map reused this boundary. Coordinates come from `GeocoderPort`; Wikiped
 **What it protects us from:** volatile external Providers. During development we paired Groq with a Cloudflare Workers AI fallback, adjusted Groq and Cloudflare wire handling, added `EstimateSearch` behind SearchApi.io for when the free quota runs out, and placed Wikipedia in front of Nominatim for landmark accuracy. None of these changes touched a domain rule or a test of a rule.
 
 **Cost:** one interface per Provider kind and one more level of indirection. A boundary is only worth its cost where the outside side is likely to change; here our Providers changed repeatedly, so it paid for itself. The backend uses the same idea for the Planning Engine: `backend/src/clients/aiPlanner.client.js:26` (`requestPlan`) is the only file that knows the ai-service wire format.
+
+## Usage evidence (telemetry, admin page, Share links)
+
+To show use by people outside the team, the backend records an Event for each page view, sign-up, login, planning step, Trip view, share and feedback. It's written by one function, `backend/src/services/telemetry.service.js:57` (`recordEvent`), called from the controllers. Admins read it on `/admin` (`frontend/src/components/admin/AdminDashboard.jsx:128` (`AdminPage`)).
+
+- **Privacy by design:** we never store the full IP. An Event keeps the /24 (IPv4) or /48 (IPv6) prefix (`backend/src/services/telemetry.service.js:18` (`ipPrefix`)), the country and city that Vercel puts in request headers, the device from the user agent, and a salted daily Visitor hash (`backend/src/services/telemetry.service.js:38` (`visitorHash`)). Events expire after 90 days. The admin user list masks emails (`backend/src/utils/maskEmail.js:2` (`maskEmail`)).
+- **Tracking never breaks the product:** `recordEvent` catches and logs its own failures (`backend/src/services/telemetry.service.js:71` (`catch (error)`)). It's awaited rather than fire-and-forget, because a Vercel function can be frozen right after the response, which would lose the write.
+- **Admins are not evidence:** stats leave out every `ADMIN_EMAILS` account (`backend/src/controllers/stats.controller.js:24` (`insiderIds`)). Admin emails also cannot sign up publicly (`backend/src/services/auth.service.js:9` (`adminEmails.includes`)); otherwise whoever registered the address first would become an admin. The admin account is created by `npm run seed:admin` from environment variables.
+- **Share links** bring in new Visitors. Only a `planned` Trip can be shared (`backend/src/domain/trip.js:40` (`canShare`)). The public view returns only the Destination and the Trip Plan (`backend/src/services/trip.service.js:84` (`viewSharedTrip`)), and the owner page and share page render the same `frontend/src/components/trip/TripPlanView.jsx:28` (`TripPlanView`).
 
 ## AI use
 

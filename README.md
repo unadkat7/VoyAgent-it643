@@ -17,6 +17,8 @@ SearchApi.io and Cloudflare keys are optional. Without SearchApi.io, Hotels and 
 
 Each Trip Plan has a **Map** tab that pins the Destination, Hotels and Activities by day. It needs no key: places are found with free OpenStreetMap Nominatim (set `GEOCODER_ENABLED=false` to skip), and map tiles come from OpenStreetMap.
 
+Usage evidence: set `ADMIN_EMAILS` and the two `ADMIN_SEED_*` values in `.env`, run `docker compose exec backend npm run seed:admin`, then sign in as the admin and open `/admin`. See [USAGE_EVIDENCE.md](USAGE_EVIDENCE.md).
+
 ## How it fits together
 
 | Part | Stack | Owner |
