@@ -21,7 +21,7 @@ frontend (Next.js) --cookie--> backend (Express + MongoDB) --X-Internal-Key--> a
 5. **Only the owner can use a Trip.** Reading, continuing or deleting someone else's Trip gives 403, a missing Trip gives 404 and a malformed id gives 400. A `planned` Trip is final and cannot be re-planned (409).
    `backend/src/domain/trip.js:45` (`isOwnedBy`), `backend/src/services/trip.service.js:9` (`findOwnedTrip`).
 6. **Trains and roads come from data, and a place is never guessed.** Train numbers and times come only from the timetable, and road distances only from the routing Provider; the LLM may describe them but not write them. A place name that matches two far-apart places of similar size and fame is not guessed: trains and roads are skipped with a Note asking for the state.
-   `ai-service/agents/rail.py:31` (`make_rail_node`), `ai-service/domain/places.py:22` (`pick_place`), with the LLM told not to invent them at `ai-service/agents/compose.py:7` (`train times`).
+   `ai-service/agents/rail.py:32` (`make_rail_node`), `ai-service/domain/places.py:22` (`pick_place`), with the LLM told not to invent them at `ai-service/agents/compose.py:7` (`train times`).
 
 ## Three design decisions
 
