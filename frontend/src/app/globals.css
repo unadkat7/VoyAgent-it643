@@ -4,7 +4,7 @@
 @theme inline {
   --font-display: var(--font-fraunces), Georgia, serif;
   --font-sans: var(--font-jakarta), system-ui, -apple-system, sans-serif;
-  --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, monospace;
+  --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, monospace;
 
   /* Primary terracotta accent */
   --color-primary: #ce532d;
@@ -175,7 +175,25 @@ body {
   html {
     scroll-behavior: auto;
   }
-  .skeleton-shimmer {
+  .skeleton-shimmer, .voyagent-pin-pulse {
     animation: none;
   }
 }
+
+:where(button, a, summary, select, input, textarea):focus-visible {
+  outline: 3px solid #99502c;
+  outline-offset: 3px;
+}
+
+@media (max-width: 47.99rem) {
+  input:not([type="checkbox"], [type="radio"], [type="range"]), textarea, select {
+    font-size: 16px;
+  }
+
+  header button, header a, header summary, [aria-label="Trip sections"] button {
+    min-height: 44px;
+    align-content: center;
+  }
+}
+
+.safe-footer { padding-bottom: max(0.875rem, env(safe-area-inset-bottom)); }

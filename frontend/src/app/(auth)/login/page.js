@@ -19,17 +19,20 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const [formError, setFormError] = useState("");
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email || !password) return toast.error("Please fill all fields");
 
+    setFormError("");
     try {
       setLoading(true);
       const data = await login({ email, password });
       toast.success(data.message);
       router.push("/dashboard");
     } catch (error) {
-      toast.error(error.response?.data?.message || "Something went wrong");
+      setFormError(error.response?.data?.message || "Could not sign in. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -80,13 +83,14 @@ export default function LoginPage() {
               type="button"
               aria-label={showPassword ? "Hide password" : "Show password"}
               onClick={() => setShowPassword(!showPassword)}
-              className="text-[#73685E] hover:text-[#181411] transition-colors p-1"
+              className="text-[#73685E] hover:text-[#181411] transition-colors inline-grid size-11 place-items-center rounded-lg"
             >
               {showPassword ? <EyeOff size={16} aria-hidden /> : <Eye size={16} aria-hidden />}
             </button>
           }
         />
 
+        {formError && <p role="alert" className="text-sm text-danger">{formError}</p>}
         <Button type="submit" loading={loading} disabled={loading} className="mt-2">
           {loading ? "Signing in..." : "Sign In"}
         </Button>

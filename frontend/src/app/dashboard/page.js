@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { getCurrentUser, logout } from "@/services/auth.service";
+import { trackInteraction } from "@/services/event.service";
 import { deleteTrip, getUserTrips } from "@/services/trip.service";
 import {
   formatDateRange,
@@ -105,7 +106,11 @@ export default function DashboardPage() {
   const [deleting, setDeleting] = useState(false);
   const [copiedIdx, setCopiedIdx] = useState(null);
 
+  const [loadError, setLoadError] = useState(false);
+
   const loadPage = useCallback(async () => {
+    setLoading(true);
+    setLoadError(false);
     try {
       const authData = await getCurrentUser();
       if (!authData?.user) return router.replace("/login");
@@ -113,8 +118,9 @@ export default function DashboardPage() {
 
       const tripsData = await getUserTrips();
       if (tripsData?.trips) setTrips(tripsData.trips);
-    } catch {
-      router.replace("/login");
+    } catch (error) {
+      if (error.response?.status === 401) router.replace("/login");
+      else setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -191,6 +197,7 @@ export default function DashboardPage() {
   };
 
   const launchStarter = (prompt) => {
+    trackInteraction("starter_trip_selected", { value: "dashboard", path: "/dashboard" });
     router.push(`/trip/new?prompt=${encodeURIComponent(prompt)}`);
   };
 
@@ -204,7 +211,7 @@ export default function DashboardPage() {
           </div>
         </div>
         <div className="max-w-6xl mx-auto px-6 pt-10 space-y-6">
-          <div className="flex justify-between items-end">
+          <div className="flex flex-wrap gap-3 justify-between items-end">
             <div className="space-y-2">
               <Skeleton className="w-56 h-8" />
               <Skeleton className="w-72 h-4" />
@@ -221,6 +228,13 @@ export default function DashboardPage() {
     );
   }
 
+  if (loadError) return (
+    <main className="mx-auto max-w-md px-5 py-16">
+      <h1 className="font-display text-3xl font-semibold">Couldn’t load your trips</h1>
+      <p className="mt-2 text-sm text-muted">Check your connection and try again.</p>
+      <button type="button" onClick={loadPage} className="mt-4 rounded-xl bg-ink px-4 py-3 text-sm font-semibold text-white">Try again</button>
+    </main>
+  );
   if (!user) return null;
 
   const firstName = user.name.split(" ")[0];
@@ -249,6 +263,7 @@ export default function DashboardPage() {
               </div>
               <button
                 type="button"
+                aria-label="Sign out"
                 onClick={handleLogout}
                 className="flex items-center gap-1.5 text-xs font-semibold text-[#73685E] hover:text-[#CE532D] px-3 py-2 rounded-xl hover:bg-[#F2EDE4]/70 transition-colors"
               >
@@ -259,15 +274,15 @@ export default function DashboardPage() {
           }
         />
 
-        <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-10">
+        <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-5 sm:pt-10">
           {/* ── Editorial Masthead ── */}
-          <section className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pb-8 mb-8 border-b border-[#E7E0D5]">
+          <section className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-4 mb-4 sm:gap-6 sm:pb-8 sm:mb-8 border-b border-[#E7E0D5]">
             <div>
               <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#CE532D] mb-2">
-                Your Travel Atlas
+                Saved trips
               </p>
               <h1 className="font-display text-3xl sm:text-4xl font-semibold text-[#181411] tracking-tight">
-                Welcome back, {firstName}
+                {firstName}’s trips
               </h1>
               <p className="text-sm text-[#73685E] mt-1.5">
                 {trips.length > 0
@@ -299,10 +314,10 @@ export default function DashboardPage() {
                     </span>
                     <div>
                       <h2 className="font-display text-xl font-semibold text-[#181411]">
-                        Plan your first Trip in 3 steps
+                        Plan your first trip
                       </h2>
                       <p className="text-xs text-[#73685E]">
-                        Every Trip Plan checks real INR Budget Caps before composing.
+                        Start with your own plans or choose an example below.
                       </p>
                     </div>
                   </div>
@@ -316,7 +331,7 @@ export default function DashboardPage() {
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 mb-8">
+                <div className="hidden md:grid md:grid-cols-3 gap-3.5 mb-8">
                   {[
                     {
                       num: "01",
@@ -350,29 +365,20 @@ export default function DashboardPage() {
                 <div>
                   <p className="text-xs font-semibold text-[#73685E] uppercase tracking-wider mb-3 flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-[#CE532D]" aria-hidden />
-                    Or launch a curated starter journey
+                    Try a starting itinerary
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {STARTER_JOURNEYS.map((item, idx) => (
                       <div
                         key={item.title}
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => launchStarter(item.prompt)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            launchStarter(item.prompt);
-                          }
-                        }}
-                        className="group p-4 rounded-2xl bg-[#FDFBF7] border border-[#E7E0D5] hover:border-[#CE532D]/50 hover:bg-white cursor-pointer transition-all flex items-start justify-between gap-3"
+                        className="group relative p-4 rounded-2xl bg-[#FDFBF7] border border-[#E7E0D5] hover:border-[#CE532D]/50 hover:bg-white cursor-pointer transition-all flex items-start justify-between gap-3"
                       >
                         <div className="min-w-0">
                           <p className="font-mono text-[11px] text-[#CE532D] uppercase tracking-wider">
                             {item.route}
                           </p>
                           <p className="font-display text-lg font-semibold text-[#181411] group-hover:text-[#CE532D] transition-colors">
-                            {item.title}
+                            <button type="button" onClick={() => launchStarter(item.prompt)} className="text-left after:absolute after:inset-0">{item.title}</button>
                           </p>
                           <p className="text-xs text-[#73685E] mt-1">{item.meta}</p>
                         </div>
@@ -381,7 +387,7 @@ export default function DashboardPage() {
                           onClick={(e) => copyPrompt(e, item.prompt, idx)}
                           title="Copy prompt"
                           aria-label={`Copy prompt for ${item.title}`}
-                          className="p-2 rounded-xl border border-[#E7E0D5] bg-white text-[#73685E] hover:text-[#CE532D] hover:border-[#CE532D]/40 transition-colors shrink-0"
+                          className="relative z-10 grid size-11 place-items-center rounded-xl border border-[#E7E0D5] bg-white text-[#73685E] hover:text-[#CE532D] hover:border-[#CE532D]/40 transition-colors shrink-0"
                         >
                           {copiedIdx === idx ? (
                             <CheckCheck className="w-3.5 h-3.5 text-[#15803D]" aria-hidden />
@@ -488,13 +494,12 @@ export default function DashboardPage() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: Math.min(idx * 0.04, 0.25) }}
-                        onClick={() => router.push(tripLink(trip))}
                         className="group relative bg-white border border-[#E7E0D5] hover:border-[#CE532D]/45 hover:shadow-[0_18px_40px_-24px_rgba(24,20,17,0.28)] hover:-translate-y-0.5 rounded-2xl overflow-hidden cursor-pointer transition-all flex flex-col justify-between"
                       >
                         {/* Top status accent line */}
                         <div className={`h-1 w-full ${TONE_STRIPE[status.tone]}`} />
 
-                        <div className="p-5 flex-1 flex flex-col">
+                        <div className="px-4 py-3 md:p-5 flex-1 flex flex-col">
                           {/* Status + delete */}
                           <div className="flex items-center justify-between gap-2 mb-3.5">
                             <span
@@ -505,7 +510,7 @@ export default function DashboardPage() {
                             <button
                               type="button"
                               onClick={(e) => askDeleteTrip(e, trip._id)}
-                              className="text-[#B8ABA0] hover:text-[#C82828] hover:bg-[#FEF2F2] p-1.5 rounded-lg transition-colors"
+                              className="relative z-10 min-h-11 min-w-11 grid place-items-center text-[#73685E] hover:text-[#C82828] hover:bg-[#FEF2F2] p-1.5 rounded-lg transition-colors"
                               title="Delete trip"
                               aria-label={`Delete ${tripTitle(trip)}`}
                             >
@@ -520,12 +525,12 @@ export default function DashboardPage() {
                             </p>
                           )}
                           <h3 className="font-display text-xl font-semibold text-[#181411] group-hover:text-[#CE532D] transition-colors leading-snug mb-2">
-                            {tripTitle(trip)}
+                            <Link href={tripLink(trip)} className="after:absolute after:inset-0">{tripTitle(trip)}</Link>
                           </h3>
 
                           {/* Planned Trip structured facts */}
                           {plan ? (
-                            <div className="space-y-3 mt-1 flex-1 flex flex-col justify-between">
+                            <div className="hidden md:flex space-y-3 mt-1 flex-1 flex-col justify-between">
                               <div className="flex flex-wrap gap-1.5 text-[11px] text-[#3B342E]">
                                 {plan.check_in && plan.check_out && (
                                   <span className="inline-flex items-center gap-1 bg-[#FAF8F4] border border-[#E7E0D5] px-2 py-0.5 rounded-md">
@@ -586,7 +591,7 @@ export default function DashboardPage() {
                         </div>
 
                         {/* Card Footer */}
-                        <div className="px-5 py-3.5 bg-[#FDFBF7] border-t border-[#F2EDE4] flex items-center justify-between">
+                        <div className="px-4 py-2 md:px-5 md:py-3.5 bg-[#FDFBF7] border-t border-[#F2EDE4] flex items-center justify-between">
                           <span className="flex items-center gap-1.5 text-[11px] text-[#73685E]">
                             <Clock className="w-3.5 h-3.5" aria-hidden />
                             {dateStr}

@@ -8,7 +8,6 @@ import {
   MapPin,
   Plane,
   ShieldCheck,
-  Sparkles,
 } from "lucide-react";
 import BrandLogo from "@/components/layout/BrandLogo";
 
@@ -94,28 +93,15 @@ export default function LandingPage() {
 
       {/* ── Asymmetric Editorial Split Hero ── */}
       <section className="relative overflow-hidden bg-atlas-grid border-b border-[#E7E0D5]">
-        <div className="max-w-6xl mx-auto px-5 sm:px-6 pt-14 pb-16 lg:pt-20 lg:pb-24">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-10 items-center">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-9 pb-10 lg:pt-20 lg:pb-24">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-7 lg:gap-10 items-center">
             {/* Left Copy Column */}
-            <div className="lg:col-span-6 space-y-6">
-              <div className="inline-flex items-center gap-2 text-[10px] sm:text-[11px] font-mono uppercase tracking-[0.08em] sm:tracking-[0.14em] text-[#B54320] bg-[#FCEEE8] border border-[#F3CFC0] px-3 sm:px-3.5 py-1.5 rounded-full">
-                <Sparkles className="w-3.5 h-3.5 shrink-0" aria-hidden />
-                <span>LangGraph Multi-Agent · INR Budget-First</span>
-              </div>
-
-              <h1 className="font-display text-4xl sm:text-5xl lg:text-[56px] font-semibold text-[#181411] leading-[1.06] tracking-tight">
-                Describe the journey.{" "}
-                <span className="italic text-[#CE532D] font-medium">
-                  Three specialists
-                </span>{" "}
-                craft the plan.
+            <div className="lg:col-span-6 space-y-4 lg:space-y-6">
+              <h1 className="font-display text-[clamp(2.7rem,6vw,4.5rem)] font-semibold text-ink leading-[1.02] tracking-tight">
+                Your next trip, <span className="italic text-primary-hover">within budget.</span>
               </h1>
-
-              <p className="text-base sm:text-[17px] text-[#73685E] leading-relaxed max-w-xl">
-                Tell VoyAgent your Origin, Destination, Days, Travel Party, and INR Budget.
-                Specialist agents research Stays, Flights, and a day-by-day Itinerary in
-                parallel—then verify Budget Feasibility and pin every stop on an interactive
-                Trip Map.
+              <p className="max-w-lg text-base sm:text-lg text-muted leading-relaxed">
+                Tell us where you want to go and what you want to spend. Get stays, flights, and a day-by-day itinerary in rupees.
               </p>
 
               <div className="flex flex-wrap items-center gap-3 pt-1">
@@ -126,27 +112,6 @@ export default function LandingPage() {
                   Start planning for free
                   <ArrowRight className="w-4 h-4" aria-hidden />
                 </Link>
-                <Link
-                  href="/login"
-                  className="inline-flex items-center gap-2 text-sm font-semibold text-[#181411] px-6 py-3.5 rounded-2xl border border-[#E7E0D5] bg-white hover:bg-[#F2EDE4]/60 transition-all"
-                >
-                  Sign in to saved Trips
-                </Link>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-3 text-xs text-[#73685E]">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#15803D]" aria-hidden />
-                  Strict INR Budget Caps
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#CE532D]" aria-hidden />
-                  OpenStreetMap Trip Map
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#181411]" aria-hidden />
-                  Free · No Credit Card
-                </span>
               </div>
             </div>
 
@@ -183,7 +148,7 @@ export default function LandingPage() {
                 </div>
 
                 {/* Body preview: Budget bar + 3 parallel agent strips + mini map pins */}
-                <div className="p-6 space-y-5">
+                <div className="p-4 sm:p-6 space-y-4">
                   {/* Budget Feasibility Bar */}
                   <div>
                     <div className="flex items-center justify-between text-xs mb-1.5">
@@ -213,7 +178,8 @@ export default function LandingPage() {
                   </div>
 
                   {/* Three Specialist Cards */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  <p className="sm:hidden text-sm text-ink-soft"><strong>Day 1</strong> · Baga Beach and Fort Aguada</p>
+                    <div className="hidden sm:grid sm:grid-cols-3 gap-2.5">
                     <div className="rounded-2xl bg-[#FDFBF7] border border-[#E7E0D5] p-3.5">
                       <div className="flex items-center justify-between mb-2">
                         <span className="w-7 h-7 rounded-lg bg-[#FEF7E6] text-[#B45309] flex items-center justify-center">

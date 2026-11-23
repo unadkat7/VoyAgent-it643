@@ -25,6 +25,8 @@ export default function Input({
 
         <input
           id={id}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error || hint ? `${id}-detail` : undefined}
           className={`
             w-full bg-[#FDFBF7] border rounded-xl
             text-sm text-[#181411] placeholder-[#A89E94]
@@ -43,14 +45,14 @@ export default function Input({
         />
 
         {rightElement && (
-          <span className="absolute right-3.5 flex items-center">{rightElement}</span>
+          <span className="absolute right-1 flex items-center">{rightElement}</span>
         )}
       </div>
 
       {error ? (
-        <p className="text-xs text-[#C82828]">{error}</p>
+        <p id={`${id}-detail`} className="text-sm text-[#C82828]">{error}</p>
       ) : hint ? (
-        <p className="text-xs text-[#73685E]">{hint}</p>
+        <p id={`${id}-detail`} className="text-sm text-[#73685E]">{hint}</p>
       ) : null}
     </div>
   );

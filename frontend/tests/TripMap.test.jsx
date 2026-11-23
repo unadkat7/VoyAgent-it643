@@ -40,4 +40,17 @@ describe("TripMap", () => {
     expect(screen.queryByTestId("pin")).not.toBeInTheDocument();
     expect(screen.getByText(/no map pins/i)).toBeInTheDocument();
   });
+
+  it("reports map interactions when onTrack is provided", async () => {
+    const onTrack = vi.fn();
+    render(<TripMap plan={LOCATED_PLAN} onTrack={onTrack} />);
+
+    await userEvent.click(screen.getByRole("button", { name: "Satellite" }));
+    await userEvent.click(screen.getByRole("button", { name: "Day 1" }));
+    await userEvent.click(screen.getByRole("button", { name: /expand immersive fullscreen map/i }));
+
+    expect(onTrack).toHaveBeenCalledWith("map_style_changed", "satellite");
+    expect(onTrack).toHaveBeenCalledWith("map_day_filtered", "day");
+    expect(onTrack).toHaveBeenCalledWith("map_fullscreen_opened");
+  });
 });

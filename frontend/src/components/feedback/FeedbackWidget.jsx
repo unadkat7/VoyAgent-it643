@@ -14,11 +14,22 @@ const RATINGS = [
   { value: 5, label: "Loved it" },
 ];
 
+const CATEGORIES = [
+  { id: "general", label: "General" },
+  { id: "planning", label: "Planning" },
+  { id: "itinerary", label: "Itinerary" },
+  { id: "budget", label: "Budget" },
+  { id: "map", label: "Map" },
+  { id: "bug", label: "Bug" },
+  { id: "feature", label: "Idea" },
+];
+
 // Feedback is part of the project's evidence of outside use (see USAGE_EVIDENCE.md).
 export default function FeedbackWidget({ page }) {
   const [open, setOpen] = useState(false);
   const [rating, setRating] = useState(0);
   const [hovered, setHovered] = useState(0);
+  const [category, setCategory] = useState("general");
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
 
@@ -30,11 +41,12 @@ export default function FeedbackWidget({ page }) {
     if (!rating) return toast.error("Pick a rating first");
     try {
       setSending(true);
-      await sendFeedback({ rating, message: message.trim(), page });
+      await sendFeedback({ rating, message: message.trim(), page, category });
       toast.success("Thanks for the feedback!");
       setOpen(false);
       setRating(0);
       setHovered(0);
+      setCategory("general");
       setMessage("");
     } catch {
       toast.error("Could not send feedback. Please try again.");
@@ -44,7 +56,7 @@ export default function FeedbackWidget({ page }) {
   };
 
   return (
-    <div className="fixed bottom-5 right-5 z-40">
+    <div className="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] right-3 sm:right-5 z-40">
       <AnimatePresence mode="wait">
         {!open ? (
           <motion.button
@@ -67,7 +79,7 @@ export default function FeedbackWidget({ page }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 12, scale: 0.96 }}
             transition={{ duration: 0.18 }}
-            className="w-[calc(100vw-2.5rem)] max-w-xs bg-white border border-[#E7E0D5] rounded-2xl shadow-2xl shadow-[#181411]/15 p-5"
+            className="max-h-[80dvh] overflow-y-auto w-[calc(100vw-1.5rem)] max-w-xs bg-white border border-[#E7E0D5] rounded-2xl shadow-2xl shadow-[#181411]/15 p-5"
           >
             <div className="flex items-center justify-between mb-3">
               <div>
@@ -80,7 +92,7 @@ export default function FeedbackWidget({ page }) {
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Close feedback"
-                className="w-7 h-7 rounded-lg flex items-center justify-center text-[#73685E] hover:text-[#181411] hover:bg-[#FAF8F4] transition-colors"
+                className="w-11 h-11 rounded-lg flex items-center justify-center text-[#73685E] hover:text-[#181411] hover:bg-[#FAF8F4] transition-colors"
               >
                 <X className="w-4 h-4" aria-hidden />
               </button>
@@ -120,6 +132,27 @@ export default function FeedbackWidget({ page }) {
                   {activeLabel}
                 </span>
               )}
+            </div>
+
+            <div className="flex flex-wrap gap-1.5 mb-3" role="group" aria-label="Feedback category">
+              {CATEGORIES.map((item) => {
+                const active = category === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setCategory(item.id)}
+                    aria-pressed={active}
+                    className={`px-2 py-0.5 rounded-full text-[11px] font-medium border transition-colors ${
+                      active
+                        ? "bg-[#181411] border-[#181411] text-[#FAF8F4]"
+                        : "bg-[#FAF8F4] border-[#E7E0D5] text-[#73685E] hover:text-[#181411]"
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                );
+              })}
             </div>
 
             <textarea

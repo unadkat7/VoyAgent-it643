@@ -44,7 +44,7 @@ export default function SharedTripPage() {
       maxWidth="max-w-7xl"
       left={<BrandLogo href="/" size="sm" />}
       right={
-        <Link href="/signup" className={PLAN_YOUR_OWN}>
+        <Link href="/signup?source=share" className={PLAN_YOUR_OWN}>
           <Sparkles className="w-3.5 h-3.5" aria-hidden />
           Plan your own trip
         </Link>
@@ -90,10 +90,9 @@ export default function SharedTripPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-12">
           <div className="bg-white border border-[#E7E0D5] rounded-3xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <p className="text-sm text-[#3B342E]">
-              Someone planned this Trip with VoyAgent. Describe yours in plain words and get stays,
-              flights and a day-by-day plan.
+              Create your own itinerary with stays, flights, and a budget for your group.
             </p>
-            <Link href="/signup" className={PLAN_YOUR_OWN}>
+            <Link href="/signup?source=share" className={PLAN_YOUR_OWN}>
               Plan your own trip
             </Link>
           </div>

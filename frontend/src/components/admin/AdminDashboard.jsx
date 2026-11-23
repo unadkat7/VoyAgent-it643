@@ -2,143 +2,77 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ShieldAlert } from "lucide-react";
+import {
+  Activity,
+  ArrowLeft,
+  Compass,
+  Globe2,
+  LayoutDashboard,
+  Map as MapIcon,
+  ShieldAlert,
+  Users,
+} from "lucide-react";
 import { getAdminOverview } from "@/services/admin.service";
+import { normalizeAdminOverview } from "@/lib/adminAnalytics";
 import AppHeader from "@/components/layout/AppHeader";
 import BrandLogo from "@/components/layout/BrandLogo";
 import Skeleton from "@/components/ui/Skeleton";
+import ActivityAndFeedback from "./ActivityAndFeedback";
+import ActivityHeatmap from "./ActivityHeatmap";
+import AdminMasthead from "./AdminMasthead";
+import AudienceBreakdown from "./AudienceBreakdown";
+import ConversionFunnel from "./ConversionFunnel";
+import FeatureEngagementPanel from "./FeatureEngagementPanel";
+import KpiGrid from "./KpiGrid";
+import RetentionCohortTable from "./RetentionCohortTable";
+import TrafficTrendChart from "./TrafficTrendChart";
+import TravelIntelligencePanel, { StatusDonut } from "./TravelIntelligencePanel";
+import UsersTable from "./UsersTable";
 
-const RANGES = [7, 30, 90];
+const WORKSPACE_TABS = [
+  { id: "overview", label: "Overview", icon: LayoutDashboard },
+  { id: "traffic", label: "Traffic & stages", icon: Activity },
+  { id: "product", label: "TripMap & Product", icon: MapIcon },
+  { id: "travel", label: "Travel Intelligence", icon: Compass },
+  { id: "audience", label: "Audience & Retention", icon: Globe2 },
+  { id: "users", label: "Users & Feedback", icon: Users },
+];
 
-const EVENT_LABELS = {
-  pageview: "Viewed a page",
-  signup: "Signed up",
-  login: "Logged in",
-  trip_plan_requested: "Asked for a plan",
-  trip_planned: "Got a Trip Plan",
-  trip_plan_failed: "Planning failed",
-  trip_viewed: "Opened a Trip",
-  trip_deleted: "Deleted a Trip",
-  trip_shared: "Shared a Trip",
-  shared_trip_viewed: "Opened a shared Trip",
-  feedback_submitted: "Sent feedback",
-};
-
-const CARD = "bg-white border border-[#E7E0D5] rounded-2xl p-5";
-const HEADING = "text-[11px] font-semibold uppercase tracking-wider text-[#73685E] mb-3";
-
-const formatDate = (value) =>
-  value
-    ? new Date(value).toLocaleString("en-IN", {
-        day: "numeric",
-        month: "short",
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-    : "—";
-
-const place = ({ city, country }) => [city, country].filter(Boolean).join(", ") || "Unknown";
-const deviceLabel = (device) =>
-  device ? [device.type, device.os, device.browser].filter(Boolean).join(" · ") : "—";
-
-function StatTile({ label, value, testId }) {
-  return (
-    <div className={CARD} data-testid={testId}>
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-[#73685E]">{label}</p>
-      <p className="font-mono text-3xl font-semibold text-[#181411] mt-2">{value}</p>
-    </div>
-  );
-}
-
-function DailyChart({ daily }) {
-  const max = Math.max(1, ...daily.map((row) => row.visitors));
-  return (
-    <div className={CARD}>
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-[#73685E]">
-          Daily visitors and sign-ups
-        </p>
-        <p className="flex items-center gap-3 text-[11px] text-[#73685E]">
-          <span className="inline-flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-sm bg-[#CE532D]" /> Visitors
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-sm bg-[#181411]" /> Sign-ups
-          </span>
-        </p>
-      </div>
-      <div className="flex items-end gap-[3px] h-40" role="img" aria-label="Daily visitors and sign-ups">
-        {daily.map((row) => (
-          <div
-            key={row.day}
-            className="flex-1 h-full flex flex-col justify-end relative group"
-            title={`${row.day}: ${row.visitors} visitors, ${row.signups} sign-ups, ${row.tripsPlanned} Trips planned`}
-          >
-            <div
-              className="bg-[#CE532D]/80 rounded-t-sm"
-              style={{ height: `${(row.visitors / max) * 100}%` }}
-            />
-            {row.signups > 0 && (
-              <div
-                className="bg-[#181411] absolute bottom-0 left-1/4 right-1/4 rounded-t-sm"
-                style={{ height: `${(Math.min(row.signups, max) / max) * 100}%` }}
-              />
-            )}
-          </div>
-        ))}
-      </div>
-      <div className="flex justify-between font-mono text-[10px] text-[#73685E] mt-1.5">
-        <span>{daily[0]?.day}</span>
-        <span>{daily.at(-1)?.day}</span>
-      </div>
-    </div>
-  );
-}
-
-function BarList({ title, rows, empty }) {
-  const max = Math.max(1, ...rows.map((row) => row.value));
-  return (
-    <div className={CARD}>
-      <p className={HEADING}>{title}</p>
-      {rows.length === 0 ? (
-        <p className="text-sm text-[#73685E]">{empty}</p>
-      ) : (
-        <ul className="space-y-2">
-          {rows.map((row) => (
-            <li key={row.label} className="text-sm">
-              <div className="flex justify-between text-[#3B342E]">
-                <span className="capitalize">{row.label}</span>
-                <span className="font-mono">{row.value}</span>
-              </div>
-              <div className="h-1.5 bg-[#F2EDE4] rounded-full mt-1">
-                <div
-                  className="h-full bg-[#CE532D] rounded-full"
-                  style={{ width: `${(row.value / max) * 100}%` }}
-                />
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
-// Usage evidence for the project: outside sign-ups, activity, devices, places and feedback.
+// Usage evidence & analytics command center for outside users, TripMap, Travel Intelligence and feedback.
 export default function AdminPage() {
   const router = useRouter();
   const [days, setDays] = useState(30);
-  const [data, setData] = useState(null);
+  const [activeTab, setActiveTab] = useState("overview");
+  const [rawData, setRawData] = useState(null);
   const [error, setError] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState(null);
+
+  const [revision, setRevision] = useState(0);
+  const refresh = () => {
+    setRefreshing(true);
+    setRevision((value) => value + 1);
+  };
+  const changePeriod = (value) => {
+    if (value === days) return;
+    setRefreshing(true);
+    setDays(value);
+  };
 
   useEffect(() => {
     let cancelled = false;
     getAdminOverview(days)
       .then((overview) => {
-        if (!cancelled) setData(overview);
+        if (!cancelled) {
+          setRawData({ overview, days });
+          setRefreshing(false);
+          setError(null);
+          setLastUpdatedAt(Date.now());
+        }
       })
       .catch((err) => {
         if (cancelled) return;
+        setRefreshing(false);
         const status = err.response?.status;
         if (status === 401) router.replace("/login");
         else setError(status === 403 ? "Admins only" : "Could not load usage data.");
@@ -146,21 +80,22 @@ export default function AdminPage() {
     return () => {
       cancelled = true;
     };
-  }, [days, router]);
+  }, [days, revision, router]);
 
   const header = (
     <AppHeader
+      maxWidth="max-w-7xl"
       left={
         <button
           type="button"
           onClick={() => router.push("/dashboard")}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#73685E] hover:text-[#181411] bg-white border border-[#E7E0D5] px-3 py-1.5 rounded-xl transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#73685E] hover:text-[#181411] bg-white border border-[#E7E0D5] hover:border-[#D6CCC0] px-3 py-1.5 rounded-xl transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" aria-hidden />
           Dashboard
         </button>
       }
-      center={<BrandLogo href="/dashboard" size="sm" />}
+      center={<BrandLogo href="/dashboard" size="sm" subtitle="Admin" />}
     />
   );
 
@@ -168,176 +103,158 @@ export default function AdminPage() {
     return (
       <div className="min-h-screen bg-[#FAF8F4] font-sans">
         {header}
-        <div className="max-w-md mx-auto mt-24 bg-white border border-[#E7E0D5] rounded-3xl p-8 text-center">
-          <ShieldAlert className="w-6 h-6 text-[#B45309] mx-auto mb-3" aria-hidden />
+        <div className="max-w-md mx-auto mt-24 bg-white border border-[#E7E0D5] rounded-3xl p-8 text-center shadow-sm">
+          <ShieldAlert className="w-7 h-7 text-[#B45309] mx-auto mb-3" aria-hidden />
           <h2 className="font-display text-2xl font-semibold text-[#181411]">{error}</h2>
+          <p className="text-xs text-[#73685E] mt-2">
+            {error === "Admins only" ? "Sign in with an admin account to view analytics." : "Check your connection and try again."}
+          </p>
+          {error !== "Admins only" && <button type="button" disabled={refreshing} onClick={refresh} className="mt-4 rounded-xl bg-ink px-4 py-3 text-sm text-white">Try again</button>}
         </div>
       </div>
     );
   }
 
-  if (!data) {
+  if (!rawData) {
     return (
       <div className="min-h-screen bg-[#FAF8F4] font-sans">
         {header}
-        <div className="max-w-6xl mx-auto px-6 pt-8 grid grid-cols-2 md:grid-cols-5 gap-4">
-          {Array.from({ length: 5 }, (_, index) => (
-            <Skeleton key={index} className="h-24" />
-          ))}
-          <Skeleton className="col-span-2 md:col-span-5 h-56" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8 space-y-5">
+          <Skeleton className="h-44 w-full rounded-3xl" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Array.from({ length: 6 }, (_, index) => (
+              <Skeleton key={index} className="h-28 rounded-2xl" />
+            ))}
+          </div>
+          <Skeleton className="h-64 w-full rounded-2xl" />
         </div>
       </div>
     );
   }
 
-  const { stats, users, activity, feedback } = data;
+  const data = normalizeAdminOverview(rawData.overview);
+  const { stats, users, activity, feedback, feedbackSummary, trips, retention } = data;
 
   return (
     <div className="min-h-screen bg-[#FAF8F4] font-sans pb-24">
       {header}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-8 space-y-6">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h1 className="font-display text-3xl font-semibold text-[#181411]">Usage</h1>
-            <p className="text-sm text-[#73685E]">
-              Outside users only: admin accounts are left out. Emails are masked.
-            </p>
-          </div>
-          <div className="flex gap-1 bg-white border border-[#E7E0D5] rounded-xl p-1">
-            {RANGES.map((range) => (
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 space-y-6">
+        <AdminMasthead
+          data={data}
+          days={days}
+          onDaysChange={changePeriod}
+          onRefresh={refresh}
+          refreshing={refreshing}
+          lastUpdatedAt={lastUpdatedAt}
+        />
+
+        {/* Workspace Switcher */}
+        <label className="grid gap-1 text-sm font-semibold lg:hidden">
+          Analytics section
+          <select className="min-h-11 w-full rounded-xl border border-border bg-white px-3" value={activeTab} onChange={(e) => setActiveTab(e.target.value)}>
+            {WORKSPACE_TABS.map(({ id, label }) => <option key={id} value={id}>{label}</option>)}
+          </select>
+        </label>
+        <nav
+          className="hidden lg:flex flex-wrap items-center gap-1 border-b border-[#E7E0D5]"
+          aria-label="Analytics sections"
+        >
+          {WORKSPACE_TABS.map(({ id, label, icon: Icon }) => {
+            const active = activeTab === id;
+            return (
               <button
-                key={range}
+                key={id}
                 type="button"
-                onClick={() => setDays(range)}
-                aria-pressed={days === range}
-                className={`text-xs font-semibold px-3 py-1.5 rounded-lg ${
-                  days === range ? "bg-[#181411] text-white" : "text-[#73685E] hover:text-[#181411]"
+                onClick={() => setActiveTab(id)}
+                aria-current={active ? "page" : undefined}
+                className={`inline-flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold border-b-2 whitespace-nowrap transition-colors -mb-px ${
+                  active
+                    ? "border-[#CE532D] text-[#CE532D]"
+                    : "border-transparent text-[#73685E] hover:text-[#181411]"
                 }`}
               >
-                {range} days
+                <Icon className="w-3.5 h-3.5" aria-hidden />
+                {label}
               </button>
-            ))}
-          </div>
-        </div>
+            );
+          })}
+        </nav>
 
-        <section className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <StatTile label="Outside accounts" value={stats.outsideAccounts} testId="stat-outside-accounts" />
-          <StatTile label="Sign-ups, 7 days" value={stats.signupsLast7Days} />
-          <StatTile label="Visitors, 7 days" value={stats.uniqueVisitors7d} />
-          <StatTile label="Planned Trips" value={stats.outsidePlannedTrips} />
-          <StatTile
-            label="Feedback"
-            value={`${stats.feedbackCount}${stats.averageRating ? ` · ${stats.averageRating}★` : ""}`}
-          />
-        </section>
+        {/* ── OVERVIEW (Executive Suite) ── */}
+        {activeTab === "overview" && (
+          <div className="space-y-6">
+            <KpiGrid stats={stats} daily={activity.daily} trips={trips} days={rawData.days} />
 
-        <DailyChart daily={activity.daily} />
-
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <BarList
-            title="Countries (visitors)"
-            empty="No location data yet."
-            rows={activity.countries.map((row) => ({ label: row.country, value: row.visitors }))}
-          />
-          <BarList
-            title="Devices (visitors)"
-            empty="No visits yet."
-            rows={activity.devices.map((row) => ({ label: row.type ?? "unknown", value: row.visitors }))}
-          />
-          <BarList
-            title="Most viewed shared Trips"
-            empty="No Trips shared yet."
-            rows={activity.topShared.map((row) => ({
-              label: row.destination ?? "Untitled",
-              value: row.shareViews,
-            }))}
-          />
-        </section>
-
-        <section className={CARD}>
-          <p className={HEADING}>Users ({users.length})</p>
-          {users.length === 0 ? (
-            <p className="text-sm text-[#73685E]">No outside users yet.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="text-left text-[11px] uppercase tracking-wider text-[#73685E]">
-                  <tr>
-                    <th className="py-2 pr-4">User</th>
-                    <th className="py-2 pr-4">Joined</th>
-                    <th className="py-2 pr-4">Trips (planned)</th>
-                    <th className="py-2 pr-4">Last active</th>
-                    <th className="py-2 pr-4">Location</th>
-                    <th className="py-2">Device</th>
-                  </tr>
-                </thead>
-                <tbody className="text-[#3B342E]">
-                  {users.map((user) => (
-                    <tr key={`${user.email}-${user.joinedAt}`} className="border-t border-[#F2EDE4]">
-                      <td className="py-2 pr-4 font-mono text-xs">{user.email}</td>
-                      <td className="py-2 pr-4">{formatDate(user.joinedAt)}</td>
-                      <td className="py-2 pr-4 font-mono">
-                        {user.trips} ({user.plannedTrips})
-                      </td>
-                      <td className="py-2 pr-4">{formatDate(user.lastActiveAt)}</td>
-                      <td className="py-2 pr-4">{place(user)}</td>
-                      <td className="py-2 capitalize">{deviceLabel(user.device)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+              <div className="lg:col-span-8">
+                <TrafficTrendChart daily={activity.daily} />
+              </div>
+              <div className="lg:col-span-4">
+                <section className="h-full rounded-2xl border border-border bg-white p-4 sm:p-6">
+                  <h2 className="mb-4 font-display text-2xl font-semibold">Trip outcomes</h2>
+                  <StatusDonut planned={trips.plannedTrips} draft={trips.draftTrips} failed={trips.failedTrips} />
+                </section>
+              </div>
             </div>
-          )}
-        </section>
-
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className={CARD}>
-            <p className={HEADING}>Recent activity</p>
-            {activity.recentEvents.length === 0 ? (
-              <p className="text-sm text-[#73685E]">Nothing yet.</p>
-            ) : (
-              <ul className="divide-y divide-[#F2EDE4] text-sm max-h-[420px] overflow-y-auto">
-                {activity.recentEvents.map((event, index) => (
-                  <li key={`${event.createdAt}-${index}`} className="py-2">
-                    <div className="flex justify-between gap-3">
-                      <span className="font-medium text-[#181411]">
-                        {EVENT_LABELS[event.type] ?? event.type}
-                        {event.path && <span className="font-mono text-xs text-[#73685E]"> {event.path}</span>}
-                      </span>
-                      <span className="text-xs text-[#73685E] shrink-0">{formatDate(event.createdAt)}</span>
-                    </div>
-                    <p className="text-xs text-[#73685E]">
-                      {event.user ?? "Visitor"} · {place(event)} · {deviceLabel(event.device)}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            )}
           </div>
+        )}
 
-          <div className={CARD}>
-            <p className={HEADING}>Feedback log</p>
-            {feedback.length === 0 ? (
-              <p className="text-sm text-[#73685E]">No feedback yet.</p>
-            ) : (
-              <ul className="divide-y divide-[#F2EDE4] text-sm max-h-[420px] overflow-y-auto">
-                {feedback.map((item, index) => (
-                  <li key={`${item.createdAt}-${index}`} className="py-2">
-                    <div className="flex justify-between gap-3">
-                      <span className="text-[#CE532D]" aria-label={`${item.rating} out of 5`}>
-                        {"★".repeat(item.rating)}
-                        <span className="text-[#E7E0D5]">{"★".repeat(5 - item.rating)}</span>
-                      </span>
-                      <span className="text-xs text-[#73685E]">{formatDate(item.createdAt)}</span>
-                    </div>
-                    {item.message && <p className="text-[#3B342E] mt-0.5">{item.message}</p>}
-                    {item.page && <p className="font-mono text-[11px] text-[#73685E]">{item.page}</p>}
-                  </li>
-                ))}
-              </ul>
-            )}
+        {/* ── TRAFFIC & FUNNEL ── */}
+        {activeTab === "traffic" && (
+          <div className="space-y-6">
+            <TrafficTrendChart daily={activity.daily} />
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+              <div className="lg:col-span-5">
+                <ConversionFunnel funnel={activity.funnel} />
+              </div>
+              <div className="lg:col-span-7">
+                <ActivityHeatmap cells={activity.hourlyHeatmap} />
+              </div>
+            </div>
+            <AudienceBreakdown activity={activity} expanded />
           </div>
-        </section>
+        )}
+
+        {/* ── TRIPMAP & PRODUCT ENGAGEMENT ── */}
+        {activeTab === "product" && (
+          <div className="space-y-6">
+            <FeatureEngagementPanel featureEngagement={activity.featureEngagement} />
+            <ActivityAndFeedback
+              recentEvents={activity.recentEvents}
+              feedback={feedback}
+              feedbackSummary={feedbackSummary}
+            />
+          </div>
+        )}
+
+        {/* ── TRAVEL INTELLIGENCE ── */}
+        {activeTab === "travel" && (
+          <div className="space-y-6">
+            <TravelIntelligencePanel trips={trips} showMap />
+          </div>
+        )}
+
+        {/* ── AUDIENCE & RETENTION ── */}
+        {activeTab === "audience" && (
+          <div className="space-y-6">
+            <RetentionCohortTable retention={retention} />
+            <AudienceBreakdown activity={activity} expanded />
+            <ActivityHeatmap cells={activity.hourlyHeatmap} />
+          </div>
+        )}
+
+        {/* ── USERS & FEEDBACK ── */}
+        {activeTab === "users" && (
+          <div className="space-y-6">
+            <UsersTable users={users} />
+            <ActivityAndFeedback
+              recentEvents={activity.recentEvents}
+              feedback={feedback}
+              feedbackSummary={feedbackSummary}
+              showActivity={false}
+            />
+          </div>
+        )}
       </main>
     </div>
   );

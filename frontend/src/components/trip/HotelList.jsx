@@ -8,7 +8,7 @@ import PriceSourceBadge from "./PriceSourceBadge";
 
 const MAX_AMENITIES = 4;
 
-function HotelCard({ hotel, nights }) {
+function HotelCard({ hotel, nights, onTrack }) {
   const [imgFailed, setImgFailed] = useState(false);
   const showImage = Boolean(hotel.image_url) && !imgFailed;
   const visibleAmenities = hotel.amenities?.slice(0, MAX_AMENITIES) ?? [];
@@ -100,6 +100,7 @@ function HotelCard({ hotel, nights }) {
           }
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => onTrack?.("hotel_deal_clicked", hotel.booking_url ? "booking_url" : "google_maps")}
           className="mt-auto inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl text-xs font-semibold text-white bg-[#181411] hover:bg-[#CE532D] transition-colors"
         >
           {hotel.booking_url ? "View deal" : "Find on map"}
@@ -110,7 +111,7 @@ function HotelCard({ hotel, nights }) {
   );
 }
 
-export default function HotelList({ hotels, nights }) {
+export default function HotelList({ hotels, nights, onTrack = null }) {
   if (!hotels?.length) {
     return (
       <EmptyState icon={Building2}>
@@ -122,7 +123,7 @@ export default function HotelList({ hotels, nights }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
       {hotels.map((hotel) => (
-        <HotelCard key={hotel.name} hotel={hotel} nights={nights} />
+        <HotelCard key={hotel.name} hotel={hotel} nights={nights} onTrack={onTrack} />
       ))}
     </div>
   );

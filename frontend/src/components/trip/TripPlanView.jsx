@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useMemo, useRef, useState } from "react";
+import useWideLayout from "@/lib/useWideLayout";
 import dynamic from "next/dynamic";
 import { Building2, Calendar, Map as MapIcon, Plane, Sparkles, Users } from "lucide-react";
 import {
@@ -17,6 +17,7 @@ import HotelList from "@/components/trip/HotelList";
 import ItineraryList from "@/components/trip/ItineraryList";
 import TripOverview from "@/components/trip/TripOverview";
 import Skeleton from "@/components/ui/Skeleton";
+import { trackInteraction } from "@/services/event.service";
 
 // Leaflet needs `window`, so the map only loads in the browser.
 const TripMap = dynamic(() => import("@/components/trip/TripMap"), {
@@ -30,10 +31,54 @@ export default function TripPlanView({ trip }) {
   const [selectedDay, setSelectedDay] = useState("all");
   const [focusedPointKey, setFocusedPointKey] = useState(null);
 
+  const wideLayout = useWideLayout();
+  const [originStop, setOriginStop] = useState(null);
+  const mapReturnButton = useRef(null);
+
+  useEffect(() => {
+    const restoreStop = (event) => {
+      if (event.state?.voyStop) {
+        setOriginStop(event.state.voyStop);
+        setSelectedDay(event.state.voyStop.day);
+        setFocusedPointKey(event.state.voyStop.key);
+        setActiveTab("map");
+      } else if (originStop) {
+        const { key, day } = originStop;
+        setOriginStop(null);
+        setSelectedDay(day);
+        setFocusedPointKey(null);
+        setActiveTab("itinerary");
+        requestAnimationFrame(() => document.getElementById(key)?.focus());
+      }
+    };
+    window.addEventListener("popstate", restoreStop);
+    return () => window.removeEventListener("popstate", restoreStop);
+  }, [originStop]);
+
   const hasMapPins = useMemo(
     () => (trip?.plan ? mapPoints(trip.plan, "all").length > 0 : false),
     [trip]
   );
+
+  const handleTrack = (action, value) => {
+    const path = typeof window !== "undefined" ? window.location.pathname : undefined;
+    trackInteraction(action, { value, tripId: trip?._id, path });
+  };
+
+  const handleSelectTab = (tabId) => {
+    if (originStop && tabId === "itinerary") {
+      window.history.back();
+      return;
+    }
+    if (originStop && tabId !== "map") {
+      const state = { ...window.history.state };
+      delete state.voyStop;
+      window.history.replaceState(state, "");
+      setOriginStop(null);
+    }
+    setActiveTab(tabId);
+    handleTrack("trip_tab_viewed", tabId);
+  };
 
   const handleSelectDay = (day) => {
     setSelectedDay(day);
@@ -41,7 +86,19 @@ export default function TripPlanView({ trip }) {
   };
 
   const handleFocusActivity = (pointKey, dayNumber) => {
+    if (!wideLayout) {
+      const stop = { key: pointKey, day: selectedDay };
+      setOriginStop(stop);
+      window.history.pushState({ ...window.history.state, voyStop: stop }, "");
+      setFocusedPointKey(pointKey);
+      handleSelectTab("map");
+      handleTrack("map_pin_focused", "locate_from_itinerary");
+      requestAnimationFrame(() => mapReturnButton.current?.focus());
+      return;
+    }
+    const willFocus = focusedPointKey !== pointKey;
     setFocusedPointKey((current) => (current === pointKey ? null : pointKey));
+    if (willFocus) handleTrack("map_pin_focused", "locate_from_itinerary");
     if (selectedDay !== "all" && selectedDay !== dayNumber) {
       setSelectedDay(dayNumber);
     }
@@ -63,8 +120,8 @@ export default function TripPlanView({ trip }) {
     <>
       {/* ── Editorial Dossier Masthead ── */}
       <section className="bg-white border-b border-[#E7E0D5]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8">
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-7">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 sm:pt-8">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-3 pb-4 lg:gap-6 lg:pb-7">
             <div className="space-y-2.5 min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 {route && (
@@ -109,7 +166,7 @@ export default function TripPlanView({ trip }) {
             {plan.estimated_cost && (
               <button
                 type="button"
-                onClick={() => setActiveTab("summary")}
+                onClick={() => handleSelectTab("summary")}
                 className="text-left lg:text-right bg-[#FAF8F4] hover:bg-[#F2EDE4]/70 border border-[#E7E0D5] rounded-2xl px-5 py-3.5 transition-colors shrink-0 lg:min-w-[250px]"
               >
                 <div className="flex items-baseline justify-between lg:justify-end gap-3">
@@ -142,16 +199,16 @@ export default function TripPlanView({ trip }) {
           </div>
 
           {/* Segmented Editorial Tab Bar */}
-          <nav className="flex gap-1 overflow-x-auto -mb-px" aria-label="Trip sections">
+          <nav className="grid grid-cols-5 sm:flex sm:gap-1 -mb-px" aria-label="Trip sections">
             {tabs.map(({ id, label, icon: Icon, count }) => {
               const active = activeTab === id;
               return (
                 <button
                   key={id}
                   type="button"
-                  onClick={() => setActiveTab(id)}
+                  onClick={() => handleSelectTab(id)}
                   aria-current={active ? "page" : undefined}
-                  className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 whitespace-nowrap transition-all ${
+                  className={`flex flex-col sm:flex-row justify-center items-center gap-1 sm:gap-2 px-0 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold border-b-2 whitespace-nowrap transition-all ${
                     active
                       ? "border-[#CE532D] text-[#CE532D]"
                       : "border-transparent text-[#73685E] hover:text-[#181411]"
@@ -161,7 +218,7 @@ export default function TripPlanView({ trip }) {
                   {label}
                   {typeof count === "number" && count > 0 && (
                     <span
-                      className={`font-mono text-[10px] px-1.5 py-0.5 rounded-full ${
+                      className={`hidden sm:inline font-mono text-[10px] px-1.5 py-0.5 rounded-full ${
                         active ? "bg-[#FCEEE8] text-[#B54320]" : "bg-[#F2EDE4] text-[#73685E]"
                       }`}
                     >
@@ -176,70 +233,70 @@ export default function TripPlanView({ trip }) {
       </section>
 
       {/* ── Main Content Workspace ── */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-8">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.18 }}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 sm:pt-8">
+        {activeTab === "itinerary" && (
+          <div
+            className={
+              hasMapPins ? "grid grid-cols-1 lg:grid-cols-12 gap-6 items-start" : "max-w-4xl"
+            }
           >
-            {activeTab === "itinerary" && (
-              <div
-                className={
-                  hasMapPins ? "grid grid-cols-1 lg:grid-cols-12 gap-6 items-start" : "max-w-4xl"
-                }
-              >
-                <div className={hasMapPins ? "lg:col-span-7" : ""}>
-                  <ItineraryList
-                    days={plan.itinerary}
-                    selectedDay={selectedDay}
-                    onSelectDay={handleSelectDay}
-                    focusedPointKey={focusedPointKey}
-                    onFocusActivity={hasMapPins ? handleFocusActivity : null}
-                  />
-                </div>
-
-                {/* Desktop Split-Pane Synced Trip Map */}
-                {hasMapPins && (
-                  <aside
-                    className="hidden lg:block lg:col-span-5 sticky top-24"
-                    aria-label="Synced Trip Map"
-                  >
-                    <TripMap
-                      plan={plan}
-                      selectedDay={selectedDay}
-                      onDayChange={handleSelectDay}
-                      focusedPointKey={focusedPointKey}
-                      onClearFocus={() => setFocusedPointKey(null)}
-                      compact
-                    />
-                  </aside>
-                )}
-              </div>
-            )}
-
-            {activeTab === "map" && (
-              <TripMap
-                plan={plan}
+            <div className={hasMapPins ? "lg:col-span-7" : ""}>
+              <ItineraryList
+                days={plan.itinerary}
                 selectedDay={selectedDay}
-                onDayChange={handleSelectDay}
+                onSelectDay={handleSelectDay}
                 focusedPointKey={focusedPointKey}
-                onClearFocus={() => setFocusedPointKey(null)}
-                showQuickStrip
+                onFocusActivity={hasMapPins ? handleFocusActivity : null}
               />
+            </div>
+
+            {/* Desktop Split-Pane Synced Trip Map */}
+            {hasMapPins && wideLayout && (
+              <aside
+                className="hidden lg:block lg:col-span-5 sticky top-24"
+                aria-label="Synced Trip Map"
+              >
+                <TripMap
+                  plan={plan}
+                  selectedDay={selectedDay}
+                  onDayChange={handleSelectDay}
+                  focusedPointKey={focusedPointKey}
+                  onClearFocus={() => setFocusedPointKey(null)}
+                  onTrack={handleTrack}
+                  compact
+                />
+              </aside>
             )}
+          </div>
+        )}
 
-            {activeTab === "hotels" && <HotelList hotels={plan.hotels} nights={plan.nights} />}
-
-            {activeTab === "flights" && (
-              <FlightList flights={plan.flights} partySize={plan.request?.party_size} />
+        {activeTab === "map" && (
+          <>
+            {originStop && (
+              <button ref={mapReturnButton} type="button" className="mb-3 rounded-xl border border-border bg-white px-4 py-3 text-sm font-semibold"
+                onClick={() => window.history.back()}>Back to itinerary stop</button>
             )}
+            <TripMap
+              plan={plan}
+              selectedDay={selectedDay}
+              onDayChange={handleSelectDay}
+              focusedPointKey={focusedPointKey}
+              onClearFocus={() => setFocusedPointKey(null)}
+              onTrack={handleTrack}
+              showQuickStrip
+            />
+          </>
+        )}
 
-            {activeTab === "summary" && <TripOverview plan={plan} />}
-          </motion.div>
-        </AnimatePresence>
+        {activeTab === "hotels" && (
+          <HotelList hotels={plan.hotels} nights={plan.nights} onTrack={handleTrack} />
+        )}
+
+        {activeTab === "flights" && (
+          <FlightList flights={plan.flights} partySize={plan.request?.party_size} />
+        )}
+
+        {activeTab === "summary" && <TripOverview plan={plan} />}
       </main>
     </>
   );

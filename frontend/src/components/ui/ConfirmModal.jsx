@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle } from "lucide-react";
 
@@ -13,9 +13,34 @@ export default function ConfirmModal({
   onConfirm,
   onCancel,
 }) {
+  const panel = useRef(null);
+  const cancelButton = useRef(null);
+  useEffect(() => {
+    if (!isOpen) return;
+    const trigger = document.activeElement;
+    cancelButton.current?.focus();
+    return () => trigger?.focus();
+  }, [isOpen]);
+
   useEffect(() => {
     if (!isOpen) return;
     const onKeyDown = (event) => {
+      if (event.key === "Tab") {
+        const buttons = panel.current?.querySelectorAll("button:enabled");
+        if (!buttons?.length) {
+          event.preventDefault();
+          return;
+        }
+        const first = buttons[0];
+        const last = buttons[buttons.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
       if (event.key === "Escape" && !loading) onCancel?.();
     };
     window.addEventListener("keydown", onKeyDown);
@@ -27,6 +52,7 @@ export default function ConfirmModal({
       {isOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          ref={panel}
           role="dialog"
           aria-modal="true"
           aria-labelledby="confirm-modal-title"
@@ -61,6 +87,7 @@ export default function ConfirmModal({
             <div className="flex gap-2.5">
               <button
                 type="button"
+                ref={cancelButton}
                 onClick={onCancel}
                 disabled={loading}
                 className="flex-1 py-2.5 rounded-xl border border-[#E7E0D5] text-sm font-semibold text-[#3B342E] hover:bg-[#FAF8F4] transition-colors disabled:opacity-50"

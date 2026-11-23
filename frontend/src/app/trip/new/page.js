@@ -9,11 +9,11 @@ import {
   Plus,
   RefreshCw,
   Send,
-  SlidersHorizontal,
   Sparkles,
   User,
 } from "lucide-react";
 import { getCurrentUser } from "@/services/auth.service";
+import { trackInteraction } from "@/services/event.service";
 import { getTripById, planTrip } from "@/services/trip.service";
 import AppHeader from "@/components/layout/AppHeader";
 import BrandLogo from "@/components/layout/BrandLogo";
@@ -84,7 +84,8 @@ function TripPlanner() {
   const [missingFields, setMissingFields] = useState([]);
   const [clarificationDraft, setClarificationDraft] = useState({});
   const [prompt, setPrompt] = useState(initialPrompt);
-  const [showBrief, setShowBrief] = useState(!searchParams.get("tripId") && !initialPrompt);
+  const [briefVersion, setBriefVersion] = useState(0);
+  const [showBrief, setShowBrief] = useState(false);
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
 
@@ -114,7 +115,7 @@ function TripPlanner() {
   }, [resume]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messages.length > 1 || loading) bottomRef.current?.scrollIntoView({ block: "nearest" });
   }, [messages, loading]);
 
   const send = async (text) => {
@@ -133,11 +134,7 @@ function TripPlanner() {
       router.replace(`/trip/new?tripId=${trip._id}`, { scroll: false });
 
       if (trip.status === "planned") {
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: "Your Trip Plan is ready! Opening your dossier now..." },
-        ]);
-        setTimeout(() => router.push(`/trip/${trip._id}`), 1100);
+        router.push(`/trip/${trip._id}`);
       } else {
         setMessages((prev) => [...prev, { role: "assistant", content: trip.clarification.question }]);
         setMissingFields(trip.clarification.missingFields ?? []);
@@ -146,7 +143,11 @@ function TripPlanner() {
       if (error.response?.status === 401) return router.replace("/login");
       // A failed planning attempt is still saved, so the next message continues the same Trip.
       const failedTripId = error.response?.data?.tripId;
-      if (failedTripId) setTripId(failedTripId);
+      if (failedTripId) {
+        setTripId(failedTripId);
+        router.replace(`/trip/new?tripId=${failedTripId}`, { scroll: false });
+      }
+      setPrompt(trimmed);
       setMessages((prev) => [...prev, { role: "assistant", content: errorReply(error) }]);
     } finally {
       setLoading(false);
@@ -155,11 +156,12 @@ function TripPlanner() {
 
   const startNewTrip = () => {
     setTripId(null);
+    setBriefVersion((version) => version + 1);
     setMessages([WELCOME]);
     setMissingFields([]);
     setClarificationDraft({});
     setPrompt("");
-    setShowBrief(true);
+    setShowBrief(false);
     router.replace("/trip/new");
   };
 
@@ -182,11 +184,15 @@ function TripPlanner() {
       })
       .filter(Boolean);
     if (entries.length === 0) return;
+    trackInteraction("clarification_inline_submitted", {
+      tripId: tripId ?? undefined,
+      path: "/trip/new",
+    });
     send(entries.join(", "));
   };
 
   const handleComposerKeyDown = (event) => {
-    if (event.key === "Enter" && !event.shiftKey) {
+    if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing && !window.matchMedia?.("(pointer: coarse)").matches) {
       event.preventDefault();
       send(prompt);
     }
@@ -218,38 +224,38 @@ function TripPlanner() {
         }
         right={
           <div className="flex items-center gap-2">
-            {!hasStarted && (
-              <button
-                type="button"
-                onClick={() => setShowBrief((v) => !v)}
-                aria-pressed={showBrief}
-                className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border transition-colors ${
-                  showBrief
-                    ? "bg-[#FCEEE8] border-[#F3CFC0] text-[#B54320]"
-                    : "bg-white border-[#E7E0D5] text-[#3B342E] hover:bg-[#FAF8F4]"
-                }`}
-              >
-                <SlidersHorizontal className="w-3.5 h-3.5" aria-hidden />
-                <span className="hidden sm:inline">Brief Builder</span>
-              </button>
-            )}
             <button
               type="button"
+              disabled={loading || !ready}
               onClick={startNewTrip}
               className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#73685E] hover:text-[#181411] bg-white border border-[#E7E0D5] hover:border-[#D6CCC0] px-3 py-1.5 rounded-xl transition-colors"
             >
               <RefreshCw className="w-3.5 h-3.5" aria-hidden />
-              New Trip
+              New trip
             </button>
           </div>
         }
       />
 
       {/* Conversation Stream */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="min-h-0 flex-1 overflow-y-auto">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-5" aria-live="polite">
+          {!hasStarted && (
+            <div className="space-y-4">
+              <h1 className="font-display text-3xl sm:text-4xl font-semibold text-ink">Plan your trip</h1>
+              <div role="group" aria-label="Planning method" className="inline-flex rounded-2xl border border-border bg-white p-1">
+                {["Describe your trip", "Use the brief builder"].map((label, index) => (
+                  <button key={label} type="button" aria-pressed={showBrief === Boolean(index)}
+                    onClick={() => setShowBrief(Boolean(index))}
+                    className="min-h-11 rounded-xl px-3 text-sm font-semibold text-muted aria-pressed:bg-ink aria-pressed:text-white">
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           <AnimatePresence initial={false}>
-            {messages.map((message, index) => {
+            {messages.filter((_, index) => index > 0 || (!showBrief && !hasStarted)).map((message, index) => {
               const mine = message.role === "traveler";
               return (
                 <motion.div
@@ -290,37 +296,40 @@ function TripPlanner() {
           {/* Guided Trip Brief + Curated Starters before first user turn */}
           {ready && !hasStarted && !loading && (
             <div className="space-y-6 pt-1">
-              <AnimatePresence>
-                {showBrief && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6 }}
-                  >
-                    <TripBriefBuilder
-                      disabled={loading}
-                      onSubmitPrompt={(composed) => send(composed)}
-                      onPrefillPrompt={(composed) => {
-                        setPrompt(composed);
-                        setShowBrief(false);
-                        inputRef.current?.focus();
-                      }}
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <div hidden={!showBrief}>
+                <TripBriefBuilder
+                  key={briefVersion}
+                  disabled={loading}
+                  onSubmitPrompt={(composed) => {
+                    trackInteraction("brief_builder_submitted", { path: "/trip/new" });
+                    send(composed);
+                  }}
+                  onPrefillPrompt={(composed) => {
+                    trackInteraction("brief_builder_prefilled", { path: "/trip/new" });
+                    setPrompt(composed);
+                    setShowBrief(false);
+                    requestAnimationFrame(() => inputRef.current?.focus());
+                  }}
+                />
+              </div>
 
-              <div>
-                <p className="text-[11px] font-semibold text-[#73685E] uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+              <div hidden={showBrief}>
+                <p className="text-xs font-semibold text-muted mb-2.5 flex items-center gap-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-[#CE532D]" aria-hidden />
-                  Or jump in with a curated Trip
+                  Start from an example
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   {STARTER_CARDS.map((card) => (
                     <button
                       key={card.title}
                       type="button"
-                      onClick={() => send(card.prompt)}
+                      onClick={() => {
+                        trackInteraction("starter_trip_selected", {
+                          value: "studio",
+                          path: "/trip/new",
+                        });
+                        send(card.prompt);
+                      }}
                       className="group text-left p-4 rounded-2xl bg-white border border-[#E7E0D5] hover:border-[#CE532D]/50 hover:shadow-sm transition-all"
                     >
                       <p className="font-mono text-[10px] uppercase tracking-wider text-[#CE532D]">
@@ -419,7 +428,7 @@ function TripPlanner() {
       </main>
 
       {/* Editorial Chat Composer Footer */}
-      <footer className="bg-white/95 backdrop-blur-md border-t border-[#E7E0D5] px-4 py-3.5 shrink-0">
+      <footer hidden={showBrief && !hasStarted} className="safe-footer bg-white/95 backdrop-blur-md border-t border-[#E7E0D5] px-4 py-3.5 shrink-0">
         <form
           onSubmit={(event) => {
             event.preventDefault();
@@ -445,7 +454,8 @@ function TripPlanner() {
             />
             <button
               type="submit"
-              disabled={loading || !prompt.trim()}
+              aria-label="Send message"
+              disabled={!ready || loading || !prompt.trim()}
               className="inline-flex items-center gap-1.5 bg-[#CE532D] hover:bg-[#B54320] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold text-xs px-4 py-2.5 rounded-xl transition-all shrink-0"
             >
               <Send className="w-3.5 h-3.5" aria-hidden />
@@ -453,7 +463,7 @@ function TripPlanner() {
             </button>
           </div>
           <div className="flex items-center justify-between mt-1.5 px-1 text-[11px] text-[#73685E]">
-            <span>Press Enter to send · Shift+Enter for new line</span>
+            <span className="hidden sm:inline">Press Enter to send · Shift+Enter for new line</span>
             {prompt.length > 1400 && (
               <span className="font-mono">
                 {prompt.length}/{MAX_PROMPT_LENGTH}

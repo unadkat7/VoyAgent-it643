@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Link2, ShieldAlert, Trash2 } from "lucide-react";
+import { ArrowLeft, Link2, MoreHorizontal, ShieldAlert, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { deleteTrip, getTripById, shareTrip } from "@/services/trip.service";
 import FeedbackWidget from "@/components/feedback/FeedbackWidget";
@@ -170,14 +170,19 @@ export default function TripDetailPage() {
                 <Link2 className="w-3.5 h-3.5" aria-hidden />
                 Share
               </button>
-              <button
-                type="button"
-                onClick={() => setShowConfirm(true)}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#C82828] bg-[#FEF2F2] hover:bg-[#FEE2E2] px-3 py-1.5 rounded-xl border border-[#C82828]/15 transition-colors"
-              >
-                <Trash2 className="w-3.5 h-3.5" aria-hidden />
-                Delete
-              </button>
+              <details className="relative">
+                <summary aria-label="More trip actions" className="flex size-11 cursor-pointer list-none items-center justify-center rounded-xl border border-border bg-white">
+                  <MoreHorizontal size={18} aria-hidden />
+                </summary>
+                <button type="button" onClick={(event) => {
+                  const menu = event.currentTarget.closest("details");
+                  menu.open = false;
+                  menu.querySelector("summary").focus();
+                  setShowConfirm(true);
+                }} className="absolute right-0 top-full mt-1 flex min-h-11 w-40 items-center gap-2 rounded-xl border border-border bg-white px-4 text-sm font-semibold text-danger shadow-lg">
+                  <Trash2 size={16} aria-hidden /> Delete trip
+                </button>
+              </details>
             </>
           }
         />

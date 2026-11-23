@@ -15,4 +15,21 @@ describe("PageViewTracker", () => {
 
     expect(sendPageview.mock.calls).toEqual([["/dashboard"], ["/trip/new"]]);
   });
+
+  it("forwards external document.referrer when present", () => {
+    sendPageview.mockClear();
+    pathname = "/";
+    const original = Object.getOwnPropertyDescriptor(document, "referrer");
+    Object.defineProperty(document, "referrer", {
+      value: "https://google.com/search?q=voyagent",
+      configurable: true,
+    });
+    try {
+      render(<PageViewTracker />);
+      expect(sendPageview).toHaveBeenCalledWith("/", "https://google.com/search?q=voyagent");
+    } finally {
+      if (original) Object.defineProperty(document, "referrer", original);
+      else Object.defineProperty(document, "referrer", { value: "", configurable: true });
+    }
+  });
 });

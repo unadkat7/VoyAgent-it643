@@ -39,7 +39,17 @@ export default function SignupPage() {
 
     try {
       setLoading(true);
-      const data = await signup({ name, email, password });
+      const sourceParam =
+        typeof window !== "undefined"
+          ? new URLSearchParams(window.location.search).get("source")
+          : null;
+      const signupSource = sourceParam === "share" ? "share_link" : undefined;
+      const data = await signup({
+        name,
+        email,
+        password,
+        ...(signupSource ? { signupSource } : {}),
+      });
       toast.success(data.message);
       // Signup already sets the session cookie, so go straight in.
       router.push("/dashboard");
@@ -100,6 +110,7 @@ export default function SignupPage() {
             id="password"
             type={showPassword ? "text" : "password"}
             autoComplete="new-password"
+            aria-describedby="password-rule"
             placeholder="Min. 8 characters"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -110,22 +121,20 @@ export default function SignupPage() {
                 type="button"
                 aria-label={showPassword ? "Hide password" : "Show password"}
                 onClick={() => setShowPassword(!showPassword)}
-                className="text-[#73685E] hover:text-[#181411] transition-colors p-1"
+                className="text-[#73685E] hover:text-[#181411] transition-colors inline-grid size-11 place-items-center rounded-lg"
               >
                 {showPassword ? <EyeOff size={16} aria-hidden /> : <Eye size={16} aria-hidden />}
               </button>
             }
           />
-          {password.length > 0 && (
-            <p
-              className={`text-[11px] flex items-center gap-1.5 ${
+          <p id="password-rule"
+              className={`text-xs flex items-center gap-1.5 ${
                 meetsLength ? "text-[#15803D]" : "text-[#73685E]"
               }`}
             >
               <Check className={`w-3.5 h-3.5 ${meetsLength ? "opacity-100" : "opacity-30"}`} aria-hidden />
               At least {MIN_PASSWORD_LENGTH} characters
-            </p>
-          )}
+          </p>
         </div>
 
         <Input
@@ -146,7 +155,7 @@ export default function SignupPage() {
               type="button"
               aria-label={showConfirm ? "Hide confirm password" : "Show confirm password"}
               onClick={() => setShowConfirm(!showConfirm)}
-              className="text-[#73685E] hover:text-[#181411] transition-colors p-1"
+              className="text-[#73685E] hover:text-[#181411] transition-colors inline-grid size-11 place-items-center rounded-lg"
             >
               {showConfirm ? <EyeOff size={16} aria-hidden /> : <Eye size={16} aria-hidden />}
             </button>

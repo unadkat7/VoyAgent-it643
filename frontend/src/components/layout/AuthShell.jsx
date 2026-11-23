@@ -81,7 +81,7 @@ export default function AuthShell({
         </aside>
 
         {/* Right form panel */}
-        <div className="flex-1 flex flex-col justify-between p-5 sm:p-8 lg:p-10 bg-atlas-grid">
+        <div className="flex-1 flex flex-col justify-between p-4 sm:p-8 lg:p-10 bg-atlas-grid">
           <div className="flex items-center justify-between max-w-md w-full mx-auto lg:max-w-none">
             <div className="lg:hidden">
               <BrandLogo href="/" size="sm" />
@@ -96,7 +96,7 @@ export default function AuthShell({
           </div>
 
           <div className="w-full max-w-[420px] mx-auto my-auto py-4">
-            <div className="bg-white border border-[#E7E0D5] rounded-3xl p-6 sm:p-7 shadow-[0_14px_40px_-24px_rgba(24,20,17,0.18)]">
+            <div className="bg-white border border-[#E7E0D5] rounded-2xl p-4 sm:rounded-3xl sm:p-7 shadow-[0_14px_40px_-24px_rgba(24,20,17,0.18)]">
               <div className="mb-5">
                 <h1 className="font-display text-3xl font-semibold text-[#181411] tracking-tight mb-1">
                   {title}

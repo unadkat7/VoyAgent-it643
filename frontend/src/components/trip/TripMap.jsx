@@ -156,6 +156,7 @@ export default function TripMap({
   onClearFocus = null,
   compact = false,
   showQuickStrip = false,
+  onTrack = null,
 }) {
   const [internalDay, setInternalDay] = useState("all");
   const [mapStyle, setMapStyle] = useState("atlas");
@@ -170,6 +171,7 @@ export default function TripMap({
   const day = selectedDay ?? internalDay;
   const setDay = (nextDay) => {
     setLocalFocusKey(null);
+    onTrack?.("map_day_filtered", nextDay === "all" ? "all" : "day");
     if (onDayChange) onDayChange(nextDay);
     else setInternalDay(nextDay);
   };
@@ -245,11 +247,25 @@ export default function TripMap({
     setLocalFocusKey(null);
     onClearFocus?.();
     setFitTrigger((n) => n + 1);
+    onTrack?.("map_reset_view");
   };
 
-  const handleSelectQuickStop = (key) => {
+  const handleSelectQuickStop = (key, kind) => {
     onClearFocus?.();
     setLocalFocusKey(key);
+    onTrack?.("map_pin_focused", kind || "activity");
+  };
+
+  const handleStyleChange = (styleId) => {
+    setMapStyle(styleId);
+    onTrack?.("map_style_changed", styleId);
+  };
+
+  const handleToggleFullscreen = () => {
+    setExpanded((prev) => {
+      if (!prev) onTrack?.("map_fullscreen_opened");
+      return !prev;
+    });
   };
 
   const mapBody = (
@@ -301,7 +317,7 @@ export default function TripMap({
             ? "flex-1 min-h-0"
             : compact
             ? "h-[calc(100vh-14.5rem)] min-h-[440px]"
-            : "h-[70vh] min-h-[440px]"
+            : "h-[60dvh] min-h-64 sm:h-[70vh] sm:min-h-[440px]"
         }`}
       >
         <MapContainer
@@ -346,7 +362,7 @@ export default function TripMap({
                 icon={pinIcon(point, isFocused)}
                 zIndexOffset={isFocused ? 1000 : 0}
                 eventHandlers={{
-                  click: () => handleSelectQuickStop(point.key),
+                  click: () => handleSelectQuickStop(point.key, point.kind),
                 }}
               >
                 <Popup>
@@ -379,6 +395,7 @@ export default function TripMap({
                       href={mapsUrl}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={() => onTrack?.("map_google_maps_opened", point.kind)}
                       className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#CE532D] hover:underline pt-1"
                     >
                       Open in Google Maps
@@ -404,7 +421,7 @@ export default function TripMap({
               <button
                 key={styleOption.id}
                 type="button"
-                onClick={() => setMapStyle(styleOption.id)}
+                onClick={() => handleStyleChange(styleOption.id)}
                 aria-pressed={active}
                 className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all ${
                   active
@@ -431,7 +448,7 @@ export default function TripMap({
           </button>
           <button
             type="button"
-            onClick={() => setExpanded((prev) => !prev)}
+            onClick={handleToggleFullscreen}
             title={expanded ? "Close fullscreen map" : "Expand immersive fullscreen map"}
             aria-label={expanded ? "Close fullscreen map" : "Expand immersive fullscreen map"}
             className="w-9 h-9 rounded-xl bg-white/95 backdrop-blur-md border border-[#E7E0D5] text-[#181411] hover:text-[#CE532D] hover:border-[#CE532D]/40 shadow-lg flex items-center justify-center transition-colors"
@@ -463,7 +480,7 @@ export default function TripMap({
               <button
                 key={stop.key}
                 type="button"
-                onClick={() => handleSelectQuickStop(stop.key)}
+                onClick={() => handleSelectQuickStop(stop.key, stop.kind)}
                 className={`shrink-0 inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${
                   active
                     ? "bg-[#181411] border-[#181411] text-[#FAF8F4] shadow-xs"
@@ -493,7 +510,10 @@ export default function TripMap({
         <li>
           <button
             type="button"
-            onClick={() => setShowActivities((v) => !v)}
+            onClick={() => {
+              setShowActivities((v) => !v);
+              onTrack?.("map_layer_toggled", "activities");
+            }}
             aria-pressed={showActivities}
             className={`flex items-center gap-1.5 px-2 py-0.5 rounded-lg transition-all ${
               showActivities ? "text-[#181411] font-medium" : "opacity-45 line-through"
@@ -506,7 +526,10 @@ export default function TripMap({
         <li>
           <button
             type="button"
-            onClick={() => setShowStays((v) => !v)}
+            onClick={() => {
+              setShowStays((v) => !v);
+              onTrack?.("map_layer_toggled", "stays");
+            }}
             aria-pressed={showStays}
             className={`flex items-center gap-1.5 px-2 py-0.5 rounded-lg transition-all ${
               showStays ? "text-[#181411] font-medium" : "opacity-45 line-through"

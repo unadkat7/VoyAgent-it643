@@ -88,7 +88,7 @@ export default function ItineraryList({
               </span>
             </header>
 
-            <ol className="p-5 space-y-3.5">
+            <ol className="p-3 sm:p-5 space-y-3.5">
               {day.activities.map((activity, index) => {
                 const pointKey = `activity-${day.day}-${index}`;
                 const canLocate = hasCoordinates(activity.coordinates) && Boolean(onFocusActivity);
@@ -152,8 +152,9 @@ export default function ItineraryList({
                         {canLocate && (
                           <button
                             type="button"
+                            id={pointKey}
                             onClick={() => onFocusActivity(pointKey, day.day)}
-                            className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg border transition-colors ${
+                            className={`scroll-mt-24 min-h-11 inline-flex items-center gap-1 text-xs font-semibold px-3 py-1 rounded-lg border transition-colors ${
                               isFocused
                                 ? "bg-[#181411] border-[#181411] text-[#FAF8F4]"
                                 : "bg-white border-[#E7E0D5] text-[#3B342E] hover:border-[#CE532D] hover:text-[#CE532D]"
