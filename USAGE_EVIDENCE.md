@@ -6,9 +6,9 @@ The project ceiling of 10 needs proof that people outside the team used the live
 
 | Source | Where to read it | What it shows |
 |---|---|---|
-| Admin page (main source) | `https://<domain>/admin`, signed in as the admin account | Outside accounts, daily visitors and sign-ups, countries, devices, the masked user list, recent Events, the feedback log and the most viewed Share links |
+| Admin page (main source) | `https://<domain>/admin`, signed in as the admin account | Outside accounts, daily visitors and sign-ups, conversion funnel, 7×24 activity heatmap, TripMap & product interactions, Travel & INR budget intelligence, retention cohorts, countries, devices, the masked user list, recent Events, the feedback log, the most viewed Share links, plus one-click CSV/JSON/Markdown export |
 | Vercel Analytics | Vercel project > Analytics | Page views and unique visitors, with no cookies; a second source next to our own Events |
-| Stats API (admin only) | `GET /api/stats`, `/api/stats/users`, `/api/stats/activity?days=30`, `/api/stats/feedback` | The same data as the admin page, as JSON |
+| Stats API (admin only) | `GET /api/stats`, `/api/stats/users`, `/api/stats/activity?days=30`, `/api/stats/trips?days=30`, `/api/stats/feedback`, `/api/stats/retention?weeks=8` | The same data as the admin page, as JSON |
 
 Admin accounts are left out of every number. Team members who sign up with their own email are counted, so use the admin account for demos.
 

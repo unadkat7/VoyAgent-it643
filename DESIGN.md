@@ -37,7 +37,7 @@ frontend (Next.js) --cookie--> backend (Express + MongoDB) --X-Internal-Key--> a
 
 ### 3. Trip Status is an explicit state machine (types as design)
 
-- **Where:** `backend/src/domain/trip.js:24` (`nextStatus`), used at `backend/src/services/trip.service.js:45` (`nextStatus`).
+- **Where:** `backend/src/domain/trip.js:24` (`nextStatus`), used at `backend/src/services/trip.service.js:51` (`nextStatus`).
 - **Before:** Early `backend/src/models/trip.model.js` (`44aa1cb`) allowed the raw strings `clarification_needed | completed | error`. The controller assigned them directly, `error` was never set, a completed Trip could be planned again, and the UI checked `status === "completed"` by hand. "Completed" also meant "plan ready", which clashes with the travel meaning (flagged in the glossary).
 - **Why it changed:** Illegal states should be impossible to build, not checked everywhere. `TripStatus` is frozen. Moves are allowed only through a transition table where `planned` is terminal. A Planning Engine outage is now recorded as `planning_failed` so the Traveler can retry the same Trip. All of it is pure code with no Express or Mongoose, tested in `backend/tests/domain/trip.test.js:23` (`a planned Trip never changes`).
 
@@ -55,12 +55,12 @@ The Trip Map reused this boundary. Coordinates come from `GeocoderPort`; Wikiped
 
 ## Usage evidence (telemetry, admin page, Share links)
 
-To show use by people outside the team, the backend records an Event for each page view, sign-up, login, planning step, Trip view, share and feedback. It's written by one function, `backend/src/services/telemetry.service.js:57` (`recordEvent`), called from the controllers. Admins read it on `/admin` (`frontend/src/components/admin/AdminDashboard.jsx:128` (`AdminPage`)).
+To show use by people outside the team, the backend records an Event for each page view, sign-up, login, planning step, Trip view, share, feedback and whitelisted UI/TripMap interaction. It's written by one function, `backend/src/services/telemetry.service.js:84` (`recordEvent`), called from the controllers. Admins read it on `/admin` (`frontend/src/components/admin/AdminDashboard.jsx:42` (`AdminPage`)).
 
-- **Privacy by design:** we never store the full IP. An Event keeps the /24 (IPv4) or /48 (IPv6) prefix (`backend/src/services/telemetry.service.js:18` (`ipPrefix`)), the country and city that Vercel puts in request headers, the device from the user agent, and a salted daily Visitor hash (`backend/src/services/telemetry.service.js:38` (`visitorHash`)). Events expire after 90 days. The admin user list masks emails (`backend/src/utils/maskEmail.js:2` (`maskEmail`)).
-- **Tracking never breaks the product:** `recordEvent` catches and logs its own failures (`backend/src/services/telemetry.service.js:71` (`catch (error)`)). It's awaited rather than fire-and-forget, because a Vercel function can be frozen right after the response, which would lose the write.
-- **Admins are not evidence:** stats leave out every `ADMIN_EMAILS` account (`backend/src/controllers/stats.controller.js:24` (`insiderIds`)). Admin emails also cannot sign up publicly (`backend/src/services/auth.service.js:9` (`adminEmails.includes`)); otherwise whoever registered the address first would become an admin. The admin account is created by `npm run seed:admin` from environment variables.
-- **Share links** bring in new Visitors. Only a `planned` Trip can be shared (`backend/src/domain/trip.js:40` (`canShare`)). The public view returns only the Destination and the Trip Plan (`backend/src/services/trip.service.js:84` (`viewSharedTrip`)), and the owner page and share page render the same `frontend/src/components/trip/TripPlanView.jsx:28` (`TripPlanView`).
+- **Privacy by design:** we never store the full IP. An Event keeps the /24 (IPv4) or /48 (IPv6) prefix (`backend/src/services/telemetry.service.js:45` (`ipPrefix`)), the country and city that Vercel puts in request headers, the device from the user agent, an external referrer hostname (never paths or query strings), and a salted daily Visitor hash (`backend/src/services/telemetry.service.js:65` (`visitorHash`)). Events expire after 90 days. The admin user list masks emails (`backend/src/utils/maskEmail.js:2` (`maskEmail`)).
+- **Tracking never breaks the product:** `recordEvent` catches and logs its own failures (`backend/src/services/telemetry.service.js:109` (`catch (error)`)). It's awaited rather than fire-and-forget, because a Vercel function can be frozen right after the response, which would lose the write.
+- **Admins are not evidence:** stats leave out every `ADMIN_EMAILS` account (`backend/src/controllers/stats.controller.js:33` (`insiderIds`)). Admin emails also cannot sign up publicly (`backend/src/services/auth.service.js:9` (`adminEmails.includes`)); otherwise whoever registered the address first would become an admin. The admin account is created by `npm run seed:admin` from environment variables.
+- **Share links** bring in new Visitors. Only a `planned` Trip can be shared (`backend/src/domain/trip.js:40` (`canShare`)). The public view returns only the Destination and the Trip Plan (`backend/src/services/trip.service.js:92` (`viewSharedTrip`)), and the owner page and share page render the same `frontend/src/components/trip/TripPlanView.jsx:29` (`TripPlanView`).
 
 ## AI use
 

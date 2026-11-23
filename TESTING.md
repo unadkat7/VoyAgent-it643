@@ -85,11 +85,11 @@ Doubles are chosen by interaction direction: **incoming interactions** (queries 
 
 ## Usage evidence tests
 
-- **Privacy:** `backend/tests/api/telemetry.test.js:20` (`keeps only the network part`) checks IPv4, IPv4-mapped and IPv6 prefixes. The signup Event test checks that the full IP appears nowhere in the stored Event.
-- **Tracking never breaks a request:** `backend/tests/api/telemetry.test.js:65` (`does not fail the request`) makes `Event.create` fail and still expects a 201.
-- **Input:** page-view paths must be site paths, at most 200 characters (`backend/tests/api/telemetry.test.js:97` (`rejects the path`)), and known bots are skipped.
+- **Privacy:** `backend/tests/api/telemetry.test.js:22` (`keeps only the network part`) checks IPv4, IPv4-mapped and IPv6 prefixes. The signup Event test checks that the full IP appears nowhere in the stored Event, and referrer paths/queries are stripped to external hostnames only.
+- **Tracking never breaks a request:** `backend/tests/api/telemetry.test.js:67` (`does not fail the request`) makes `Event.create` fail and still expects a 201.
+- **Input:** page-view paths must be site paths, at most 200 characters (`backend/tests/api/telemetry.test.js:99` (`rejects the path`)), interaction telemetry accepts only whitelisted actions/tokens, and known bots are skipped.
 - **Planning steps:** `backend/tests/api/trips.test.js:117` (`records each planning step as an Event`).
-- **Admin stats:** `backend/tests/api/stats.test.js:20` (`cannot be created through public sign-up`) and `backend/tests/api/stats.test.js:78` (`lists outside users with masked emails`). Every stats route is checked for 401 and 403.
+- **Admin stats:** `backend/tests/api/stats.test.js:22` (`cannot be created through public sign-up`) and `backend/tests/api/stats.test.js:87` (`lists outside users with masked emails`). Every stats route (`/api/stats`, `/users`, `/activity`, `/trips`, `/feedback`, `/retention`) is checked for 401 and 403, plus legacy-document compatibility and TripMap/Travel Intelligence aggregations.
 - **Share links:** `backend/tests/api/share.test.js:64` (`shows the plan to anyone`) checks that the conversation and owner are hidden and that views are counted. `backend/tests/api/share.test.js:47` (`refuses a Trip that is not planned yet`) covers the 409.
 
 ## Honest gaps (what automated tests do not cover)
