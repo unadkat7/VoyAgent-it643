@@ -7,6 +7,7 @@ import { env } from "./config/env.js";
 import { errorHandler, notFound } from "./middleware/errorHandler.js";
 import { requireJson } from "./middleware/requireJson.js";
 import authRoutes from "./routes/auth.routes.js";
+import eventRoutes from "./routes/event.routes.js";
 import feedbackRoutes from "./routes/feedback.routes.js";
 import statsRoutes from "./routes/stats.routes.js";
 import tripRoutes from "./routes/trip.routes.js";
@@ -48,6 +49,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/trips", tripRoutes);
 app.use("/api/feedback", feedbackRoutes);
 app.use("/api/stats", statsRoutes);
+app.use("/api/events", eventRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

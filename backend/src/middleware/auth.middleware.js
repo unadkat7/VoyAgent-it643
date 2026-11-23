@@ -26,6 +26,20 @@ const protect = async (req, res, next) => {
   next();
 };
 
+// For routes open to everyone: attach the account when the session is valid, otherwise carry on.
+export const optionalAuth = async (req, res, next) => {
+  const token = req.cookies.token;
+  if (token) {
+    try {
+      const { id } = jwt.verify(token, env.JWT_SECRET);
+      req.user = (await User.findById(id)) ?? undefined;
+    } catch {
+      req.user = undefined;
+    }
+  }
+  next();
+};
+
 export const requireAdmin = (req, res, next) => {
   if (!env.adminEmails.includes(req.user.email)) {
     throw new HttpError(403, "Admins only.");

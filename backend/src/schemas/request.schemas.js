@@ -20,6 +20,11 @@ export const planTripSchema = z.object({
   tripId: objectId.optional(),
 });
 
+// Only same-site paths, so a page view can never carry a full URL.
+export const pageviewSchema = z.object({
+  path: z.string().trim().max(200).regex(/^\/(?!\/)/, "Must be a site path"),
+});
+
 export const feedbackSchema = z.object({
   rating: z.number().int().min(1).max(5),
   message: z.string().trim().max(1000).optional(),
