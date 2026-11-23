@@ -9,8 +9,8 @@ Citations are `file:line` (`text expected on that line`) and are checked in CI b
 | Term | Definition | Aliases to avoid | Named in code at |
 |---|---|---|---|
 | **Traveler** | A person who goes on the Trip. Travelers speak in the Conversation. | Customer, Passenger, User (for a person travelling) | `ai-service/schemas/api.py:9` (`traveler`), `backend/src/models/trip.model.js:6` (`traveler`) |
-| **User** | A VoyAgent account: email, password, session. Only for sign-in and ownership, never for a person travelling. | Member, Customer | `backend/src/models/user.model.js:49` (`User`), `backend/src/models/trip.model.js:15` (`userId`) |
-| **Trip** | One planning attempt owned by a User: its Conversation, Trip Status and, once planned, its Trip Plan. | Journey, Vacation, Thread | `backend/src/models/trip.model.js:45` (`Trip`) |
+| **User** | A VoyAgent account: email, password, session. Only for sign-in and ownership, never for a person travelling. | Member, Customer | `backend/src/models/user.model.js:59` (`User`), `backend/src/models/trip.model.js:15` (`userId`) |
+| **Trip** | One planning attempt owned by a User: its Conversation, Trip Status and, once planned, its Trip Plan. | Journey, Vacation, Thread | `backend/src/models/trip.model.js:51` (`Trip`) |
 | **Conversation** | The ordered turns between the Traveler and the assistant for one Trip. The Planning Engine reads all of it on every call. | Prompt history, Thread, Chat | `backend/src/models/trip.model.js:25` (`conversation`), `ai-service/schemas/api.py:8` (`ConversationTurn`) |
 | **Trip Request** | What the Planning Engine understood from the Conversation: Origin, Destination, Duration, Budget, Party Size, Travel Style and optional details. | Requirements, Planner output | `ai-service/schemas/trip_request.py:4` (`TripRequest`) |
 | **Origin** | The city the Travel Party starts from. Not a Destination. | Departure, Source, From | `ai-service/schemas/trip_request.py:7` (`origin`) |
@@ -36,9 +36,9 @@ Citations are `file:line` (`text expected on that line`) and are checked in CI b
 | **Coordinates** | Latitude and longitude of the Destination, a Hotel or an Activity, found by a geocoder Provider after the plan is Feasible. Never written by the LLM. Missing when a place cannot be found. | Location (that is the place name text), GPS, Lat/long | `ai-service/schemas/geo.py:8` (`GeoPoint`), `ai-service/agents/locate.py:81` (`make_locate_node`) |
 | **Trip Map** | The Map tab of a Trip Plan: one pin per place that has Coordinates, filterable by Itinerary Day. | Map view, Location map | `frontend/src/components/trip/TripMap.jsx:151` (`TripMap`) |
 | **Airport Code** | The IATA code for a known city. Unknown places have none. | Airport id | `ai-service/domain/airports.py:54` (`airport_code`) |
-| **Event** | One recorded thing a visitor did (a page view, a sign-up, a Trip planned, feedback sent), with a network prefix, country, city and device. Kept 90 days. Never a plan item. | Log, Hit, Activity (that is an Itinerary item) | `backend/src/models/event.model.js:20` (`eventSchema`), `backend/src/models/event.model.js:3` (`EVENT_TYPES`) |
-| **Visitor** | Whoever sent an Event, counted by a daily hash of IP and browser, so the IP itself is never stored. A Visitor may or may not have a User account. | Session, Client | `backend/src/services/telemetry.service.js:38` (`visitorHash`) |
-| **Outside user** | A User whose email is not in `ADMIN_EMAILS`. Usage stats count only Outside users. | Real user, Customer | `backend/src/controllers/stats.controller.js:24` (`insiderIds`) |
+| **Event** | One recorded thing a visitor did (a page view, a sign-up, a Trip planned, feedback sent, or a whitelisted UI/TripMap interaction), with a network prefix, country, city and device. Kept 90 days. Never a plan item. | Log, Hit, Activity (that is an Itinerary item) | `backend/src/models/event.model.js:38` (`eventSchema`), `backend/src/models/event.model.js:3` (`EVENT_TYPES`) |
+| **Visitor** | Whoever sent an Event, counted by a daily hash of IP and browser, so the IP itself is never stored. A Visitor may or may not have a User account. | Session, Client | `backend/src/services/telemetry.service.js:65` (`visitorHash`) |
+| **Outside user** | A User whose email is not in `ADMIN_EMAILS`. Usage stats count only Outside users. | Real user, Customer | `backend/src/controllers/stats.controller.js:33` (`insiderIds`) |
 | **Share link** | A public, read-only link to a `planned` Trip, created by its owner. Shows the Trip Plan, never the Conversation or the owner. | Public trip, Invite | `backend/src/models/trip.model.js:37` (`shareId`), `backend/src/domain/trip.js:40` (`canShare`) |
 
 ## Flagged ambiguities
