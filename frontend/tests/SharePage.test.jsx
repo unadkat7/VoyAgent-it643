@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import SharedTripPage from "@/app/share/[shareId]/page";
+import SharedTripPage from "@/components/trip/SharedTrip";
 import { getSharedTrip } from "@/services/trip.service";
 import { PLAN } from "./fixtures";
 

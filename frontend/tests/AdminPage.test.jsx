@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import AdminPage from "@/app/admin/page";
+import AdminPage from "@/components/admin/AdminDashboard";
 import { getAdminOverview } from "@/services/admin.service";
 
 const replace = vi.fn();

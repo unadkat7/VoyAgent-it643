@@ -2,3 +2,5 @@ User-agent: *
 Allow: /
 Disallow: /dashboard
 Disallow: /trip/
+Disallow: /share/
+Disallow: /admin
