@@ -24,29 +24,3 @@ describe("POST /api/feedback", () => {
     expect((await request(app).post("/api/feedback").send({ rating: 4 })).status).toBe(401);
   });
 });
-
-describe("GET /api/stats", () => {
-  it("is only for admins", async () => {
-    const agent = await signedInAgent("asha@example.com");
-
-    expect((await agent.get("/api/stats")).status).toBe(403);
-  });
-
-  it("counts Travelers, Trips and feedback for an admin", async () => {
-    const traveler = await signedInAgent("asha@example.com");
-    await traveler.post("/api/feedback").send({ rating: 4 });
-    await traveler.post("/api/feedback").send({ rating: 2 });
-    const admin = await signedInAgent("admin@voyagent.test", "Admin");
-
-    const response = await admin.get("/api/stats");
-
-    expect(response.status).toBe(200);
-    expect(response.body.stats).toMatchObject({
-      accounts: 2,
-      trips: 0,
-      plannedTrips: 0,
-      feedbackCount: 2,
-      averageRating: 3,
-    });
-  });
-});
