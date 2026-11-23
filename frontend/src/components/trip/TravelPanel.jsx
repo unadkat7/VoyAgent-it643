@@ -23,7 +23,11 @@ export default function TravelPanel({ plan }) {
           </h2>
         )}
         {flights.length === 0 && hasOtherWays ? (
-          <p className="text-base text-muted">No flights for this trip. Trains and road options are below.</p>
+          <p className="text-base text-muted">
+            {hasTrains
+              ? "No flights for this trip. Trains and road options are below."
+              : "No flights or trains for this trip. The road route is below."}
+          </p>
         ) : (
           <FlightList flights={flights} partySize={plan.request?.party_size} notes={plan.notes} />
         )}

@@ -137,6 +137,12 @@ describe("Travel panel", () => {
     expect(screen.getByText(/No flights for this trip\. Trains and road options are below\./)).toBeInTheDocument();
   });
 
+  it("points only to the road when there are no trains either", () => {
+    render(<TravelPanel plan={{ ...TRAVEL_PLAN, trains_out: [], trains_back: [] }} />);
+
+    expect(screen.getByText("No flights or trains for this trip. The road route is below.")).toBeInTheDocument();
+  });
+
   it("keeps older plans without trains or roads looking as before", () => {
     render(<TravelPanel plan={PLAN} />);
 
