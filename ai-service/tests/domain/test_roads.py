@@ -9,7 +9,8 @@ def test_hours_are_a_range_because_hill_roads_are_slower_than_routing_says():
     assert route.from_place == "Rishikesh"
     assert route.to_place == "Badrinath"
     assert route.distance_km == 294
-    assert (route.hours_low, route.hours_high) == (9.0, 12.0)  # 7.3 x 1.2 and x 1.6, to the half hour
+    # 7.3 h x 1.2 = 8.76 and x 1.6 = 11.68, rounded to the half hour.
+    assert (route.hours_low, route.hours_high) == (9.0, 11.5)
     assert route.road_ends_km_before is None
 
 

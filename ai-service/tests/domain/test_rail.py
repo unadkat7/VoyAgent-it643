@@ -110,6 +110,29 @@ def test_best_three_by_journey_time():
     assert [j.legs[0].train.number for j in journeys] == ["2", "3", "1"]
 
 
+def test_a_direct_train_beats_a_change_that_saves_less_than_three_hours():
+    to_ratlam = train("12263", [("ST", "16:55", "16:55"), ("BRC", "18:00", "18:00")])
+    onward = train("12055", [("BRC", "19:00", "19:00"), ("HW", "37:55", "37:55")])  # 21h total
+
+    journeys = find_journeys(timetable(SURAT_HARIDWAR, to_ratlam, onward), {"ST"}, {"HW"}, [TUE])
+
+    assert [j.legs[0].train.number for j in journeys] == ["12911", "12263"]
+
+
+def test_no_change_onto_a_train_that_already_stops_at_the_origin():
+    # Riding 12263 to Vadodara just to catch 12911, which already calls at Surat, is pointless.
+    to_vadodara = train("12263", [("ST", "16:00", "16:00"), ("BRC", "17:00", "17:00")])
+    surat_haridwar = train(
+        "12911",
+        [("ST", "16:10", "16:15"), ("BRC", "17:50", "17:55"), ("HW", "38:30", "38:30")],
+        days=[1],
+    )
+
+    journeys = find_journeys(timetable(surat_haridwar, to_vadodara), {"ST"}, {"HW"}, [TUE])
+
+    assert [[leg.train.number for leg in j.legs] for j in journeys] == [["12911"]]
+
+
 def test_arrive_by_drops_late_arrivals():
     journeys = find_journeys(
         timetable(SURAT_HARIDWAR), {"ST"}, {"HW"}, [TUE], arrive_by=datetime(2026, 12, 16, 12, 0)
@@ -125,13 +148,22 @@ def test_train_going_the_other_way_is_not_a_journey():
 
 
 def test_stations_near_a_point_are_nearest_first_within_the_radius():
-    table = timetable()
+    local = train(
+        "L", [("RKSH", "08:00", "08:00"), ("HW", "09:00", "09:00"), ("DDN", "10:00", "10:00")]
+    )
+    table = timetable(local)
     rishikesh = GeoPoint(lat=30.109, lng=78.292)
 
     near = stations_near(table, rishikesh, 15)
 
     assert [s.code for s in near] == ["RKSH"]
     assert [s.code for s in stations_near(table, rishikesh, 40)] == ["RKSH", "HW", "DDN"]
+
+
+def test_a_station_no_train_calls_at_is_never_offered():
+    rishikesh = GeoPoint(lat=30.109, lng=78.292)
+
+    assert stations_near(timetable(), rishikesh, 15) == []
 
 
 def test_railheads_are_busy_stations_within_350_km():
