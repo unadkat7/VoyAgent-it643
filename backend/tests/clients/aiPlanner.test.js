@@ -8,6 +8,8 @@ const PLANNED = { status: "planned", plan: { request: { destination: "Goa" } } }
 const CALL = { tripId: "t1", conversation: [{ role: "traveler", content: "Goa" }] };
 
 const planner = () => nock(AI).post(PLAN_PATH);
+// nock needs a real Error here; a plain object makes the request hang until it times out.
+const connectionReset = () => Object.assign(new Error("socket hang up"), { code: "ECONNRESET" });
 
 beforeAll(() => nock.disableNetConnect());
 afterEach(() => nock.cleanAll());
@@ -15,7 +17,7 @@ afterEach(() => nock.cleanAll());
 // On Vercel a frozen function can wake with a dead keep-alive socket, or reach a cold ai-service.
 describe("requestPlan on a serverless platform", () => {
   it("retries once when the connection is dropped", async () => {
-    planner().replyWithError({ code: "ECONNRESET", message: "socket hang up" });
+    planner().replyWithError(connectionReset());
     planner().reply(200, PLANNED);
 
     const result = await requestPlan(CALL);
@@ -32,7 +34,7 @@ describe("requestPlan on a serverless platform", () => {
   });
 
   it("gives up after the second failure", async () => {
-    planner().twice().replyWithError({ code: "ECONNRESET", message: "socket hang up" });
+    planner().twice().replyWithError(connectionReset());
 
     await expect(requestPlan(CALL)).rejects.toThrow(PlannerUnavailableError);
     expect(nock.isDone()).toBe(true);

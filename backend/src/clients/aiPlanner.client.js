@@ -6,6 +6,10 @@ const PLAN_TIMEOUT_MS = 120_000;
 
 export class PlannerUnavailableError extends Error {}
 
+const describe = (error) => error.response?.status ?? error.code ?? error.message;
+const unavailable = (error) =>
+  new PlannerUnavailableError(`Planning Engine request failed: ${describe(error)}`);
+
 const plannerResponseSchema = z.discriminatedUnion("status", [
   z.object({
     status: z.literal("needs_clarification"),
@@ -22,26 +26,41 @@ const plannerResponseSchema = z.discriminatedUnion("status", [
   }),
 ]);
 
+const RETRY_DELAY_MS = 500;
+const RETRYABLE_STATUS = new Set([502, 503, 504]);
+
+// On Vercel a frozen function can wake with a dead keep-alive socket, or reach a still-starting
+// ai-service. Both fail fast and succeed on the next try; anything else is a real failure.
+const isTransient = (error) =>
+  error.response ? RETRYABLE_STATUS.has(error.response.status) : error.code !== "ECONNABORTED";
+
+function postPlan(body) {
+  return axios.post(`${env.AI_SERVICE_URL}/planner/plan-trip`, body, {
+    headers: { "X-Internal-Key": env.INTERNAL_API_KEY },
+    timeout: PLAN_TIMEOUT_MS,
+  });
+}
+
 // Adapter for the Planning Engine (ai-service). The rest of the backend never sees its wire format.
 export async function requestPlan({ tripId, conversation }) {
+  const body = {
+    trip_id: tripId,
+    conversation: conversation.map(({ role, content }) => ({ role, content })),
+  };
   let data;
   try {
-    const response = await axios.post(
-      `${env.AI_SERVICE_URL}/planner/plan-trip`,
-      {
-        trip_id: tripId,
-        conversation: conversation.map(({ role, content }) => ({ role, content })),
-      },
-      {
-        headers: { "X-Internal-Key": env.INTERNAL_API_KEY },
-        timeout: PLAN_TIMEOUT_MS,
-      }
-    );
-    data = response.data;
-  } catch (error) {
-    throw new PlannerUnavailableError(
-      `Planning Engine request failed: ${error.response?.status ?? error.code ?? error.message}`
-    );
+    data = (await postPlan(body)).data;
+  } catch (firstError) {
+    if (!isTransient(firstError)) {
+      throw unavailable(firstError);
+    }
+    console.warn(`Planning Engine request failed, retrying once: ${describe(firstError)}`);
+    await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+    try {
+      data = (await postPlan(body)).data;
+    } catch (secondError) {
+      throw unavailable(secondError);
+    }
   }
 
   const parsed = plannerResponseSchema.safeParse(data);
