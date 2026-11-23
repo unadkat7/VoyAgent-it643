@@ -9,6 +9,7 @@ from schemas.geo import GeoPoint
 from schemas.itinerary import ItineraryDay
 from schemas.plan import TripPlan
 from schemas.recommendations import FlightRecommendation, HotelRecommendation
+from schemas.travel import RoadRoute, TrainOption
 from schemas.trip_request import TripRequest
 
 
@@ -26,6 +27,11 @@ class PlanningState(TypedDict, total=False):
     # Hotel, flight and itinerary nodes run in parallel and may each add notes.
     notes: Annotated[list[str], operator.add]
     cost: TripCost
+    trains_out: list[TrainOption]
+    trains_back: list[TrainOption]
+    road_route: RoadRoute
+    road_leg: RoadRoute
+    timetable_as_of: str
     destination_point: GeoPoint | None
     clarification: Clarification
     plan: TripPlan

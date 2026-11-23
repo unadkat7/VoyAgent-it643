@@ -11,7 +11,9 @@ STATION_RADIUS_KM = 15.0
 MAX_STATION_RADIUS_KM = 60.0
 RAILHEAD_MAX_KM = 350.0
 RAILHEAD_MIN_DAILY_TRAINS = 10
-MAX_RAILHEADS = 3
+# Many, because small stations cluster near hill towns (Rishikesh) and a busier one a little
+# farther away (Haridwar) can be hours quicker overall. Searching them is cheap; routing is not.
+MAX_RAILHEADS = 15
 MAX_JOURNEYS = 3
 CHANGE_PENALTY_MINUTES = 3 * 60
 
@@ -142,10 +144,13 @@ def find_journeys(
     return sorted(found.values(), key=_rank)[:limit]
 
 
+def travel_minutes(journey: Journey) -> int:
+    """Journey time as a Traveler feels it: each change counts as CHANGE_PENALTY extra minutes."""
+    return journey.minutes + (len(journey.legs) - 1) * CHANGE_PENALTY_MINUTES
+
+
 def _rank(journey: Journey) -> tuple[int, datetime]:
-    # Travelers prefer staying on one train, so a change counts as CHANGE_PENALTY extra time.
-    changes = len(journey.legs) - 1
-    return journey.minutes + changes * CHANGE_PENALTY_MINUTES, journey.departs
+    return travel_minutes(journey), journey.departs
 
 
 def _onward_calls(

@@ -53,7 +53,10 @@ def make_timetable():
         train(
             "12911", "BL HARIDWAR EXP", [("ST", "16:10", "16:15"), ("HW", "38:30", "38:30")], [1]
         ),
-        train("12912", "HW BL EXP", [("HW", "06:00", "06:00"), ("ST", "28:00", "28:00")]),
+        # Runs only on Tuesdays: the day after check-out (Monday 21 December).
+        train("12912", "HW BL EXP", [("HW", "06:00", "06:00"), ("ST", "28:00", "28:00")], [1]),
+        # 25 hours to Rishikesh: arrives first only because it leaves a day earlier.
+        train("19031", "YOGA EXP", [("ST", "02:00", "02:00"), ("RKSH", "27:00", "27:00")], [0]),
         # Ten local trains a day keep Haridwar and Rishikesh busy enough to be railheads.
         *(
             train(
@@ -73,6 +76,7 @@ def place(name, point, kind="city", importance=0.6):
 
 PLACES = {
     "Surat": [place("Surat", SURAT)],
+    "Rishikesh": [place("Rishikesh", GeoPoint(lat=30.109, lng=78.292), kind="town")],
     "Haridwar": [place("Haridwar", HARIDWAR)],
     "Badrinath": [place("Badrinath", BADRINATH, kind="town", importance=0.16)],
 }
@@ -84,9 +88,9 @@ DRIVES = {
 }
 
 
-def request_to(destination):
+def request_to(destination, origin="Surat"):
     return TripRequest(
-        origin="Surat",
+        origin=origin,
         destination=destination,
         duration_days=5,
         budget=40_000,
@@ -96,10 +100,10 @@ def request_to(destination):
     )
 
 
-def make_engine(destination, *, timetable=None, places=None, router=None):
+def make_engine(destination, *, origin="Surat", timetable=None, places=None, router=None):
     llm = FakeLLM(
         {
-            TripRequest: request_to(destination),
+            TripRequest: request_to(destination, origin),
             Itinerary: Itinerary(
                 days=[
                     ItineraryDay(
@@ -125,7 +129,7 @@ def make_engine(destination, *, timetable=None, places=None, router=None):
     return PlanningEngine(
         llm=llm,
         hotel_search=SequenceSearch([stay]),
-        flight_search=SequenceSearch(),
+        flight_search=SequenceSearch([]),  # only Dubai has an airport; no flights are found
         geocoder=FakeGeocoder(),
         today=lambda: TODAY,
         timetable=timetable or FakeTimetable(make_timetable()),
@@ -157,6 +161,38 @@ def test_place_without_a_station_gets_trains_to_the_best_railhead_and_a_road_leg
     assert plan.road_leg.distance_km == 319
     assert [leg.train_number for leg in plan.trains_back[0].legs] == ["12912"]
     assert plan.timetable_as_of == "2026-08-30"
+
+
+def test_railhead_is_picked_by_total_travel_time_not_by_who_leaves_first():
+    # Rishikesh: 25 h + about 9 h of road. Haridwar: 22 h + about 9.5 h. Haridwar is quicker,
+    # though 19031 reaches Rishikesh a day sooner because it leaves a day earlier.
+    plan = plan_for("Badrinath")
+
+    assert plan.road_leg.from_place == "Haridwar Jn"
+    assert all(option.legs[0].train_number != "19031" for option in plan.trains_out)
+
+
+def test_at_most_two_railheads_and_the_direct_road_are_routed():
+    router = FakeRouter(DRIVES, default=Drive(km=1350, hours=22.0))
+
+    plan_for("Badrinath", router=router)
+
+    assert len(router.calls) <= 3
+
+
+def test_return_trains_may_leave_the_day_after_check_out():
+    plan = plan_for("Badrinath")
+
+    assert plan.trains_back[0].departs == "2026-12-22T06:00"
+
+
+def test_no_trains_when_the_origin_is_already_at_the_railhead():
+    plan = plan_for("Badrinath", origin="Rishikesh")
+
+    assert plan.trains_out == [] and plan.trains_back == []
+    assert plan.road_leg is None
+    assert plan.road_route is not None
+    assert not any("No train" in note for note in plan.notes)
 
 
 def test_every_plan_also_gets_a_road_route_on_its_own():

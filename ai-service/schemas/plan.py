@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 from schemas.geo import GeoPoint
 from schemas.itinerary import ItineraryDay
 from schemas.recommendations import FlightRecommendation, HotelRecommendation
+from schemas.travel import RoadRoute, TrainOption
 from schemas.trip_request import TripRequest
 
 
@@ -35,3 +36,9 @@ class TripPlan(BaseModel):
     estimated_cost: EstimatedCost
     notes: list[str] = Field(default_factory=list)
     destination_coordinates: GeoPoint | None = None
+    # Getting there by train and by road. Empty for plans made before these were added.
+    trains_out: list[TrainOption] = Field(default_factory=list)
+    trains_back: list[TrainOption] = Field(default_factory=list)
+    road_route: RoadRoute | None = None
+    road_leg: RoadRoute | None = None
+    timetable_as_of: str | None = None

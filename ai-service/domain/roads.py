@@ -6,6 +6,9 @@ from schemas.travel import RoadRoute
 SLOW_FACTOR_LOW = 1.2
 SLOW_FACTOR_HIGH = 1.6
 ROAD_END_KM = 2.0
+# Only for shortlisting railheads before asking the router: hill roads wind, so 1 km in a
+# straight line took about 4 minutes on the routes checked (Rishikesh and Haridwar to Badrinath).
+MINUTES_PER_STRAIGHT_KM = 4.0
 
 
 @dataclass(frozen=True)
@@ -15,6 +18,10 @@ class Drive:
     km: float
     hours: float
     end_gap_km: float = 0.0
+
+
+def estimated_road_minutes(straight_km: float) -> float:
+    return straight_km * MINUTES_PER_STRAIGHT_KM
 
 
 def _half_hours(hours: float) -> float:

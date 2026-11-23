@@ -4,7 +4,10 @@ from datetime import date
 from graph.builder import build_planning_graph
 from ports.geocoder import GeocoderPort
 from ports.llm import LLMPort
+from ports.places import PlaceFinderPort
+from ports.roads import RouterPort
 from ports.search import FlightSearchPort, HotelSearchPort
+from ports.timetable import TimetablePort
 from schemas.api import PlanTripRequest, PlanTripResponse
 
 
@@ -19,6 +22,9 @@ class PlanningEngine:
         flight_search: FlightSearchPort,
         geocoder: GeocoderPort,
         today: Callable[[], date] = date.today,
+        timetable: TimetablePort | None = None,
+        places: PlaceFinderPort | None = None,
+        router: RouterPort | None = None,
     ):
         self._graph = build_planning_graph(
             llm=llm,
@@ -26,6 +32,9 @@ class PlanningEngine:
             flight_search=flight_search,
             geocoder=geocoder,
             today=today,
+            timetable=timetable,
+            places=places,
+            router=router,
         )
 
     def plan(self, request: PlanTripRequest) -> PlanTripResponse:

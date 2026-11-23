@@ -1,6 +1,6 @@
 import pytest
 
-from domain.roads import Drive, road_end_note, road_route
+from domain.roads import Drive, estimated_road_minutes, road_end_note, road_route
 
 
 def test_hours_are_a_range_because_hill_roads_are_slower_than_routing_says():
@@ -27,6 +27,11 @@ def test_road_end_note_names_the_place_and_the_gap():
     assert road_end_note(route) == (
         "The road ends about 10 km before Kedarnath; the rest is on foot or by other transport."
     )
+
+
+def test_rough_road_time_from_straight_line_distance_matches_the_hill_routes_checked():
+    # Rishikesh -> Badrinath: 134 km in a straight line; routing says 7.3 h, so about 8.8 h slowed.
+    assert estimated_road_minutes(134) == pytest.approx(7.3 * 1.2 * 60, rel=0.15)
 
 
 def test_no_note_when_the_road_reaches_the_place():

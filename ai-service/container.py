@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from adapters.cached_search import CachedSearch
 from adapters.cloudflare_llm import CloudflareLLM
 from adapters.estimate_search import EstimateSearch
@@ -5,8 +7,10 @@ from adapters.fallback_geocoder import FallbackGeocoder
 from adapters.fallback_llm import FallbackLLM
 from adapters.fallback_search import FallbackSearch
 from adapters.groq_llm import GroqLLM
+from adapters.gtfs_timetable import GtfsTimetable
 from adapters.no_geocoder import NoGeocoder
 from adapters.nominatim import NominatimGeocoder
+from adapters.osrm import OsrmRouter
 from adapters.searchapi import SearchApiSearch
 from adapters.wikipedia_geocoder import WikipediaGeocoder
 from graph.engine import PlanningEngine
@@ -38,9 +42,22 @@ def build_engine(settings: Settings) -> PlanningEngine:
     if settings.searchapi_key:
         search = FallbackSearch(SearchApiSearch(api_key=settings.searchapi_key), search)
     cached = CachedSearch(search, ttl_seconds=settings.search_cache_ttl_seconds)
-    geocoder = (
-        FallbackGeocoder(WikipediaGeocoder(), NominatimGeocoder(base_url=settings.nominatim_url))
-        if settings.geocoder_enabled
-        else NoGeocoder()
+    if not settings.geocoder_enabled:
+        return PlanningEngine(
+            llm=llm, hotel_search=cached, flight_search=cached, geocoder=NoGeocoder()
+        )
+
+    # One Nominatim client, so the map pins and the place finder share its rate limit.
+    nominatim = NominatimGeocoder(base_url=settings.nominatim_url)
+    timetable_path = Path(settings.timetable_path)
+    if not timetable_path.is_absolute():
+        timetable_path = Path(__file__).resolve().parent / timetable_path
+    return PlanningEngine(
+        llm=llm,
+        hotel_search=cached,
+        flight_search=cached,
+        geocoder=FallbackGeocoder(WikipediaGeocoder(), nominatim),
+        timetable=GtfsTimetable(timetable_path),
+        places=nominatim,
+        router=OsrmRouter(base_url=settings.osrm_url),
     )
-    return PlanningEngine(llm=llm, hotel_search=cached, flight_search=cached, geocoder=geocoder)
