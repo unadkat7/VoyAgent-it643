@@ -139,8 +139,8 @@ function DayChip({ active, onClick, children }) {
       aria-pressed={active}
       className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all whitespace-nowrap ${
         active
-          ? "bg-[#CE532D] border-[#CE532D] text-white shadow-xs"
-          : "bg-white/95 border-[#E7E0D5] text-[#3B342E] hover:text-[#181411] hover:border-[#D6CCC0]"
+          ? "bg-primary border-primary text-white shadow-xs"
+          : "bg-white/95 border-border text-ink-soft hover:text-ink hover:border-border-strong"
       }`}
     >
       {children}
@@ -272,7 +272,7 @@ export default function TripMap({
     <div
       className={
         expanded
-          ? "fixed inset-3 sm:inset-5 z-50 bg-[#FAF8F4] border border-[#E7E0D5] rounded-3xl shadow-2xl p-3 sm:p-4 flex flex-col gap-3"
+          ? "fixed inset-3 sm:inset-5 z-50 bg-bg border border-border rounded-3xl shadow-2xl p-3 sm:p-4 flex flex-col gap-3"
           : "space-y-3"
       }
     >
@@ -291,7 +291,7 @@ export default function TripMap({
           </div>
         )}
         <div className="flex items-center gap-2 ml-auto">
-          <span className="font-mono text-[11px] text-[#73685E]">
+          <span className="font-mono text-[11px] text-muted">
             {activityCount} {activityCount === 1 ? "activity" : "activities"}
             {stayCount > 0 ? ` · ${stayCount} ${stayCount === 1 ? "stay" : "stays"}` : ""}
           </span>
@@ -299,7 +299,7 @@ export default function TripMap({
             <button
               type="button"
               onClick={() => setExpanded(false)}
-              className="inline-flex items-center gap-1 text-xs font-semibold bg-[#181411] text-[#FAF8F4] px-3 py-1.5 rounded-full hover:bg-[#2C2520] transition-colors"
+              className="inline-flex items-center gap-1 text-xs font-semibold bg-ink text-bg px-3 py-1.5 rounded-full hover:bg-ink-hover transition-colors"
             >
               <Minimize2 className="w-3.5 h-3.5" aria-hidden />
               Exit
@@ -310,7 +310,7 @@ export default function TripMap({
 
       {/* Interactive Map Canvas with Floating Glassmorphic Controls */}
       <div
-        className={`relative isolate rounded-2xl overflow-hidden border border-[#E7E0D5] bg-[#EFEAE1] shadow-[0_14px_36px_-22px_rgba(24,20,17,0.24)] ${
+        className={`relative isolate rounded-2xl overflow-hidden border border-border bg-[#EFEAE1] shadow-[0_14px_36px_-22px_rgba(24,20,17,0.24)] ${
           mapStyle === "atlas" ? "atlas-map-tiles" : ""
         } ${
           expanded
@@ -370,10 +370,10 @@ export default function TripMap({
                     <span
                       className={`inline-block font-mono text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${
                         point.kind === "hotel"
-                          ? "bg-[#181411] text-[#FAF8F4]"
+                          ? "bg-ink text-bg"
                           : point.kind === "activity"
-                          ? "bg-[#FCEEE8] text-[#B54320]"
-                          : "bg-[#F2EDE4] text-[#3B342E]"
+                          ? "bg-primary-light text-primary-hover"
+                          : "bg-bg-subtle text-ink-soft"
                       }`}
                     >
                       {point.kind === "hotel"
@@ -382,12 +382,12 @@ export default function TripMap({
                         ? `Stop #${point.order}`
                         : "Destination"}
                     </span>
-                    <p className="font-semibold text-[#181411] text-sm leading-snug">
+                    <p className="font-semibold text-ink text-sm leading-snug">
                       {point.title}
                     </p>
-                    {point.detail && <p className="text-xs text-[#73685E]">{point.detail}</p>}
+                    {point.detail && <p className="text-xs text-muted">{point.detail}</p>}
                     {point.kind === "activity" && (
-                      <p className="text-xs font-semibold text-[#15803D]">
+                      <p className="text-xs font-semibold text-success">
                         {point.cost > 0 ? `Est. ${formatInr(point.cost)} per traveller` : "Free"}
                       </p>
                     )}
@@ -396,7 +396,7 @@ export default function TripMap({
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={() => onTrack?.("map_google_maps_opened", point.kind)}
-                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#CE532D] hover:underline pt-1"
+                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary hover:underline pt-1"
                     >
                       Open in Google Maps
                       <ExternalLink className="w-3 h-3" aria-hidden />
@@ -410,11 +410,11 @@ export default function TripMap({
 
         {/* Top-Right Floating Map Style Switcher (above Leaflet's z-1000 controls) */}
         <div
-          className="absolute top-3 right-3 z-[1001] flex items-center gap-1 bg-white/95 backdrop-blur-md border border-[#E7E0D5] rounded-full p-1 shadow-lg"
+          className="absolute top-3 right-3 z-[1001] flex items-center gap-1 bg-white/95 backdrop-blur-md border border-border rounded-full p-1 shadow-lg"
           role="group"
           aria-label="Map style"
         >
-          <Layers className="w-3.5 h-3.5 text-[#73685E] ml-2 mr-0.5 hidden sm:block" aria-hidden />
+          <Layers className="w-3.5 h-3.5 text-muted ml-2 mr-0.5 hidden sm:block" aria-hidden />
           {Object.values(MAP_STYLES).map((styleOption) => {
             const active = mapStyle === styleOption.id;
             return (
@@ -425,8 +425,8 @@ export default function TripMap({
                 aria-pressed={active}
                 className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all ${
                   active
-                    ? "bg-[#181411] text-[#FAF8F4] shadow-xs"
-                    : "text-[#73685E] hover:text-[#181411]"
+                    ? "bg-ink text-bg shadow-xs"
+                    : "text-muted hover:text-ink"
                 }`}
               >
                 {styleOption.label}
@@ -442,7 +442,7 @@ export default function TripMap({
             onClick={handleResetView}
             title="Fit all pins in view"
             aria-label="Fit all pins in view"
-            className="w-9 h-9 rounded-xl bg-white/95 backdrop-blur-md border border-[#E7E0D5] text-[#181411] hover:text-[#CE532D] hover:border-[#CE532D]/40 shadow-lg flex items-center justify-center transition-colors"
+            className="w-9 h-9 rounded-xl bg-white/95 backdrop-blur-md border border-border text-ink hover:text-primary hover:border-primary/40 shadow-lg flex items-center justify-center transition-colors"
           >
             <LocateFixed className="w-4 h-4" aria-hidden />
           </button>
@@ -451,7 +451,7 @@ export default function TripMap({
             onClick={handleToggleFullscreen}
             title={expanded ? "Close fullscreen map" : "Expand immersive fullscreen map"}
             aria-label={expanded ? "Close fullscreen map" : "Expand immersive fullscreen map"}
-            className="w-9 h-9 rounded-xl bg-white/95 backdrop-blur-md border border-[#E7E0D5] text-[#181411] hover:text-[#CE532D] hover:border-[#CE532D]/40 shadow-lg flex items-center justify-center transition-colors"
+            className="w-9 h-9 rounded-xl bg-white/95 backdrop-blur-md border border-border text-ink hover:text-primary hover:border-primary/40 shadow-lg flex items-center justify-center transition-colors"
           >
             {expanded ? (
               <Minimize2 className="w-4 h-4" aria-hidden />
@@ -462,8 +462,8 @@ export default function TripMap({
         </div>
 
         {/* Subtle Scroll-to-Zoom Hint Pill (bottom-left) */}
-        <div className="pointer-events-none absolute bottom-3 left-3 z-[1001] hidden sm:inline-flex items-center gap-1.5 bg-[#181411]/82 backdrop-blur-sm text-[#FAF8F4] text-[10px] font-mono px-2.5 py-1 rounded-full shadow-md">
-          <Compass className="w-3 h-3 text-[#F29674]" aria-hidden />
+        <div className="pointer-events-none absolute bottom-3 left-3 z-[1001] hidden sm:inline-flex items-center gap-1.5 bg-ink/82 backdrop-blur-sm text-bg text-[10px] font-mono px-2.5 py-1 rounded-full shadow-md">
+          <Compass className="w-3 h-3 text-primary-soft" aria-hidden />
           Scroll to zoom · Drag to pan
         </div>
       </div>
@@ -483,17 +483,17 @@ export default function TripMap({
                 onClick={() => handleSelectQuickStop(stop.key, stop.kind)}
                 className={`shrink-0 inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${
                   active
-                    ? "bg-[#181411] border-[#181411] text-[#FAF8F4] shadow-xs"
-                    : "bg-white border-[#E7E0D5] text-[#3B342E] hover:border-[#CE532D]/50 hover:text-[#CE532D]"
+                    ? "bg-ink border-ink text-bg shadow-xs"
+                    : "bg-white border-border text-ink-soft hover:border-primary/50 hover:text-primary"
                 }`}
               >
                 <span
                   className={`w-4 h-4 rounded-full font-mono text-[10px] font-bold flex items-center justify-center ${
                     stop.kind === "hotel"
                       ? active
-                        ? "bg-[#FAF8F4] text-[#181411]"
-                        : "bg-[#181411] text-[#FAF8F4]"
-                      : "bg-[#CE532D] text-white"
+                        ? "bg-bg text-ink"
+                        : "bg-ink text-bg"
+                      : "bg-primary text-white"
                   }`}
                 >
                   {stop.kind === "hotel" ? "H" : stop.order}
@@ -506,7 +506,7 @@ export default function TripMap({
       )}
 
       {/* Interactive Filterable Editorial Legend */}
-      <ul className="flex flex-wrap items-center gap-2 text-xs text-[#73685E] bg-white border border-[#E7E0D5] rounded-xl px-3.5 py-2">
+      <ul className="flex flex-wrap items-center gap-2 text-xs text-muted bg-white border border-border rounded-xl px-3.5 py-2">
         <li>
           <button
             type="button"
@@ -516,10 +516,10 @@ export default function TripMap({
             }}
             aria-pressed={showActivities}
             className={`flex items-center gap-1.5 px-2 py-0.5 rounded-lg transition-all ${
-              showActivities ? "text-[#181411] font-medium" : "opacity-45 line-through"
+              showActivities ? "text-ink font-medium" : "opacity-45 line-through"
             }`}
           >
-            <span className="w-3 h-3 rounded-full bg-[#CE532D]" aria-hidden />
+            <span className="w-3 h-3 rounded-full bg-primary" aria-hidden />
             Activity (numbered by day)
           </button>
         </li>
@@ -532,15 +532,15 @@ export default function TripMap({
             }}
             aria-pressed={showStays}
             className={`flex items-center gap-1.5 px-2 py-0.5 rounded-lg transition-all ${
-              showStays ? "text-[#181411] font-medium" : "opacity-45 line-through"
+              showStays ? "text-ink font-medium" : "opacity-45 line-through"
             }`}
           >
-            <span className="w-3 h-3 rounded bg-[#181411]" aria-hidden />
+            <span className="w-3 h-3 rounded bg-ink" aria-hidden />
             Stay
           </button>
         </li>
         <li className="flex items-center gap-1.5 px-2 py-0.5">
-          <span className="w-3 h-3 rounded-full border-2 border-[#CE532D] bg-white" aria-hidden />
+          <span className="w-3 h-3 rounded-full border-2 border-primary bg-white" aria-hidden />
           Destination
         </li>
       </ul>
@@ -551,7 +551,7 @@ export default function TripMap({
     return (
       <>
         <div
-          className="fixed inset-0 z-40 bg-[#181411]/45 backdrop-blur-xs"
+          className="fixed inset-0 z-40 bg-ink/45 backdrop-blur-xs"
           onClick={() => setExpanded(false)}
           aria-hidden="true"
         />

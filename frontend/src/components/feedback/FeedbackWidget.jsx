@@ -66,9 +66,9 @@ export default function FeedbackWidget({ page }) {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.92 }}
             onClick={() => setOpen(true)}
-            className="flex items-center gap-2 bg-[#181411] hover:bg-[#2C2520] text-[#FAF8F4] text-xs font-semibold px-4 py-2.5 rounded-full shadow-lg shadow-[#181411]/20 border border-[#FAF8F4]/10 transition-colors"
+            className="flex items-center gap-2 bg-ink hover:bg-ink-hover text-bg text-xs font-semibold px-4 py-2.5 rounded-full shadow-lg shadow-ink/20 border border-bg/10 transition-colors"
           >
-            <MessageSquareHeart className="w-3.5 h-3.5 text-[#F29674]" aria-hidden />
+            <MessageSquareHeart className="w-3.5 h-3.5 text-primary-soft" aria-hidden />
             Feedback
           </motion.button>
         ) : (
@@ -79,20 +79,20 @@ export default function FeedbackWidget({ page }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 12, scale: 0.96 }}
             transition={{ duration: 0.18 }}
-            className="max-h-[80dvh] overflow-y-auto w-[calc(100vw-1.5rem)] max-w-xs bg-white border border-[#E7E0D5] rounded-2xl shadow-2xl shadow-[#181411]/15 p-5"
+            className="max-h-[80dvh] overflow-y-auto w-[calc(100vw-1.5rem)] max-w-xs bg-white border border-border rounded-2xl shadow-2xl shadow-ink/15 p-5"
           >
             <div className="flex items-center justify-between mb-3">
               <div>
-                <p className="font-display text-base font-semibold text-[#181411]">
+                <p className="font-display text-base font-semibold text-ink">
                   How was this experience?
                 </p>
-                <p className="text-[11px] text-[#73685E]">Helps us sharpen the Planning Engine</p>
+                <p className="text-[11px] text-muted">Helps us sharpen the Planning Engine</p>
               </div>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Close feedback"
-                className="w-11 h-11 rounded-lg flex items-center justify-center text-[#73685E] hover:text-[#181411] hover:bg-[#FAF8F4] transition-colors"
+                className="w-11 h-11 rounded-lg flex items-center justify-center text-muted hover:text-ink hover:bg-bg transition-colors"
               >
                 <X className="w-4 h-4" aria-hidden />
               </button>
@@ -119,8 +119,8 @@ export default function FeedbackWidget({ page }) {
                     <Star
                       className={`w-6 h-6 transition-colors ${
                         value <= activeRating
-                          ? "fill-[#D97706] text-[#D97706]"
-                          : "text-[#D6CCC0]"
+                          ? "fill-star text-star"
+                          : "text-border-strong"
                       }`}
                       aria-hidden
                     />
@@ -128,7 +128,7 @@ export default function FeedbackWidget({ page }) {
                 ))}
               </div>
               {activeLabel && (
-                <span className="text-[11px] font-semibold text-[#B45309] bg-[#FEF7E6] px-2 py-0.5 rounded-full">
+                <span className="text-[11px] font-semibold text-warning bg-warning-light px-2 py-0.5 rounded-full">
                   {activeLabel}
                 </span>
               )}
@@ -145,8 +145,8 @@ export default function FeedbackWidget({ page }) {
                     aria-pressed={active}
                     className={`px-2 py-0.5 rounded-full text-[11px] font-medium border transition-colors ${
                       active
-                        ? "bg-[#181411] border-[#181411] text-[#FAF8F4]"
-                        : "bg-[#FAF8F4] border-[#E7E0D5] text-[#73685E] hover:text-[#181411]"
+                        ? "bg-ink border-ink text-bg"
+                        : "bg-bg border-border text-muted hover:text-ink"
                     }`}
                   >
                     {item.label}
@@ -161,12 +161,12 @@ export default function FeedbackWidget({ page }) {
               maxLength={1000}
               rows={3}
               placeholder="What worked well, or what felt off? (optional)"
-              className="w-full bg-[#FDFBF7] border border-[#E7E0D5] rounded-xl px-3 py-2.5 text-sm text-[#181411] placeholder-[#A89E94] mb-3 focus:outline-none focus:bg-white focus:border-[#CE532D] focus:ring-2 focus:ring-[#CE532D]/15 resize-none transition-all"
+              className="w-full bg-surface-warm border border-border rounded-xl px-3 py-2.5 text-sm text-ink placeholder-faint mb-3 focus:outline-none focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/15 resize-none transition-all"
             />
             <button
               type="submit"
               disabled={sending}
-              className="w-full bg-[#CE532D] hover:bg-[#B54320] disabled:opacity-50 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors"
+              className="w-full bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors"
             >
               {sending ? "Sending..." : "Send feedback"}
             </button>

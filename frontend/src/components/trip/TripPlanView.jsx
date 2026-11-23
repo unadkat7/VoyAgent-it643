@@ -119,43 +119,43 @@ export default function TripPlanView({ trip }) {
   return (
     <>
       {/* ── Editorial Dossier Masthead ── */}
-      <section className="bg-white border-b border-[#E7E0D5]">
+      <section className="bg-white border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 sm:pt-8">
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-3 pb-4 lg:gap-6 lg:pb-7">
             <div className="space-y-2.5 min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 {route && (
-                  <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-[#CE532D] bg-[#FCEEE8] border border-[#F3CFC0] px-2.5 py-0.5 rounded-full">
+                  <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-primary bg-primary-light border border-primary-border px-2.5 py-0.5 rounded-full">
                     {route}
                   </span>
                 )}
-                <span className="text-[11px] font-semibold text-[#15803D] bg-[#ECFDF3] border border-[#15803D]/15 px-2.5 py-0.5 rounded-full">
+                <span className="text-[11px] font-semibold text-success bg-success-light border border-success/15 px-2.5 py-0.5 rounded-full">
                   Planned
                 </span>
                 {plan.request?.travel_style && (
-                  <span className="text-[11px] font-medium capitalize text-[#3B342E] bg-[#FAF8F4] border border-[#E7E0D5] px-2.5 py-0.5 rounded-full">
+                  <span className="text-[11px] font-medium capitalize text-ink-soft bg-bg border border-border px-2.5 py-0.5 rounded-full">
                     {plan.request.travel_style}
                   </span>
                 )}
               </div>
 
-              <h1 className="font-display text-3xl sm:text-4xl lg:text-[42px] font-semibold text-[#181411] tracking-tight leading-tight">
+              <h1 className="font-display text-3xl sm:text-4xl lg:text-[42px] font-semibold text-ink tracking-tight leading-tight">
                 {tripTitle(trip)}
               </h1>
 
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs sm:text-sm text-[#73685E]">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs sm:text-sm text-muted">
                 <span className="inline-flex items-center gap-1.5">
-                  <Calendar className="w-4 h-4 text-[#CE532D]" aria-hidden />
+                  <Calendar className="w-4 h-4 text-primary" aria-hidden />
                   {formatDateRange(plan.check_in, plan.check_out)} · {plan.nights} nights
                 </span>
                 {plan.request?.party_size && (
                   <span className="inline-flex items-center gap-1.5">
-                    <Users className="w-4 h-4 text-[#73685E]" aria-hidden />
+                    <Users className="w-4 h-4 text-muted" aria-hidden />
                     {plan.request.party_size} Travelers
                   </span>
                 )}
                 {plan.request?.budget && (
-                  <span className="font-mono text-xs text-[#3B342E]">
+                  <span className="font-mono text-xs text-ink-soft">
                     Budget {formatInr(plan.request.budget)}
                   </span>
                 )}
@@ -167,29 +167,29 @@ export default function TripPlanView({ trip }) {
               <button
                 type="button"
                 onClick={() => handleSelectTab("summary")}
-                className="text-left lg:text-right bg-[#FAF8F4] hover:bg-[#F2EDE4]/70 border border-[#E7E0D5] rounded-2xl px-5 py-3.5 transition-colors shrink-0 lg:min-w-[250px]"
+                className="text-left lg:text-right bg-bg hover:bg-bg-subtle/70 border border-border rounded-2xl px-5 py-3.5 transition-colors shrink-0 lg:min-w-[250px]"
               >
                 <div className="flex items-baseline justify-between lg:justify-end gap-3">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-[#73685E]">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-muted">
                     Estimated Cost
                   </span>
-                  <span className="font-mono text-2xl font-semibold text-[#15803D]">
+                  <span className="font-mono text-2xl font-semibold text-success">
                     {formatInr(plan.estimated_cost.total)}
                   </span>
                 </div>
                 {breakdown.budget > 0 && (
                   <div className="mt-2 space-y-1">
-                    <div className="h-1.5 rounded-full bg-[#E7E0D5] overflow-hidden flex">
+                    <div className="h-1.5 rounded-full bg-border overflow-hidden flex">
                       <div
-                        className="bg-[#CE532D] h-full"
+                        className="bg-primary h-full"
                         style={{ width: `${breakdown.hotelPercent}%` }}
                       />
                       <div
-                        className="bg-[#181411] h-full"
+                        className="bg-ink h-full"
                         style={{ width: `${breakdown.flightPercent}%` }}
                       />
                     </div>
-                    <p className="font-mono text-[10px] text-[#73685E]">
+                    <p className="font-mono text-[10px] text-muted">
                       {breakdown.usedPercent}% of Budget · Stays &amp; Flights
                     </p>
                   </div>
@@ -210,8 +210,8 @@ export default function TripPlanView({ trip }) {
                   aria-current={active ? "page" : undefined}
                   className={`flex flex-col sm:flex-row justify-center items-center gap-1 sm:gap-2 px-0 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold border-b-2 whitespace-nowrap transition-all ${
                     active
-                      ? "border-[#CE532D] text-[#CE532D]"
-                      : "border-transparent text-[#73685E] hover:text-[#181411]"
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted hover:text-ink"
                   }`}
                 >
                   <Icon className="w-4 h-4" aria-hidden />
@@ -219,7 +219,7 @@ export default function TripPlanView({ trip }) {
                   {typeof count === "number" && count > 0 && (
                     <span
                       className={`hidden sm:inline font-mono text-[10px] px-1.5 py-0.5 rounded-full ${
-                        active ? "bg-[#FCEEE8] text-[#B54320]" : "bg-[#F2EDE4] text-[#73685E]"
+                        active ? "bg-primary-light text-primary-hover" : "bg-bg-subtle text-muted"
                       }`}
                     >
                       {count}

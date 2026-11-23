@@ -85,8 +85,8 @@ export default function TripDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#FAF8F4] font-sans">
-        <div className="bg-[#FAF8F4]/90 border-b border-[#E7E0D5] px-6 h-16 flex items-center">
+      <div className="min-h-screen bg-bg font-sans">
+        <div className="bg-bg/90 border-b border-border px-6 h-16 flex items-center">
           <div className="max-w-6xl w-full mx-auto flex justify-between">
             <Skeleton className="w-24 h-6" />
             <Skeleton className="w-24 h-6" />
@@ -107,15 +107,15 @@ export default function TripDetailPage() {
 
   if (error || !trip?.plan) {
     return (
-      <div className="min-h-screen bg-[#FAF8F4] flex flex-col items-center justify-center text-center p-8">
-        <div className="bg-white border border-[#E7E0D5] rounded-3xl p-8 max-w-md w-full shadow-sm">
-          <div className="w-12 h-12 rounded-2xl bg-[#FEF7E6] border border-[#D97706]/20 flex items-center justify-center mx-auto mb-4">
-            <ShieldAlert className="w-6 h-6 text-[#B45309]" aria-hidden />
+      <div className="min-h-screen bg-bg flex flex-col items-center justify-center text-center p-8">
+        <div className="bg-white border border-border rounded-3xl p-8 max-w-md w-full shadow-sm">
+          <div className="w-12 h-12 rounded-2xl bg-warning-light border border-star/20 flex items-center justify-center mx-auto mb-4">
+            <ShieldAlert className="w-6 h-6 text-warning" aria-hidden />
           </div>
-          <h2 className="font-display text-2xl font-semibold text-[#181411] mb-2">
+          <h2 className="font-display text-2xl font-semibold text-ink mb-2">
             {error ?? "This Trip is not planned yet"}
           </h2>
-          <p className="text-sm text-[#73685E] mb-6">
+          <p className="text-sm text-muted mb-6">
             {error
               ? "Return to your Dashboard to view your saved Trips."
               : "Pick up the Conversation where you left off to finish planning."}
@@ -125,7 +125,7 @@ export default function TripDetailPage() {
               <button
                 type="button"
                 onClick={() => router.push(`/trip/new?tripId=${trip._id}`)}
-                className="bg-[#CE532D] hover:bg-[#B54320] text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors"
+                className="bg-primary hover:bg-primary-hover text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors"
               >
                 Continue planning
               </button>
@@ -133,7 +133,7 @@ export default function TripDetailPage() {
             <button
               type="button"
               onClick={() => router.push("/dashboard")}
-              className="bg-[#181411] hover:bg-[#2C2520] text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors"
+              className="bg-ink hover:bg-ink-hover text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors"
             >
               Back to Dashboard
             </button>
@@ -145,14 +145,14 @@ export default function TripDetailPage() {
 
   return (
     <PageWrapper>
-      <div className="min-h-screen bg-[#FAF8F4] font-sans pb-24">
+      <div className="min-h-screen bg-bg font-sans pb-24">
         <AppHeader
           maxWidth="max-w-7xl"
           left={
             <button
               type="button"
               onClick={() => router.push("/dashboard")}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#73685E] hover:text-[#181411] bg-white border border-[#E7E0D5] hover:border-[#D6CCC0] px-3 py-1.5 rounded-xl transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted hover:text-ink bg-white border border-border hover:border-border-strong px-3 py-1.5 rounded-xl transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" aria-hidden />
               Dashboard
@@ -165,7 +165,7 @@ export default function TripDetailPage() {
                 type="button"
                 onClick={handleShare}
                 disabled={sharing}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#181411] bg-white hover:bg-[#F2EDE4]/70 px-3 py-1.5 rounded-xl border border-[#E7E0D5] transition-colors disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink bg-white hover:bg-bg-subtle/70 px-3 py-1.5 rounded-xl border border-border transition-colors disabled:opacity-60"
               >
                 <Link2 className="w-3.5 h-3.5" aria-hidden />
                 Share

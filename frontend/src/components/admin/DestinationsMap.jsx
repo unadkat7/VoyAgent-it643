@@ -43,10 +43,10 @@ export default function DestinationsMap({ pins = [] }) {
 
   if (validPins.length === 0) {
     return (
-      <div className="h-64 rounded-2xl border border-[#E7E0D5] bg-[#FAF8F4] flex flex-col items-center justify-center text-center p-6">
-        <MapIcon className="w-6 h-6 text-[#A89E94] mb-2" aria-hidden />
-        <p className="text-sm font-medium text-[#3B342E]">No geocoded destinations yet</p>
-        <p className="text-xs text-[#73685E] mt-0.5">
+      <div className="h-64 rounded-2xl border border-border bg-bg flex flex-col items-center justify-center text-center p-6">
+        <MapIcon className="w-6 h-6 text-faint mb-2" aria-hidden />
+        <p className="text-sm font-medium text-ink-soft">No geocoded destinations yet</p>
+        <p className="text-xs text-muted mt-0.5">
           Planned Trips with coordinates will appear pinned across the atlas automatically.
         </p>
       </div>
@@ -56,7 +56,7 @@ export default function DestinationsMap({ pins = [] }) {
   const maxCount = Math.max(1, ...validPins.map((p) => p.count));
 
   return (
-    <div className="relative isolate h-72 sm:h-80 rounded-2xl overflow-hidden border border-[#E7E0D5] bg-[#EFEAE1] atlas-map-tiles">
+    <div className="relative isolate h-72 sm:h-80 rounded-2xl overflow-hidden border border-border bg-[#EFEAE1] atlas-map-tiles">
       <MapContainer
         center={[validPins[0].lat, validPins[0].lng]}
         zoom={5}
@@ -77,15 +77,15 @@ export default function DestinationsMap({ pins = [] }) {
           >
             <Popup>
               <div className="min-w-[150px] space-y-1">
-                <p className="font-display font-semibold text-sm text-[#181411]">
+                <p className="font-display font-semibold text-sm text-ink">
                   {pin.destination}
                 </p>
-                <p className="text-xs text-[#3B342E]">
+                <p className="text-xs text-ink-soft">
                   <strong className="font-mono">{pin.count}</strong> planned{" "}
                   {pin.count === 1 ? "Trip" : "Trips"}
                 </p>
                 {pin.avgBudgetInr && (
-                  <p className="text-xs text-[#15803D] font-mono font-semibold">
+                  <p className="text-xs text-success font-mono font-semibold">
                     Avg budget {formatInr(pin.avgBudgetInr)}
                   </p>
                 )}

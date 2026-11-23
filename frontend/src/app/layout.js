@@ -29,12 +29,19 @@ export const metadata = {
     "Describe your Trip in natural language. Three specialist agents plan stays, flights, day-by-day itineraries, and an interactive Trip Map within your INR Budget.",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#faf8f4",
+};
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${fraunces.variable} ${jakarta.variable} ${jetbrainsMono.variable}`}>
-      <body className="font-sans antialiased bg-[#FAF8F4] text-[#181411] selection:bg-[#FCEEE8] selection:text-[#B54320]">
+      <body className="font-sans antialiased bg-bg text-ink selection:bg-primary-light selection:text-primary-hover">
         <Toaster
-          position="top-right"
+          position="top-center"
           toastOptions={{
             duration: 3200,
             style: {

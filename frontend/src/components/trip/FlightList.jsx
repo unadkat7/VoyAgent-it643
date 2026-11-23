@@ -28,20 +28,20 @@ export default function FlightList({ flights, partySize }) {
         return (
           <article
             key={`${flight.airline}-${flight.flight_number ?? index}`}
-            className="bg-white border border-[#E7E0D5] hover:border-[#D6CCC0] rounded-2xl overflow-hidden shadow-[0_8px_24px_-18px_rgba(24,20,17,0.16)] transition-all"
+            className="bg-white border border-border hover:border-border-strong rounded-2xl overflow-hidden shadow-[0_8px_24px_-18px_rgba(24,20,17,0.16)] transition-all"
           >
             <div className="grid grid-cols-1 md:grid-cols-12">
               {/* Left: Carrier + Flight Number */}
-              <div className="md:col-span-3 p-5 flex items-center gap-3.5 bg-[#FDFBF7] border-b md:border-b-0 md:border-r border-[#F2EDE4]">
-                <div className="w-11 h-11 rounded-xl bg-[#FCEEE8] border border-[#F3CFC0] flex items-center justify-center shrink-0">
-                  <Plane className="w-5 h-5 text-[#CE532D]" aria-hidden />
+              <div className="md:col-span-3 p-5 flex items-center gap-3.5 bg-surface-warm border-b md:border-b-0 md:border-r border-bg-subtle">
+                <div className="w-11 h-11 rounded-xl bg-primary-light border border-primary-border flex items-center justify-center shrink-0">
+                  <Plane className="w-5 h-5 text-primary" aria-hidden />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-[#CE532D] uppercase tracking-wider truncate">
+                  <p className="text-xs font-bold text-primary uppercase tracking-wider truncate">
                     {flight.airline}
                   </p>
                   {flight.flight_number && (
-                    <p className="font-mono text-sm font-semibold text-[#181411] mt-0.5">
+                    <p className="font-mono text-sm font-semibold text-ink mt-0.5">
                       {flight.flight_number}
                     </p>
                   )}
@@ -55,50 +55,50 @@ export default function FlightList({ flights, partySize }) {
               <div className="md:col-span-6 p-5 flex items-center justify-between gap-4">
                 <div className="min-w-0">
                   {flight.departure_time && (
-                    <p className="font-mono text-lg font-semibold text-[#181411]">
+                    <p className="font-mono text-lg font-semibold text-ink">
                       {flight.departure_time}
                     </p>
                   )}
-                  <p className="text-xs font-medium text-[#3B342E] mt-0.5">
+                  <p className="text-xs font-medium text-ink-soft mt-0.5">
                     {flight.departure_airport}
                   </p>
                 </div>
 
                 <div className="flex-1 flex flex-col items-center px-2 min-w-[96px]">
-                  <p className="font-mono text-[11px] text-[#73685E] mb-1.5 text-center">
+                  <p className="font-mono text-[11px] text-muted mb-1.5 text-center">
                     {[flight.duration, stopsLabel(flight.stops)].filter(Boolean).join(" · ")}
                   </p>
                   <div className="w-full flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full border-2 border-[#CE532D] bg-white shrink-0" />
-                    <span className="flex-1 border-t border-dashed border-[#D6CCC0]" />
-                    <Plane className="w-3.5 h-3.5 text-[#CE532D] shrink-0" aria-hidden />
-                    <span className="flex-1 border-t border-dashed border-[#D6CCC0]" />
-                    <span className="w-2 h-2 rounded-full bg-[#181411] shrink-0" />
+                    <span className="w-2 h-2 rounded-full border-2 border-primary bg-white shrink-0" />
+                    <span className="flex-1 border-t border-dashed border-border-strong" />
+                    <Plane className="w-3.5 h-3.5 text-primary shrink-0" aria-hidden />
+                    <span className="flex-1 border-t border-dashed border-border-strong" />
+                    <span className="w-2 h-2 rounded-full bg-ink shrink-0" />
                   </div>
                 </div>
 
                 <div className="min-w-0 text-right">
                   {flight.arrival_time && (
-                    <p className="font-mono text-lg font-semibold text-[#181411]">
+                    <p className="font-mono text-lg font-semibold text-ink">
                       {flight.arrival_time}
                     </p>
                   )}
-                  <p className="text-xs font-medium text-[#3B342E] mt-0.5">
+                  <p className="text-xs font-medium text-ink-soft mt-0.5">
                     {flight.arrival_airport}
                   </p>
                 </div>
               </div>
 
               {/* Right: Perforated Boarding-Pass Fare Stub */}
-              <div className="md:col-span-3 p-5 flex md:flex-col items-center md:items-end justify-between md:justify-center border-t md:border-t-0 md:border-l border-dashed border-[#D6CCC0] bg-[#FAF8F4]/70">
+              <div className="md:col-span-3 p-5 flex md:flex-col items-center md:items-end justify-between md:justify-center border-t md:border-t-0 md:border-l border-dashed border-border-strong bg-bg/70">
                 <div className="md:text-right">
-                  <p className="font-mono text-2xl font-semibold text-[#15803D]">
+                  <p className="font-mono text-2xl font-semibold text-success">
                     {formatInr(flight.price_per_traveler)}
                   </p>
-                  <p className="text-xs text-[#73685E]">per traveller</p>
+                  <p className="text-xs text-muted">per traveller</p>
                 </div>
                 {partyTotal != null && (
-                  <p className="font-mono text-[11px] text-[#3B342E] bg-white border border-[#E7E0D5] px-2.5 py-1 rounded-lg md:mt-2">
+                  <p className="font-mono text-[11px] text-ink-soft bg-white border border-border px-2.5 py-1 rounded-lg md:mt-2">
                     {formatInr(partyTotal)} for {partySize}
                   </p>
                 )}

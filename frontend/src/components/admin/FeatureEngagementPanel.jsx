@@ -13,8 +13,8 @@ import {
 import { formatPercent } from "@/lib/adminAnalytics";
 
 const CARD =
-  "bg-white border border-[#E7E0D5] rounded-2xl p-5 shadow-[0_8px_24px_-20px_rgba(24,20,17,0.16)]";
-const EYEBROW = "text-[11px] font-semibold uppercase tracking-wider text-[#73685E]";
+  "bg-white border border-border rounded-2xl p-5 shadow-[0_8px_24px_-20px_rgba(24,20,17,0.16)]";
+const EYEBROW = "text-[11px] font-semibold uppercase tracking-wider text-muted";
 
 const TAB_LABELS = {
   itinerary: "Itinerary",
@@ -79,25 +79,25 @@ export default function FeatureEngagementPanel({ featureEngagement, compact = fa
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className={EYEBROW}>TripMap Engagement</p>
-              <h2 className="font-display text-lg font-semibold text-[#181411] flex items-center gap-2">
-                <MapIcon className="w-4 h-4 text-[#CE532D]" aria-hidden />
+              <h2 className="font-display text-lg font-semibold text-ink flex items-center gap-2">
+                <MapIcon className="w-4 h-4 text-primary" aria-hidden />
                 Interactive map usage &amp; styles
               </h2>
             </div>
             <div className="flex items-center gap-2">
-              <div className="bg-[#FAF8F4] border border-[#E7E0D5] rounded-xl px-3 py-1.5 text-right">
-                <p className="text-[10px] uppercase tracking-wider text-[#73685E] font-semibold">
+              <div className="bg-bg border border-border rounded-xl px-3 py-1.5 text-right">
+                <p className="text-[10px] uppercase tracking-wider text-muted font-semibold">
                   Map Adoption
                 </p>
-                <p className="font-mono text-sm font-semibold text-[#181411]">
+                <p className="font-mono text-sm font-semibold text-ink">
                   {formatPercent(tripMap.adoptionRatePct)}
                 </p>
               </div>
-              <div className="bg-[#FCEEE8] border border-[#F3CFC0] rounded-xl px-3 py-1.5 text-right">
-                <p className="text-[10px] uppercase tracking-wider text-[#B54320] font-semibold">
+              <div className="bg-primary-light border border-primary-border rounded-xl px-3 py-1.5 text-right">
+                <p className="text-[10px] uppercase tracking-wider text-primary-hover font-semibold">
                   Interactions
                 </p>
-                <p className="font-mono text-sm font-semibold text-[#B54320]">
+                <p className="font-mono text-sm font-semibold text-primary-hover">
                   {tripMap.totalInteractions.toLocaleString("en-IN")}
                 </p>
               </div>
@@ -107,17 +107,17 @@ export default function FeatureEngagementPanel({ featureEngagement, compact = fa
           {/* Map Style Preference Split */}
           <div>
             <div className="flex items-center justify-between text-xs mb-1.5">
-              <span className="font-medium text-[#3B342E] inline-flex items-center gap-1.5">
-                <Layers className="w-3.5 h-3.5 text-[#73685E]" aria-hidden />
+              <span className="font-medium text-ink-soft inline-flex items-center gap-1.5">
+                <Layers className="w-3.5 h-3.5 text-muted" aria-hidden />
                 Map style switches
               </span>
-              <span className="font-mono text-[11px] text-[#73685E]">
+              <span className="font-mono text-[11px] text-muted">
                 {totalStyles} total switches
               </span>
             </div>
             {totalStyles > 0 ? (
               <>
-                <div className="h-2.5 rounded-full bg-[#F2EDE4] overflow-hidden flex">
+                <div className="h-2.5 rounded-full bg-bg-subtle overflow-hidden flex">
                   {tripMap.styles.map((s) => {
                     if (s.count <= 0) return null;
                     const cfg = STYLE_COLORS[s.style] ?? { label: s.style, color: "#73685E" };
@@ -133,7 +133,7 @@ export default function FeatureEngagementPanel({ featureEngagement, compact = fa
                     );
                   })}
                 </div>
-                <div className="flex flex-wrap gap-3 mt-2 text-[11px] text-[#3B342E]">
+                <div className="flex flex-wrap gap-3 mt-2 text-[11px] text-ink-soft">
                   {tripMap.styles.map((s) => {
                     const cfg = STYLE_COLORS[s.style] ?? { label: s.style, color: "#73685E" };
                     return (
@@ -150,7 +150,7 @@ export default function FeatureEngagementPanel({ featureEngagement, compact = fa
                 </div>
               </>
             ) : (
-              <p className="text-xs text-[#73685E] bg-[#FAF8F4] border border-[#F2EDE4] rounded-xl px-3 py-2">
+              <p className="text-xs text-muted bg-bg border border-bg-subtle rounded-xl px-3 py-2">
                 No map style switches recorded in this window yet.
               </p>
             )}
@@ -160,13 +160,13 @@ export default function FeatureEngagementPanel({ featureEngagement, compact = fa
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-2.5">
             {mapActionRows.slice(0, allActions ? undefined : 5).map((row) => (
               <div key={row.label} className="text-xs">
-                <div className="flex justify-between text-[#3B342E] mb-1">
+                <div className="flex justify-between text-ink-soft mb-1">
                   <span>{row.label}</span>
-                  <span className="font-mono font-semibold text-[#181411]">{row.value}</span>
+                  <span className="font-mono font-semibold text-ink">{row.value}</span>
                 </div>
-                <div className="h-1.5 bg-[#F2EDE4] rounded-full overflow-hidden">
+                <div className="h-1.5 bg-bg-subtle rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-[#CE532D] rounded-full"
+                    className="h-full bg-primary rounded-full"
                     style={{ width: `${row.value > 0 ? Math.max(6, (row.value / maxMapAction) * 100) : 0}%` }}
                   />
                 </div>
@@ -177,17 +177,17 @@ export default function FeatureEngagementPanel({ featureEngagement, compact = fa
           </div>
 
           {/* Highlight Pills */}
-          <div className="flex flex-wrap gap-2 pt-3 border-t border-[#F2EDE4] text-[11px]">
-            <span className="inline-flex items-center gap-1.5 bg-[#FAF8F4] border border-[#E7E0D5] px-2.5 py-1 rounded-full text-[#3B342E]">
-              <Maximize2 className="w-3 h-3 text-[#CE532D]" aria-hidden />
+          <div className="flex flex-wrap gap-2 pt-3 border-t border-bg-subtle text-[11px]">
+            <span className="inline-flex items-center gap-1.5 bg-bg border border-border px-2.5 py-1 rounded-full text-ink-soft">
+              <Maximize2 className="w-3 h-3 text-primary" aria-hidden />
               Fullscreen opens: <strong className="font-mono">{tripMap.fullscreenOpens}</strong>
             </span>
-            <span className="inline-flex items-center gap-1.5 bg-[#FAF8F4] border border-[#E7E0D5] px-2.5 py-1 rounded-full text-[#3B342E]">
-              <ExternalLink className="w-3 h-3 text-[#15803D]" aria-hidden />
+            <span className="inline-flex items-center gap-1.5 bg-bg border border-border px-2.5 py-1 rounded-full text-ink-soft">
+              <ExternalLink className="w-3 h-3 text-success" aria-hidden />
               Google Maps handoffs: <strong className="font-mono">{tripMap.googleMapsClicks}</strong>
             </span>
-            <span className="inline-flex items-center gap-1.5 bg-[#FAF8F4] border border-[#E7E0D5] px-2.5 py-1 rounded-full text-[#3B342E]">
-              <MousePointerClick className="w-3 h-3 text-[#181411]" aria-hidden />
+            <span className="inline-flex items-center gap-1.5 bg-bg border border-border px-2.5 py-1 rounded-full text-ink-soft">
+              <MousePointerClick className="w-3 h-3 text-ink" aria-hidden />
               Map visitors: <strong className="font-mono">{tripMap.uniqueVisitors}</strong>
             </span>
           </div>
@@ -200,36 +200,36 @@ export default function FeatureEngagementPanel({ featureEngagement, compact = fa
             <div className="flex items-start justify-between gap-2 mb-3">
               <div>
                 <p className={EYEBROW}>Trip Plan Dossier Tabs</p>
-                <h3 className="font-display text-base font-semibold text-[#181411] flex items-center gap-1.5">
-                  <Compass className="w-4 h-4 text-[#CE532D]" aria-hidden />
+                <h3 className="font-display text-base font-semibold text-ink flex items-center gap-1.5">
+                  <Compass className="w-4 h-4 text-primary" aria-hidden />
                   Section views &amp; outbound clicks
                 </h3>
               </div>
               {hotelOutbound.staysTabCtrPct !== null && (
-                <span className="font-mono text-[11px] font-semibold bg-[#ECFDF3] text-[#15803D] border border-[#15803D]/15 px-2.5 py-0.5 rounded-full">
+                <span className="font-mono text-[11px] font-semibold bg-success-light text-success border border-success/15 px-2.5 py-0.5 rounded-full">
                   Stays CTR {formatPercent(hotelOutbound.staysTabCtrPct)}
                 </span>
               )}
             </div>
 
             {dossierTabs.every((t) => t.views === 0) ? (
-              <p className="text-xs text-[#73685E] mb-3">
+              <p className="text-xs text-muted mb-3">
                 Tab switch telemetry will appear as travelers explore Trip Plans.
               </p>
             ) : (
               <ul className="space-y-2 mb-4">
                 {rankedTabs.map((item) => (
                   <li key={item.tab} className="text-xs">
-                    <div className="flex justify-between text-[#3B342E] mb-1">
+                    <div className="flex justify-between text-ink-soft mb-1">
                       <span className="font-medium">{TAB_LABELS[item.tab] ?? item.tab}</span>
-                      <span className="font-mono text-[#73685E]">
-                        <strong className="text-[#181411]">{item.views}</strong> views ·{" "}
+                      <span className="font-mono text-muted">
+                        <strong className="text-ink">{item.views}</strong> views ·{" "}
                         {item.visitors} visitors
                       </span>
                     </div>
-                    <div className="h-1.5 bg-[#F2EDE4] rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-bg-subtle rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-[#181411] rounded-full"
+                        className="h-full bg-ink rounded-full"
                         style={{
                           width: `${item.views > 0 ? Math.max(5, (item.views / maxTabViews) * 100) : 0}%`,
                         }}
@@ -240,20 +240,20 @@ export default function FeatureEngagementPanel({ featureEngagement, compact = fa
               </ul>
             )}
 
-            <div className="grid grid-cols-2 gap-2.5 pt-3 border-t border-[#F2EDE4]">
-              <div className="rounded-xl bg-[#FAF8F4] border border-[#E7E0D5] px-3 py-2">
-                <p className="text-[10px] uppercase tracking-wider font-semibold text-[#73685E]">
+            <div className="grid grid-cols-2 gap-2.5 pt-3 border-t border-bg-subtle">
+              <div className="rounded-xl bg-bg border border-border px-3 py-2">
+                <p className="text-[10px] uppercase tracking-wider font-semibold text-muted">
                   Hotel Deal Clicks
                 </p>
-                <p className="font-mono text-lg font-semibold text-[#15803D]">
+                <p className="font-mono text-lg font-semibold text-success">
                   {hotelOutbound.bookingUrlClicks}
                 </p>
               </div>
-              <div className="rounded-xl bg-[#FAF8F4] border border-[#E7E0D5] px-3 py-2">
-                <p className="text-[10px] uppercase tracking-wider font-semibold text-[#73685E]">
+              <div className="rounded-xl bg-bg border border-border px-3 py-2">
+                <p className="text-[10px] uppercase tracking-wider font-semibold text-muted">
                   Hotel Map Lookups
                 </p>
-                <p className="font-mono text-lg font-semibold text-[#181411]">
+                <p className="font-mono text-lg font-semibold text-ink">
                   {hotelOutbound.googleMapsClicks}
                 </p>
               </div>
@@ -263,20 +263,20 @@ export default function FeatureEngagementPanel({ featureEngagement, compact = fa
           {/* Creation UX Adoption */}
           <div className={CARD}>
             <p className={EYEBROW}>Planner Creation Flow</p>
-            <h3 className="font-display text-base font-semibold text-[#181411] flex items-center gap-1.5 mb-3">
-              <SlidersHorizontal className="w-4 h-4 text-[#CE532D]" aria-hidden />
+            <h3 className="font-display text-base font-semibold text-ink flex items-center gap-1.5 mb-3">
+              <SlidersHorizontal className="w-4 h-4 text-primary" aria-hidden />
               Brief Builder, Starters &amp; Clarifications
             </h3>
             <ul className="space-y-2">
               {creationRows.map((row) => (
                 <li key={row.label} className="text-xs">
-                  <div className="flex justify-between text-[#3B342E] mb-1">
+                  <div className="flex justify-between text-ink-soft mb-1">
                     <span>{row.label}</span>
-                    <span className="font-mono font-semibold text-[#181411]">{row.value}</span>
+                    <span className="font-mono font-semibold text-ink">{row.value}</span>
                   </div>
-                  <div className="h-1.5 bg-[#F2EDE4] rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-bg-subtle rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-[#B45309] rounded-full"
+                      className="h-full bg-warning rounded-full"
                       style={{
                         width: `${row.value > 0 ? Math.max(6, (row.value / maxCreation) * 100) : 0}%`,
                       }}

@@ -20,10 +20,10 @@ const TIERS = [
 ];
 
 const TIER_BADGE = {
-  power: "bg-[#FCEEE8] text-[#B54320] border-[#F3CFC0]",
-  active: "bg-[#ECFDF3] text-[#15803D] border-[#15803D]/15",
-  explorer: "bg-[#FAF8F4] text-[#3B342E] border-[#E7E0D5]",
-  new: "bg-[#FEF7E6] text-[#B45309] border-[#B45309]/15",
+  power: "bg-primary-light text-primary-hover border-primary-border",
+  active: "bg-success-light text-success border-success/15",
+  explorer: "bg-bg text-ink-soft border-border",
+  new: "bg-warning-light text-warning border-warning/15",
 };
 
 export default function UsersTable({ users = [] }) {
@@ -73,15 +73,15 @@ export default function UsersTable({ users = [] }) {
   }, [users, query, tier, sortBy, sortDir]);
 
   return (
-    <section className="bg-white border border-[#E7E0D5] rounded-2xl p-5 shadow-[0_8px_24px_-20px_rgba(24,20,17,0.16)]">
+    <section className="bg-white border border-border rounded-2xl p-5 shadow-[0_8px_24px_-20px_rgba(24,20,17,0.16)]">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-[#73685E] flex items-center gap-1.5">
-            <Users className="w-3.5 h-3.5 text-[#CE532D]" aria-hidden />
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted flex items-center gap-1.5">
+            <Users className="w-3.5 h-3.5 text-primary" aria-hidden />
             Outside Users ({filtered.length}
             {filtered.length !== users.length ? ` of ${users.length}` : ""})
           </p>
-          <p className="text-xs text-[#73685E] mt-0.5">
+          <p className="text-xs text-muted mt-0.5">
             Emails stay masked for privacy. Admin accounts are excluded.
           </p>
         </div>
@@ -98,8 +98,8 @@ export default function UsersTable({ users = [] }) {
                   aria-pressed={active}
                   className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border transition-colors ${
                     active
-                      ? "bg-[#181411] border-[#181411] text-[#FAF8F4]"
-                      : "bg-[#FAF8F4] border-[#E7E0D5] text-[#73685E] hover:text-[#181411]"
+                      ? "bg-ink border-ink text-bg"
+                      : "bg-bg border-border text-muted hover:text-ink"
                   }`}
                 >
                   {opt.label}
@@ -110,7 +110,7 @@ export default function UsersTable({ users = [] }) {
 
           <div className="relative w-full sm:w-56">
             <Search
-              className="w-3.5 h-3.5 text-[#73685E] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+              className="w-3.5 h-3.5 text-muted absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
               aria-hidden
             />
             <input
@@ -119,16 +119,16 @@ export default function UsersTable({ users = [] }) {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search email, city, dest..."
               aria-label="Search outside users"
-              className="w-full bg-[#FAF8F4] border border-[#E7E0D5] focus:bg-white focus:border-[#CE532D] rounded-xl pl-8 pr-3 py-1.5 text-xs text-[#181411] placeholder-[#A89E94] focus:outline-none transition-all"
+              className="w-full bg-bg border border-border focus:bg-white focus:border-primary rounded-xl pl-8 pr-3 py-1.5 text-xs text-ink placeholder-faint focus:outline-none transition-all"
             />
           </div>
         </div>
       </div>
 
       {users.length === 0 ? (
-        <p className="text-sm text-[#73685E]">No outside users yet.</p>
+        <p className="text-sm text-muted">No outside users yet.</p>
       ) : filtered.length === 0 ? (
-        <p className="text-sm text-[#73685E] py-6 text-center">
+        <p className="text-sm text-muted py-6 text-center">
           No outside users match your current filter.
         </p>
       ) : !wide ? (
@@ -162,7 +162,7 @@ export default function UsersTable({ users = [] }) {
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
-            <thead className="text-left text-[10px] uppercase tracking-wider text-[#73685E] border-b border-[#E7E0D5]">
+            <thead className="text-left text-[10px] uppercase tracking-wider text-muted border-b border-border">
               <tr>
                 <th className="py-2.5 pr-3">User &amp; Source</th>
                 <th className="py-2.5 pr-3">Tier</th>
@@ -170,7 +170,7 @@ export default function UsersTable({ users = [] }) {
                   <button
                     type="button"
                     onClick={() => toggleSort("joinedAt")}
-                    className="inline-flex items-center gap-1 hover:text-[#181411]"
+                    className="inline-flex items-center gap-1 hover:text-ink"
                   >
                     Joined <ArrowUpDown className="w-3 h-3" aria-hidden />
                   </button>
@@ -179,7 +179,7 @@ export default function UsersTable({ users = [] }) {
                   <button
                     type="button"
                     onClick={() => toggleSort("plannedTrips")}
-                    className="inline-flex items-center gap-1 hover:text-[#181411]"
+                    className="inline-flex items-center gap-1 hover:text-ink"
                   >
                     Trips <ArrowUpDown className="w-3 h-3" aria-hidden />
                   </button>
@@ -189,7 +189,7 @@ export default function UsersTable({ users = [] }) {
                   <button
                     type="button"
                     onClick={() => toggleSort("avgBudgetInr")}
-                    className="inline-flex items-center gap-1 hover:text-[#181411]"
+                    className="inline-flex items-center gap-1 hover:text-ink"
                   >
                     Avg Budget <ArrowUpDown className="w-3 h-3" aria-hidden />
                   </button>
@@ -198,7 +198,7 @@ export default function UsersTable({ users = [] }) {
                   <button
                     type="button"
                     onClick={() => toggleSort("lastActiveAt")}
-                    className="inline-flex items-center gap-1 hover:text-[#181411]"
+                    className="inline-flex items-center gap-1 hover:text-ink"
                   >
                     Last active <ArrowUpDown className="w-3 h-3" aria-hidden />
                   </button>
@@ -206,7 +206,7 @@ export default function UsersTable({ users = [] }) {
                 <th className="py-2.5">Location &amp; Device</th>
               </tr>
             </thead>
-            <tbody className="text-[#3B342E] divide-y divide-[#F2EDE4]">
+            <tbody className="text-ink-soft divide-y divide-bg-subtle">
               {filtered.map((user) => {
                 const userTier = user.engagementTier ?? "explorer";
                 const sourceLabel =
@@ -216,13 +216,13 @@ export default function UsersTable({ users = [] }) {
                 return (
                   <tr
                     key={`${user.email}-${user.joinedAt}`}
-                    className="hover:bg-[#FAF8F4]/70 transition-colors"
+                    className="hover:bg-bg/70 transition-colors"
                   >
                     <td className="py-2.5 pr-3 whitespace-nowrap">
-                      <p className="font-mono text-[11px] font-medium text-[#181411]">
+                      <p className="font-mono text-[11px] font-medium text-ink">
                         {user.email}
                       </p>
-                      <p className="font-mono text-[10px] text-[#73685E]">via {sourceLabel}</p>
+                      <p className="font-mono text-[10px] text-muted">via {sourceLabel}</p>
                     </td>
                     <td className="py-2.5 pr-3">
                       <span
@@ -237,7 +237,7 @@ export default function UsersTable({ users = [] }) {
                       {formatShortDate(user.joinedAt)}
                     </td>
                     <td className="py-2.5 pr-3 font-mono whitespace-nowrap">
-                      <strong className="text-[#181411]">{user.trips}</strong> ({user.plannedTrips})
+                      <strong className="text-ink">{user.trips}</strong> ({user.plannedTrips})
                     </td>
                     <td className="py-2.5 pr-3 whitespace-nowrap">
                       {user.topDestination ?? "—"}
@@ -249,8 +249,8 @@ export default function UsersTable({ users = [] }) {
                       {formatShortDate(user.lastActiveAt)}
                     </td>
                     <td className="py-2.5">
-                      <p className="text-[#181411] whitespace-nowrap">{formatPlace(user)}</p>
-                      <p className="text-[11px] text-[#73685E] capitalize truncate max-w-[200px]">
+                      <p className="text-ink whitespace-nowrap">{formatPlace(user)}</p>
+                      <p className="text-[11px] text-muted capitalize truncate max-w-[200px]">
                         {formatDeviceLabel(user.device)}
                       </p>
                     </td>

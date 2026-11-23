@@ -89,7 +89,7 @@ export default function AdminPage() {
         <button
           type="button"
           onClick={() => router.push("/dashboard")}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#73685E] hover:text-[#181411] bg-white border border-[#E7E0D5] hover:border-[#D6CCC0] px-3 py-1.5 rounded-xl transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted hover:text-ink bg-white border border-border hover:border-border-strong px-3 py-1.5 rounded-xl transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" aria-hidden />
           Dashboard
@@ -101,12 +101,12 @@ export default function AdminPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#FAF8F4] font-sans">
+      <div className="min-h-screen bg-bg font-sans">
         {header}
-        <div className="max-w-md mx-auto mt-24 bg-white border border-[#E7E0D5] rounded-3xl p-8 text-center shadow-sm">
-          <ShieldAlert className="w-7 h-7 text-[#B45309] mx-auto mb-3" aria-hidden />
-          <h2 className="font-display text-2xl font-semibold text-[#181411]">{error}</h2>
-          <p className="text-xs text-[#73685E] mt-2">
+        <div className="max-w-md mx-auto mt-24 bg-white border border-border rounded-3xl p-8 text-center shadow-sm">
+          <ShieldAlert className="w-7 h-7 text-warning mx-auto mb-3" aria-hidden />
+          <h2 className="font-display text-2xl font-semibold text-ink">{error}</h2>
+          <p className="text-xs text-muted mt-2">
             {error === "Admins only" ? "Sign in with an admin account to view analytics." : "Check your connection and try again."}
           </p>
           {error !== "Admins only" && <button type="button" disabled={refreshing} onClick={refresh} className="mt-4 rounded-xl bg-ink px-4 py-3 text-sm text-white">Try again</button>}
@@ -117,7 +117,7 @@ export default function AdminPage() {
 
   if (!rawData) {
     return (
-      <div className="min-h-screen bg-[#FAF8F4] font-sans">
+      <div className="min-h-screen bg-bg font-sans">
         {header}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8 space-y-5">
           <Skeleton className="h-44 w-full rounded-3xl" />
@@ -136,7 +136,7 @@ export default function AdminPage() {
   const { stats, users, activity, feedback, feedbackSummary, trips, retention } = data;
 
   return (
-    <div className="min-h-screen bg-[#FAF8F4] font-sans pb-24">
+    <div className="min-h-screen bg-bg font-sans pb-24">
       {header}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 space-y-6">
         <AdminMasthead
@@ -156,7 +156,7 @@ export default function AdminPage() {
           </select>
         </label>
         <nav
-          className="hidden lg:flex flex-wrap items-center gap-1 border-b border-[#E7E0D5]"
+          className="hidden lg:flex flex-wrap items-center gap-1 border-b border-border"
           aria-label="Analytics sections"
         >
           {WORKSPACE_TABS.map(({ id, label, icon: Icon }) => {
@@ -169,8 +169,8 @@ export default function AdminPage() {
                 aria-current={active ? "page" : undefined}
                 className={`inline-flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold border-b-2 whitespace-nowrap transition-colors -mb-px ${
                   active
-                    ? "border-[#CE532D] text-[#CE532D]"
-                    : "border-transparent text-[#73685E] hover:text-[#181411]"
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted hover:text-ink"
                 }`}
               >
                 <Icon className="w-3.5 h-3.5" aria-hidden />

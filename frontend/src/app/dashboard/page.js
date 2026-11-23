@@ -39,15 +39,15 @@ import ConfirmModal from "@/components/ui/ConfirmModal";
 import Skeleton from "@/components/ui/Skeleton";
 
 const TONE_BADGE = {
-  success: "bg-[#ECFDF3] text-[#15803D] border-[#15803D]/15",
-  warning: "bg-[#FEF7E6] text-[#B45309] border-[#B45309]/15",
-  danger: "bg-[#FEF2F2] text-[#C82828] border-[#C82828]/15",
+  success: "bg-success-light text-success border-success/15",
+  warning: "bg-warning-light text-warning border-warning/15",
+  danger: "bg-danger-light text-danger border-danger/15",
 };
 
 const TONE_STRIPE = {
-  success: "bg-[#15803D]",
-  warning: "bg-[#D97706]",
-  danger: "bg-[#C82828]",
+  success: "bg-success",
+  warning: "bg-star",
+  danger: "bg-danger",
 };
 
 const FILTER_OPTIONS = [
@@ -203,8 +203,8 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#FAF8F4] font-sans">
-        <div className="bg-[#FAF8F4]/90 border-b border-[#E7E0D5] px-6 h-16 flex items-center">
+      <div className="min-h-screen bg-bg font-sans">
+        <div className="bg-bg/90 border-b border-border px-6 h-16 flex items-center">
           <div className="max-w-6xl w-full mx-auto flex items-center justify-between">
             <Skeleton className="w-32 h-6" />
             <Skeleton className="w-24 h-8" />
@@ -242,7 +242,7 @@ export default function DashboardPage() {
 
   return (
     <PageWrapper>
-      <div className="min-h-screen bg-[#FAF8F4] font-sans pb-24">
+      <div className="min-h-screen bg-bg font-sans pb-24">
         <AppHeader
           left={<BrandLogo href="/dashboard" size="sm" />}
           right={
@@ -250,22 +250,22 @@ export default function DashboardPage() {
               {user.isAdmin && (
                 <Link
                   href="/admin"
-                  className="text-xs font-semibold text-[#181411] bg-white border border-[#E7E0D5] hover:bg-[#F2EDE4]/70 px-3 py-1.5 rounded-xl transition-colors"
+                  className="text-xs font-semibold text-ink bg-white border border-border hover:bg-bg-subtle/70 px-3 py-1.5 rounded-xl transition-colors"
                 >
                   Admin
                 </Link>
               )}
-              <div className="hidden sm:flex items-center gap-2 bg-white border border-[#E7E0D5] pl-1.5 pr-3 py-1 rounded-full">
-                <span className="w-6 h-6 rounded-full bg-[#181411] text-[#FAF8F4] text-xs font-semibold flex items-center justify-center">
+              <div className="hidden sm:flex items-center gap-2 bg-white border border-border pl-1.5 pr-3 py-1 rounded-full">
+                <span className="w-6 h-6 rounded-full bg-ink text-bg text-xs font-semibold flex items-center justify-center">
                   {initial}
                 </span>
-                <span className="text-xs font-medium text-[#3B342E]">{firstName}</span>
+                <span className="text-xs font-medium text-ink-soft">{firstName}</span>
               </div>
               <button
                 type="button"
                 aria-label="Sign out"
                 onClick={handleLogout}
-                className="flex items-center gap-1.5 text-xs font-semibold text-[#73685E] hover:text-[#CE532D] px-3 py-2 rounded-xl hover:bg-[#F2EDE4]/70 transition-colors"
+                className="flex items-center gap-1.5 text-xs font-semibold text-muted hover:text-primary px-3 py-2 rounded-xl hover:bg-bg-subtle/70 transition-colors"
               >
                 <LogOut className="w-3.5 h-3.5" aria-hidden />
                 <span className="hidden sm:inline">Sign out</span>
@@ -276,15 +276,15 @@ export default function DashboardPage() {
 
         <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-5 sm:pt-10">
           {/* ── Editorial Masthead ── */}
-          <section className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-4 mb-4 sm:gap-6 sm:pb-8 sm:mb-8 border-b border-[#E7E0D5]">
+          <section className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-4 mb-4 sm:gap-6 sm:pb-8 sm:mb-8 border-b border-border">
             <div>
-              <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#CE532D] mb-2">
+              <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-primary mb-2">
                 Saved trips
               </p>
-              <h1 className="font-display text-3xl sm:text-4xl font-semibold text-[#181411] tracking-tight">
+              <h1 className="font-display text-3xl sm:text-4xl font-semibold text-ink tracking-tight">
                 {firstName}’s trips
               </h1>
-              <p className="text-sm text-[#73685E] mt-1.5">
+              <p className="text-sm text-muted mt-1.5">
                 {trips.length > 0
                   ? `${counts.planned} planned ${counts.planned === 1 ? "Trip" : "Trips"}${
                       counts.draft > 0 ? ` · ${counts.draft} waiting on details` : ""
@@ -296,7 +296,7 @@ export default function DashboardPage() {
             <button
               type="button"
               onClick={() => router.push("/trip/new")}
-              className="inline-flex items-center justify-center gap-2 bg-[#CE532D] hover:bg-[#B54320] active:scale-[0.985] text-white font-semibold text-sm px-5 py-3 rounded-2xl shadow-md shadow-[#CE532D]/20 transition-all shrink-0"
+              className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover active:scale-[0.985] text-white font-semibold text-sm px-5 py-3 rounded-2xl shadow-md shadow-primary/20 transition-all shrink-0"
             >
               <Plus className="w-4 h-4" aria-hidden />
               Plan New Trip
@@ -306,17 +306,17 @@ export default function DashboardPage() {
           {/* ── EMPTY STATE / ONBOARDING ── */}
           {trips.length === 0 && (
             <section className="space-y-6">
-              <div className="bg-white border border-[#E7E0D5] rounded-3xl p-6 sm:p-8 shadow-[0_12px_32px_-24px_rgba(24,20,17,0.18)]">
+              <div className="bg-white border border-border rounded-3xl p-6 sm:p-8 shadow-[0_12px_32px_-24px_rgba(24,20,17,0.18)]">
                 <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
                   <div className="flex items-center gap-2.5">
-                    <span className="w-9 h-9 rounded-xl bg-[#FCEEE8] text-[#CE532D] flex items-center justify-center">
+                    <span className="w-9 h-9 rounded-xl bg-primary-light text-primary flex items-center justify-center">
                       <Compass className="w-4 h-4" aria-hidden />
                     </span>
                     <div>
-                      <h2 className="font-display text-xl font-semibold text-[#181411]">
+                      <h2 className="font-display text-xl font-semibold text-ink">
                         Plan your first trip
                       </h2>
-                      <p className="text-xs text-[#73685E]">
+                      <p className="text-xs text-muted">
                         Start with your own plans or choose an example below.
                       </p>
                     </div>
@@ -324,7 +324,7 @@ export default function DashboardPage() {
                   <button
                     type="button"
                     onClick={() => router.push("/trip/new")}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-[#181411] hover:bg-[#2C2520] px-4 py-2.5 rounded-xl transition-colors"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-ink hover:bg-ink-hover px-4 py-2.5 rounded-xl transition-colors"
                   >
                     Open Trip Planner
                     <ArrowRight className="w-3.5 h-3.5" aria-hidden />
@@ -351,46 +351,46 @@ export default function DashboardPage() {
                   ].map((step) => (
                     <div
                       key={step.num}
-                      className="p-4 rounded-2xl bg-[#FAF8F4] border border-[#E7E0D5]"
+                      className="p-4 rounded-2xl bg-bg border border-border"
                     >
-                      <span className="font-mono text-[11px] font-semibold text-[#CE532D]">
+                      <span className="font-mono text-[11px] font-semibold text-primary">
                         STEP {step.num}
                       </span>
-                      <p className="text-sm font-bold text-[#181411] mt-1">{step.label}</p>
-                      <p className="text-xs text-[#73685E] mt-1 leading-relaxed">{step.desc}</p>
+                      <p className="text-sm font-bold text-ink mt-1">{step.label}</p>
+                      <p className="text-xs text-muted mt-1 leading-relaxed">{step.desc}</p>
                     </div>
                   ))}
                 </div>
 
                 <div>
-                  <p className="text-xs font-semibold text-[#73685E] uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-[#CE532D]" aria-hidden />
+                  <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-primary" aria-hidden />
                     Try a starting itinerary
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {STARTER_JOURNEYS.map((item, idx) => (
                       <div
                         key={item.title}
-                        className="group relative p-4 rounded-2xl bg-[#FDFBF7] border border-[#E7E0D5] hover:border-[#CE532D]/50 hover:bg-white cursor-pointer transition-all flex items-start justify-between gap-3"
+                        className="group relative p-4 rounded-2xl bg-surface-warm border border-border hover:border-primary/50 hover:bg-white cursor-pointer transition-all flex items-start justify-between gap-3"
                       >
                         <div className="min-w-0">
-                          <p className="font-mono text-[11px] text-[#CE532D] uppercase tracking-wider">
+                          <p className="font-mono text-[11px] text-primary uppercase tracking-wider">
                             {item.route}
                           </p>
-                          <p className="font-display text-lg font-semibold text-[#181411] group-hover:text-[#CE532D] transition-colors">
+                          <p className="font-display text-lg font-semibold text-ink group-hover:text-primary transition-colors">
                             <button type="button" onClick={() => launchStarter(item.prompt)} className="text-left after:absolute after:inset-0">{item.title}</button>
                           </p>
-                          <p className="text-xs text-[#73685E] mt-1">{item.meta}</p>
+                          <p className="text-xs text-muted mt-1">{item.meta}</p>
                         </div>
                         <button
                           type="button"
                           onClick={(e) => copyPrompt(e, item.prompt, idx)}
                           title="Copy prompt"
                           aria-label={`Copy prompt for ${item.title}`}
-                          className="relative z-10 grid size-11 place-items-center rounded-xl border border-[#E7E0D5] bg-white text-[#73685E] hover:text-[#CE532D] hover:border-[#CE532D]/40 transition-colors shrink-0"
+                          className="relative z-10 grid size-11 place-items-center rounded-xl border border-border bg-white text-muted hover:text-primary hover:border-primary/40 transition-colors shrink-0"
                         >
                           {copiedIdx === idx ? (
-                            <CheckCheck className="w-3.5 h-3.5 text-[#15803D]" aria-hidden />
+                            <CheckCheck className="w-3.5 h-3.5 text-success" aria-hidden />
                           ) : (
                             <Copy className="w-3.5 h-3.5" aria-hidden />
                           )}
@@ -421,14 +421,14 @@ export default function DashboardPage() {
                         aria-pressed={active}
                         className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all ${
                           active
-                            ? "bg-[#181411] border-[#181411] text-[#FAF8F4]"
-                            : "bg-white border-[#E7E0D5] text-[#73685E] hover:text-[#181411] hover:border-[#D6CCC0]"
+                            ? "bg-ink border-ink text-bg"
+                            : "bg-white border-border text-muted hover:text-ink hover:border-border-strong"
                         }`}
                       >
                         {option.label}
                         <span
                           className={`font-mono text-[10px] px-1.5 py-0.2 rounded-full ${
-                            active ? "bg-[#FAF8F4]/15 text-[#FAF8F4]" : "bg-[#F2EDE4] text-[#73685E]"
+                            active ? "bg-bg/15 text-bg" : "bg-bg-subtle text-muted"
                           }`}
                         >
                           {count}
@@ -440,7 +440,7 @@ export default function DashboardPage() {
 
                 <div className="relative w-full md:w-72">
                   <Search
-                    className="w-4 h-4 text-[#73685E] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
+                    className="w-4 h-4 text-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
                     aria-hidden
                   />
                   <input
@@ -449,18 +449,18 @@ export default function DashboardPage() {
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="Filter by destination or style..."
                     aria-label="Filter saved Trips"
-                    className="w-full bg-white border border-[#E7E0D5] rounded-xl pl-9 pr-3.5 py-2 text-xs text-[#181411] placeholder-[#A89E94] focus:outline-none focus:border-[#CE532D] focus:ring-2 focus:ring-[#CE532D]/15 transition-all"
+                    className="w-full bg-white border border-border rounded-xl pl-9 pr-3.5 py-2 text-xs text-ink placeholder-faint focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 transition-all"
                   />
                 </div>
               </div>
 
               {/* Filtered Empty Notice */}
               {filteredTrips.length === 0 ? (
-                <div className="bg-white border border-[#E7E0D5] rounded-2xl p-10 text-center">
-                  <p className="font-display text-lg font-semibold text-[#181411] mb-1">
+                <div className="bg-white border border-border rounded-2xl p-10 text-center">
+                  <p className="font-display text-lg font-semibold text-ink mb-1">
                     No matching Trips
                   </p>
-                  <p className="text-sm text-[#73685E] mb-4">
+                  <p className="text-sm text-muted mb-4">
                     Try clearing your search or switching the status filter.
                   </p>
                   <button
@@ -469,7 +469,7 @@ export default function DashboardPage() {
                       setStatusFilter("all");
                       setQuery("");
                     }}
-                    className="text-xs font-semibold text-[#CE532D] hover:underline"
+                    className="text-xs font-semibold text-primary hover:underline"
                   >
                     Reset filters
                   </button>
@@ -494,7 +494,7 @@ export default function DashboardPage() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: Math.min(idx * 0.04, 0.25) }}
-                        className="group relative bg-white border border-[#E7E0D5] hover:border-[#CE532D]/45 hover:shadow-[0_18px_40px_-24px_rgba(24,20,17,0.28)] hover:-translate-y-0.5 rounded-2xl overflow-hidden cursor-pointer transition-all flex flex-col justify-between"
+                        className="group relative bg-white border border-border hover:border-primary/45 hover:shadow-[0_18px_40px_-24px_rgba(24,20,17,0.28)] hover:-translate-y-0.5 rounded-2xl overflow-hidden cursor-pointer transition-all flex flex-col justify-between"
                       >
                         {/* Top status accent line */}
                         <div className={`h-1 w-full ${TONE_STRIPE[status.tone]}`} />
@@ -510,7 +510,7 @@ export default function DashboardPage() {
                             <button
                               type="button"
                               onClick={(e) => askDeleteTrip(e, trip._id)}
-                              className="relative z-10 min-h-11 min-w-11 grid place-items-center text-[#73685E] hover:text-[#C82828] hover:bg-[#FEF2F2] p-1.5 rounded-lg transition-colors"
+                              className="relative z-10 min-h-11 min-w-11 grid place-items-center text-muted hover:text-danger hover:bg-danger-light p-1.5 rounded-lg transition-colors"
                               title="Delete trip"
                               aria-label={`Delete ${tripTitle(trip)}`}
                             >
@@ -520,49 +520,49 @@ export default function DashboardPage() {
 
                           {/* Route + Title */}
                           {route && (
-                            <p className="font-mono text-[11px] uppercase tracking-wider text-[#73685E] mb-1 truncate">
+                            <p className="font-mono text-[11px] uppercase tracking-wider text-muted mb-1 truncate">
                               {route}
                             </p>
                           )}
-                          <h3 className="font-display text-xl font-semibold text-[#181411] group-hover:text-[#CE532D] transition-colors leading-snug mb-2">
+                          <h3 className="font-display text-xl font-semibold text-ink group-hover:text-primary transition-colors leading-snug mb-2">
                             <Link href={tripLink(trip)} className="after:absolute after:inset-0">{tripTitle(trip)}</Link>
                           </h3>
 
                           {/* Planned Trip structured facts */}
                           {plan ? (
                             <div className="hidden md:flex space-y-3 mt-1 flex-1 flex-col justify-between">
-                              <div className="flex flex-wrap gap-1.5 text-[11px] text-[#3B342E]">
+                              <div className="flex flex-wrap gap-1.5 text-[11px] text-ink-soft">
                                 {plan.check_in && plan.check_out && (
-                                  <span className="inline-flex items-center gap-1 bg-[#FAF8F4] border border-[#E7E0D5] px-2 py-0.5 rounded-md">
-                                    <Calendar className="w-3 h-3 text-[#73685E]" aria-hidden />
+                                  <span className="inline-flex items-center gap-1 bg-bg border border-border px-2 py-0.5 rounded-md">
+                                    <Calendar className="w-3 h-3 text-muted" aria-hidden />
                                     {formatDateRange(plan.check_in, plan.check_out)}
                                   </span>
                                 )}
                                 {plan.request?.party_size && (
-                                  <span className="inline-flex items-center gap-1 bg-[#FAF8F4] border border-[#E7E0D5] px-2 py-0.5 rounded-md">
-                                    <Users className="w-3 h-3 text-[#73685E]" aria-hidden />
+                                  <span className="inline-flex items-center gap-1 bg-bg border border-border px-2 py-0.5 rounded-md">
+                                    <Users className="w-3 h-3 text-muted" aria-hidden />
                                     {plan.request.party_size} Travelers
                                   </span>
                                 )}
                                 {plan.request?.travel_style && (
-                                  <span className="capitalize bg-[#FCEEE8] text-[#B54320] px-2 py-0.5 rounded-md font-medium">
+                                  <span className="capitalize bg-primary-light text-primary-hover px-2 py-0.5 rounded-md font-medium">
                                     {plan.request.travel_style}
                                   </span>
                                 )}
                               </div>
 
                               {plan.estimated_cost && (
-                                <div className="rounded-xl bg-[#FAF8F4] border border-[#E7E0D5] px-3.5 py-2.5 flex items-baseline justify-between gap-2">
+                                <div className="rounded-xl bg-bg border border-border px-3.5 py-2.5 flex items-baseline justify-between gap-2">
                                   <div>
-                                    <p className="text-[10px] uppercase tracking-wider font-semibold text-[#73685E]">
+                                    <p className="text-[10px] uppercase tracking-wider font-semibold text-muted">
                                       Estimated Cost
                                     </p>
-                                    <p className="font-mono text-base font-semibold text-[#15803D]">
+                                    <p className="font-mono text-base font-semibold text-success">
                                       {formatInr(plan.estimated_cost.total)}
                                     </p>
                                   </div>
                                   {plan.request?.budget && (
-                                    <p className="font-mono text-[11px] text-[#73685E] text-right">
+                                    <p className="font-mono text-[11px] text-muted text-right">
                                       Budget {formatInr(plan.request.budget)}
                                     </p>
                                   )}
@@ -571,7 +571,7 @@ export default function DashboardPage() {
                             </div>
                           ) : (
                             <div className="space-y-2.5 mt-1 flex-1">
-                              <p className="text-xs text-[#73685E] line-clamp-2 leading-relaxed">
+                              <p className="text-xs text-muted line-clamp-2 leading-relaxed">
                                 {firstMessage || "Conversation started"}
                               </p>
                               {trip.status === "draft" && missingFields.length > 0 && (
@@ -579,7 +579,7 @@ export default function DashboardPage() {
                                   {missingFields.slice(0, 4).map((field) => (
                                     <span
                                       key={field}
-                                      className="text-[10px] font-medium text-[#B45309] bg-[#FEF7E6] border border-[#B45309]/15 px-2 py-0.5 rounded-md"
+                                      className="text-[10px] font-medium text-warning bg-warning-light border border-warning/15 px-2 py-0.5 rounded-md"
                                     >
                                       Needs {MISSING_FIELD_LABELS[field] ?? field}
                                     </span>
@@ -591,12 +591,12 @@ export default function DashboardPage() {
                         </div>
 
                         {/* Card Footer */}
-                        <div className="px-4 py-2 md:px-5 md:py-3.5 bg-[#FDFBF7] border-t border-[#F2EDE4] flex items-center justify-between">
-                          <span className="flex items-center gap-1.5 text-[11px] text-[#73685E]">
+                        <div className="px-4 py-2 md:px-5 md:py-3.5 bg-surface-warm border-t border-bg-subtle flex items-center justify-between">
+                          <span className="flex items-center gap-1.5 text-[11px] text-muted">
                             <Clock className="w-3.5 h-3.5" aria-hidden />
                             {dateStr}
                           </span>
-                          <span className="text-xs font-semibold text-[#CE532D] flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
+                          <span className="text-xs font-semibold text-primary flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
                             {status.action}
                             <ChevronRight className="w-3.5 h-3.5" aria-hidden />
                           </span>

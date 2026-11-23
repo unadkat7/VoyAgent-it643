@@ -71,9 +71,9 @@ export default function SignupPage() {
       title="Create your account"
       subtitle="Free to use. Save and revisit every Trip Plan you create."
       footer={
-        <p className="text-center text-sm text-[#73685E]">
+        <p className="text-center text-sm text-muted">
           Already have an account?{" "}
-          <Link href="/login" className="text-[#CE532D] font-semibold hover:underline">
+          <Link href="/login" className="text-primary font-semibold hover:underline">
             Sign in
           </Link>
         </p>
@@ -121,7 +121,7 @@ export default function SignupPage() {
                 type="button"
                 aria-label={showPassword ? "Hide password" : "Show password"}
                 onClick={() => setShowPassword(!showPassword)}
-                className="text-[#73685E] hover:text-[#181411] transition-colors inline-grid size-11 place-items-center rounded-lg"
+                className="text-muted hover:text-ink transition-colors inline-grid size-11 place-items-center rounded-lg"
               >
                 {showPassword ? <EyeOff size={16} aria-hidden /> : <Eye size={16} aria-hidden />}
               </button>
@@ -129,7 +129,7 @@ export default function SignupPage() {
           />
           <p id="password-rule"
               className={`text-xs flex items-center gap-1.5 ${
-                meetsLength ? "text-[#15803D]" : "text-[#73685E]"
+                meetsLength ? "text-success" : "text-muted"
               }`}
             >
               <Check className={`w-3.5 h-3.5 ${meetsLength ? "opacity-100" : "opacity-30"}`} aria-hidden />
@@ -155,7 +155,7 @@ export default function SignupPage() {
               type="button"
               aria-label={showConfirm ? "Hide confirm password" : "Show confirm password"}
               onClick={() => setShowConfirm(!showConfirm)}
-              className="text-[#73685E] hover:text-[#181411] transition-colors inline-grid size-11 place-items-center rounded-lg"
+              className="text-muted hover:text-ink transition-colors inline-grid size-11 place-items-center rounded-lg"
             >
               {showConfirm ? <EyeOff size={16} aria-hidden /> : <Eye size={16} aria-hidden />}
             </button>
@@ -165,7 +165,7 @@ export default function SignupPage() {
         <Button type="submit" loading={loading} disabled={loading} className="mt-2">
           {loading ? "Creating account..." : "Create Account"}
         </Button>
-        <p className="text-[11px] text-[#73685E] text-center">
+        <p className="text-[11px] text-muted text-center">
           We record your country, device type and the pages you use to measure usage. We never
           store your full IP address.
         </p>

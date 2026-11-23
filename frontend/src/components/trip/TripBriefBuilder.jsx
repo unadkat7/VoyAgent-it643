@@ -58,19 +58,19 @@ export default function TripBriefBuilder({ onSubmitPrompt, onPrefillPrompt, disa
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-white border border-[#E7E0D5] rounded-3xl p-5 sm:p-6 shadow-[0_14px_36px_-26px_rgba(24,20,17,0.22)] space-y-5"
+      className="bg-white border border-border rounded-3xl p-5 sm:p-6 shadow-[0_14px_36px_-26px_rgba(24,20,17,0.22)] space-y-5"
     >
       {/* Header + 6/6 Rule-1 Readiness Tracker */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[#F2EDE4]">
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-bg-subtle">
         <div className="flex items-center gap-2.5">
-          <span className="w-8 h-8 rounded-xl bg-[#FCEEE8] text-[#CE532D] flex items-center justify-center shrink-0">
+          <span className="w-8 h-8 rounded-xl bg-primary-light text-primary flex items-center justify-center shrink-0">
             <Compass className="w-4 h-4" aria-hidden />
           </span>
           <div>
-            <h2 className="font-display text-lg font-semibold text-[#181411] leading-tight">
+            <h2 className="font-display text-lg font-semibold text-ink leading-tight">
               Guided Trip Brief
             </h2>
-            <p className="text-xs text-[#73685E]">
+            <p className="text-xs text-muted">
               Fill all 6 required fields for an instant Trip Plan without back-and-forth.
             </p>
           </div>
@@ -81,7 +81,7 @@ export default function TripBriefBuilder({ onSubmitPrompt, onPrefillPrompt, disa
               <span
                 key={slot}
                 className={`h-1.5 w-3.5 rounded-full transition-colors ${
-                  slot <= filledCount ? "bg-[#15803D]" : "bg-[#E7E0D5]"
+                  slot <= filledCount ? "bg-success" : "bg-border"
                 }`}
               />
             ))}
@@ -90,8 +90,8 @@ export default function TripBriefBuilder({ onSubmitPrompt, onPrefillPrompt, disa
             data-testid="brief-readiness"
             className={`font-mono text-[11px] font-semibold px-2 py-0.5 rounded-full ${
               filledCount === 6
-                ? "bg-[#ECFDF3] text-[#15803D]"
-                : "bg-[#FEF7E6] text-[#B45309]"
+                ? "bg-success-light text-success"
+                : "bg-warning-light text-warning"
             }`}
           >
             {filledCount}/6 ready
@@ -102,8 +102,8 @@ export default function TripBriefBuilder({ onSubmitPrompt, onPrefillPrompt, disa
       {/* Row 1: Origin + Destination */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
         <label className="flex flex-col gap-1.5">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-[#3B342E] flex items-center gap-1.5">
-            <Navigation className="w-3 h-3 text-[#CE532D]" aria-hidden />
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-soft flex items-center gap-1.5">
+            <Navigation className="w-3 h-3 text-primary" aria-hidden />
             Origin city
           </span>
           <input
@@ -111,13 +111,13 @@ export default function TripBriefBuilder({ onSubmitPrompt, onPrefillPrompt, disa
             value={origin}
             onChange={(e) => setOrigin(e.target.value)}
             placeholder="e.g. Ahmedabad, Mumbai, Delhi"
-            className="bg-[#FDFBF7] border border-[#E7E0D5] focus:bg-white focus:border-[#CE532D] focus:ring-2 focus:ring-[#CE532D]/15 rounded-xl px-3.5 py-2.5 text-sm text-[#181411] placeholder-[#A89E94] focus:outline-none transition-all"
+            className="bg-surface-warm border border-border focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/15 rounded-xl px-3.5 py-2.5 text-sm text-ink placeholder-faint focus:outline-none transition-all"
           />
         </label>
 
         <label className="flex flex-col gap-1.5">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-[#3B342E] flex items-center gap-1.5">
-            <MapPin className="w-3 h-3 text-[#CE532D]" aria-hidden />
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-soft flex items-center gap-1.5">
+            <MapPin className="w-3 h-3 text-primary" aria-hidden />
             Destination
           </span>
           <input
@@ -125,7 +125,7 @@ export default function TripBriefBuilder({ onSubmitPrompt, onPrefillPrompt, disa
             value={destination}
             onChange={(e) => setDestination(e.target.value)}
             placeholder="e.g. Goa, Manali, Jaipur, Kerala"
-            className="bg-[#FDFBF7] border border-[#E7E0D5] focus:bg-white focus:border-[#CE532D] focus:ring-2 focus:ring-[#CE532D]/15 rounded-xl px-3.5 py-2.5 text-sm text-[#181411] placeholder-[#A89E94] focus:outline-none transition-all"
+            className="bg-surface-warm border border-border focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/15 rounded-xl px-3.5 py-2.5 text-sm text-ink placeholder-faint focus:outline-none transition-all"
           />
         </label>
       </div>
@@ -134,8 +134,8 @@ export default function TripBriefBuilder({ onSubmitPrompt, onPrefillPrompt, disa
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
         {/* Duration */}
         <div className="flex flex-col gap-1.5">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-[#3B342E] flex items-center gap-1.5">
-            <Calendar className="w-3 h-3 text-[#CE532D]" aria-hidden />
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-soft flex items-center gap-1.5">
+            <Calendar className="w-3 h-3 text-primary" aria-hidden />
             Duration (days)
           </span>
           <div className="flex items-center gap-1.5">
@@ -147,8 +147,8 @@ export default function TripBriefBuilder({ onSubmitPrompt, onPrefillPrompt, disa
                 aria-pressed={durationDays === d}
                 className={`flex-1 py-2 rounded-xl font-mono text-xs font-semibold border transition-all ${
                   durationDays === d
-                    ? "bg-[#181411] border-[#181411] text-[#FAF8F4]"
-                    : "bg-[#FDFBF7] border-[#E7E0D5] text-[#3B342E] hover:border-[#D6CCC0]"
+                    ? "bg-ink border-ink text-bg"
+                    : "bg-surface-warm border-border text-ink-soft hover:border-border-strong"
                 }`}
               >
                 {d}d
@@ -159,27 +159,27 @@ export default function TripBriefBuilder({ onSubmitPrompt, onPrefillPrompt, disa
 
         {/* Party Size */}
         <div className="flex flex-col gap-1.5">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-[#3B342E] flex items-center gap-1.5">
-            <Users className="w-3 h-3 text-[#CE532D]" aria-hidden />
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-soft flex items-center gap-1.5">
+            <Users className="w-3 h-3 text-primary" aria-hidden />
             Party Size
           </span>
-          <div className="flex items-center justify-between bg-[#FDFBF7] border border-[#E7E0D5] rounded-xl px-2 py-1.5">
+          <div className="flex items-center justify-between bg-surface-warm border border-border rounded-xl px-2 py-1.5">
             <button
               type="button"
               aria-label="Decrease Party Size"
               onClick={() => setPartySize((n) => Math.max(1, n - 1))}
-              className="w-7 h-7 rounded-lg bg-white border border-[#E7E0D5] flex items-center justify-center text-[#3B342E] hover:border-[#CE532D] hover:text-[#CE532D] transition-colors"
+              className="w-7 h-7 rounded-lg bg-white border border-border flex items-center justify-center text-ink-soft hover:border-primary hover:text-primary transition-colors"
             >
               <Minus className="w-3.5 h-3.5" aria-hidden />
             </button>
-            <span className="font-mono text-sm font-semibold text-[#181411]">
+            <span className="font-mono text-sm font-semibold text-ink">
               {partySize} {partySize === 1 ? "Traveler" : "Travelers"}
             </span>
             <button
               type="button"
               aria-label="Increase Party Size"
               onClick={() => setPartySize((n) => Math.min(12, n + 1))}
-              className="w-7 h-7 rounded-lg bg-white border border-[#E7E0D5] flex items-center justify-center text-[#3B342E] hover:border-[#CE532D] hover:text-[#CE532D] transition-colors"
+              className="w-7 h-7 rounded-lg bg-white border border-border flex items-center justify-center text-ink-soft hover:border-primary hover:text-primary transition-colors"
             >
               <Plus className="w-3.5 h-3.5" aria-hidden />
             </button>
@@ -190,9 +190,9 @@ export default function TripBriefBuilder({ onSubmitPrompt, onPrefillPrompt, disa
         <div className="flex flex-col gap-1.5">
           <label
             htmlFor="brief-budget"
-            className="text-[11px] font-semibold uppercase tracking-wider text-[#3B342E] flex items-center gap-1.5"
+            className="text-[11px] font-semibold uppercase tracking-wider text-ink-soft flex items-center gap-1.5"
           >
-            <IndianRupee className="w-3 h-3 text-[#CE532D]" aria-hidden />
+            <IndianRupee className="w-3 h-3 text-primary" aria-hidden />
             Total Budget (INR)
           </label>
           <input
@@ -203,7 +203,7 @@ export default function TripBriefBuilder({ onSubmitPrompt, onPrefillPrompt, disa
             value={budget}
             onChange={(e) => setBudget(e.target.value)}
             placeholder="40000"
-            className="bg-[#FDFBF7] border border-[#E7E0D5] focus:bg-white focus:border-[#CE532D] focus:ring-2 focus:ring-[#CE532D]/15 rounded-xl px-3.5 py-2 font-mono text-sm text-[#181411] focus:outline-none transition-all"
+            className="bg-surface-warm border border-border focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/15 rounded-xl px-3.5 py-2 font-mono text-sm text-ink focus:outline-none transition-all"
           />
           <div className="flex flex-wrap gap-1">
             {BUDGET_PRESETS.map((amount) => (
@@ -213,8 +213,8 @@ export default function TripBriefBuilder({ onSubmitPrompt, onPrefillPrompt, disa
                 onClick={() => setBudget(String(amount))}
                 className={`font-mono text-[10px] px-2 py-0.5 rounded-md border transition-colors ${
                   numericBudget === amount
-                    ? "bg-[#FCEEE8] border-[#CE532D]/40 text-[#B54320] font-semibold"
-                    : "bg-[#FAF8F4] border-[#E7E0D5] text-[#73685E] hover:text-[#181411]"
+                    ? "bg-primary-light border-primary/40 text-primary-hover font-semibold"
+                    : "bg-bg border-border text-muted hover:text-ink"
                 }`}
               >
                 ₹{(amount / 1000).toFixed(0)}k
@@ -226,8 +226,8 @@ export default function TripBriefBuilder({ onSubmitPrompt, onPrefillPrompt, disa
 
       {/* Row 3: Travel Style Pills */}
       <div className="flex flex-col gap-2">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-[#3B342E] flex items-center gap-1.5">
-          <Sparkles className="w-3 h-3 text-[#CE532D]" aria-hidden />
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-soft flex items-center gap-1.5">
+          <Sparkles className="w-3 h-3 text-primary" aria-hidden />
           Travel Style
         </span>
         <div className="flex flex-wrap gap-2">
@@ -241,8 +241,8 @@ export default function TripBriefBuilder({ onSubmitPrompt, onPrefillPrompt, disa
                 aria-pressed={active}
                 className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all ${
                   active
-                    ? "bg-[#CE532D] border-[#CE532D] text-white shadow-xs"
-                    : "bg-[#FAF8F4] border-[#E7E0D5] text-[#3B342E] hover:border-[#D6CCC0]"
+                    ? "bg-primary border-primary text-white shadow-xs"
+                    : "bg-bg border-border text-ink-soft hover:border-border-strong"
                 }`}
               >
                 {style}
@@ -253,9 +253,9 @@ export default function TripBriefBuilder({ onSubmitPrompt, onPrefillPrompt, disa
       </div>
 
       {/* Live Preview + Actions */}
-      <div className="pt-4 border-t border-[#F2EDE4] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <p className="text-xs text-[#73685E] truncate">
-          <span className="font-semibold text-[#3B342E]">Brief: </span>
+      <div className="pt-4 border-t border-bg-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <p className="text-xs text-muted truncate">
+          <span className="font-semibold text-ink-soft">Brief: </span>
           {composed || "Enter your Origin and Destination to preview"}
         </p>
         <div className="flex items-center gap-2 shrink-0">
@@ -264,7 +264,7 @@ export default function TripBriefBuilder({ onSubmitPrompt, onPrefillPrompt, disa
               type="button"
               disabled={!composed || disabled}
               onClick={() => onPrefillPrompt(composed)}
-              className="px-3.5 py-2.5 rounded-xl border border-[#E7E0D5] text-xs font-semibold text-[#3B342E] hover:bg-[#FAF8F4] disabled:opacity-40 transition-colors"
+              className="px-3.5 py-2.5 rounded-xl border border-border text-xs font-semibold text-ink-soft hover:bg-bg disabled:opacity-40 transition-colors"
             >
               Edit in chat
             </button>
@@ -272,7 +272,7 @@ export default function TripBriefBuilder({ onSubmitPrompt, onPrefillPrompt, disa
           <button
             type="submit"
             disabled={!canLaunch}
-            className="inline-flex items-center gap-1.5 bg-[#CE532D] hover:bg-[#B54320] disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-sm transition-all"
+            className="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-hover disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-sm transition-all"
           >
             Start Planning
             <ArrowRight className="w-3.5 h-3.5" aria-hidden />

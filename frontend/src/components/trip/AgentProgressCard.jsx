@@ -113,17 +113,17 @@ export default function AgentProgressCard({ loading }) {
       exit={{ opacity: 0 }}
       role="status"
       aria-live="polite"
-      className="w-full bg-white border border-[#E7E0D5] rounded-3xl p-5 sm:p-6 shadow-[0_14px_36px_-26px_rgba(24,20,17,0.2)] my-2"
+      className="w-full bg-white border border-border rounded-3xl p-5 sm:p-6 shadow-[0_14px_36px_-26px_rgba(24,20,17,0.2)] my-2"
     >
       {/* Masthead */}
       <div className="flex items-center justify-between gap-2 mb-4">
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-[#CE532D] animate-pulse" aria-hidden />
-          <span className="font-display text-base font-semibold text-[#181411]">
+          <span className="w-2 h-2 rounded-full bg-primary animate-pulse" aria-hidden />
+          <span className="font-display text-base font-semibold text-ink">
             Planning Engine Active
           </span>
         </div>
-        <span className="font-mono text-[10px] uppercase tracking-wider text-[#73685E] bg-[#FAF8F4] border border-[#E7E0D5] px-2.5 py-1 rounded-full">
+        <span className="font-mono text-[10px] uppercase tracking-wider text-muted bg-bg border border-border px-2.5 py-1 rounded-full">
           3-Way Parallel Graph
         </span>
       </div>
@@ -131,26 +131,26 @@ export default function AgentProgressCard({ loading }) {
       {/* Stage 1: Understand Trip Request */}
       <div
         className={`flex items-center gap-3 p-3.5 rounded-2xl border transition-colors ${
-          phase >= 1 ? "border-[#CE532D]/30 bg-[#FCEEE8]/65" : "border-[#E7E0D5] bg-[#FAF8F4]"
+          phase >= 1 ? "border-primary/30 bg-primary-light/65" : "border-border bg-bg"
         }`}
       >
-        <div className="w-8 h-8 rounded-xl bg-white border border-[#E7E0D5] flex items-center justify-center shrink-0">
+        <div className="w-8 h-8 rounded-xl bg-white border border-border flex items-center justify-center shrink-0">
           {phase >= 2 ? (
-            <CheckCircle2 className="w-4 h-4 text-[#15803D]" aria-hidden />
+            <CheckCircle2 className="w-4 h-4 text-success" aria-hidden />
           ) : (
-            <Compass className="w-4 h-4 text-[#CE532D]" aria-hidden />
+            <Compass className="w-4 h-4 text-primary" aria-hidden />
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-bold text-[#181411]">01 · Understand Trip Request</p>
-          <p className="text-xs text-[#73685E]">
+          <p className="text-xs font-bold text-ink">01 · Understand Trip Request</p>
+          <p className="text-xs text-muted">
             {phase >= 2
               ? "Required fields parsed — fanning out to 3 specialists"
               : "Reading Origin, Destination, Days, Party Size, Budget & Style..."}
           </p>
         </div>
-        {phase === 1 && <Loader2 className="w-4 h-4 text-[#CE532D] animate-spin shrink-0" />}
-        {phase >= 2 && <CheckCircle2 className="w-4 h-4 text-[#15803D] shrink-0" />}
+        {phase === 1 && <Loader2 className="w-4 h-4 text-primary animate-spin shrink-0" />}
+        {phase >= 2 && <CheckCircle2 className="w-4 h-4 text-success shrink-0" />}
       </div>
 
       <BranchLines active={phase >= 2} direction="out" />
@@ -185,9 +185,9 @@ export default function AgentProgressCard({ loading }) {
                 {isActive && !isDone && (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: node.accent }} />
                 )}
-                {isDone && <CheckCircle2 className="w-3.5 h-3.5 text-[#15803D]" />}
+                {isDone && <CheckCircle2 className="w-3.5 h-3.5 text-success" />}
               </div>
-              <p className="text-[11px] leading-relaxed text-[#3B342E]/85">
+              <p className="text-[11px] leading-relaxed text-ink-soft/85">
                 {!isActive ? "Queued..." : isDone ? node.done : node.doing}
               </p>
               {isActive && !isDone && (
@@ -214,19 +214,19 @@ export default function AgentProgressCard({ loading }) {
       <div
         className={`mt-2 sm:mt-0 flex items-center gap-3 p-3.5 rounded-2xl border transition-all ${
           phase >= 3
-            ? "border-[#15803D]/30 bg-[#ECFDF3]/70 opacity-100"
-            : "border-[#E7E0D5] bg-[#FAF8F4] opacity-50"
+            ? "border-success/30 bg-success-light/70 opacity-100"
+            : "border-border bg-bg opacity-50"
         }`}
       >
-        <div className="w-8 h-8 rounded-xl bg-white border border-[#E7E0D5] flex items-center justify-center shrink-0">
+        <div className="w-8 h-8 rounded-xl bg-white border border-border flex items-center justify-center shrink-0">
           <IndianRupee
-            className={`w-4 h-4 ${phase >= 3 ? "text-[#15803D]" : "text-[#73685E]"}`}
+            className={`w-4 h-4 ${phase >= 3 ? "text-success" : "text-muted"}`}
             aria-hidden
           />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-bold text-[#181411]">03 · INR Budget Feasibility Check</p>
-          <p className="text-xs text-[#73685E]">
+          <p className="text-xs font-bold text-ink">03 · INR Budget Feasibility Check</p>
+          <p className="text-xs text-muted">
             {phase >= 4
               ? "Budget Caps verified — Trip is Feasible"
               : phase === 3
@@ -234,8 +234,8 @@ export default function AgentProgressCard({ loading }) {
               : "Waiting for parallel searches to join..."}
           </p>
         </div>
-        {phase === 3 && <Loader2 className="w-4 h-4 text-[#15803D] animate-spin shrink-0" />}
-        {phase >= 4 && <CheckCircle2 className="w-4 h-4 text-[#15803D] shrink-0" />}
+        {phase === 3 && <Loader2 className="w-4 h-4 text-success animate-spin shrink-0" />}
+        {phase >= 4 && <CheckCircle2 className="w-4 h-4 text-success shrink-0" />}
       </div>
 
       {/* Stage 4: Locate Coordinates & Compose Plan */}
@@ -243,18 +243,18 @@ export default function AgentProgressCard({ loading }) {
         <motion.div
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mt-2.5 flex items-center gap-3 p-3.5 rounded-2xl border border-[#181411]/20 bg-[#181411] text-[#FAF8F4]"
+          className="mt-2.5 flex items-center gap-3 p-3.5 rounded-2xl border border-ink/20 bg-ink text-bg"
         >
-          <div className="w-8 h-8 rounded-xl bg-[#FAF8F4]/10 flex items-center justify-center shrink-0">
-            <MapPin className="w-4 h-4 text-[#F29674]" aria-hidden />
+          <div className="w-8 h-8 rounded-xl bg-bg/10 flex items-center justify-center shrink-0">
+            <MapPin className="w-4 h-4 text-primary-soft" aria-hidden />
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-xs font-bold">04 · Locate Pins &amp; Compose Trip Plan</p>
-            <p className="text-xs text-[#FAF8F4]/65">
+            <p className="text-xs text-bg/65">
               Geocoding Coordinates for your Trip Map and writing travel tips...
             </p>
           </div>
-          <Loader2 className="w-4 h-4 text-[#F29674] animate-spin shrink-0" />
+          <Loader2 className="w-4 h-4 text-primary-soft animate-spin shrink-0" />
         </motion.div>
       )}
     </motion.div>
