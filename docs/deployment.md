@@ -23,7 +23,7 @@ Free tiers: **MongoDB Atlas** (database) and **Vercel** (frontend, backend and a
    | `MONGO_DB_URI` | The Atlas URI from step 1 |
    | `JWT_SECRET` | A long random string |
    | `INTERNAL_API_KEY` | Another long random string, at least 16 characters |
-   | `ADMIN_EMAILS` | Comma-separated emails that may open `/api/stats` |
+   | `ADMIN_EMAILS` | Comma-separated admin emails. They can open `/admin` and are left out of usage stats. They cannot sign up publicly. |
    | `NODE_ENV` | `production` |
    | `ENVIRONMENT` | `production` |
    | `NEXT_PUBLIC_API_URL` | `/api` |
@@ -41,7 +41,15 @@ On the Hobby plan a function may run for up to 300 seconds. The backend waits up
 ## 3. After deploying
 
 - Put the live URL at the top of `README.md`.
-- Sign in with an `ADMIN_EMAILS` account and open `/api/stats` for sign-up and Trip counts. Record them in `USAGE_EVIDENCE.md`.
+- Create the admin account once, from your machine, against the Atlas database. Keep the values out of git and type them only in your shell:
+
+  ```bash
+  cd backend
+  MONGO_DB_URI="<atlas uri>" ADMIN_EMAILS="<admin email>" ADMIN_SEED_EMAIL="<admin email>" ADMIN_SEED_PASSWORD="<password>" npm run seed:admin
+  ```
+
+  Running it again resets the password.
+- Sign in as the admin and open `/admin`. Every few days, add a row and a screenshot to `USAGE_EVIDENCE.md`.
 
 ## Known limits
 

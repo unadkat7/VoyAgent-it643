@@ -4,6 +4,7 @@ ENV NODE_ENV=production
 COPY package*.json ./
 RUN npm ci --omit=dev
 COPY src ./src
+COPY scripts ./scripts
 EXPOSE 5000
 USER node
 CMD ["node", "src/server.js"]
