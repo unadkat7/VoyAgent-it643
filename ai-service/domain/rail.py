@@ -116,6 +116,7 @@ def find_journeys(
     destinations: Iterable[str],
     depart_days: Sequence[date],
     *,
+    depart_after: datetime | None = None,
     arrive_by: datetime | None = None,
     limit: int = MAX_JOURNEYS,
 ) -> list[Journey]:
@@ -135,7 +136,9 @@ def find_journeys(
                 for journey in _journeys_from(
                     first, board, service_day, origins, destinations, onward
                 ):
-                    if arrive_by is None or journey.arrives <= arrive_by:
+                    too_early = depart_after is not None and journey.departs < depart_after
+                    too_late = arrive_by is not None and journey.arrives > arrive_by
+                    if not too_early and not too_late:
                         key = tuple(leg.train.number for leg in journey.legs)
                         best = found.get(key)
                         if best is None or _rank(journey) < _rank(best):
@@ -167,11 +170,15 @@ def _onward_calls(
 
 def _journeys_from(first, board, service_day, origins, destinations, onward):
     stops = first.stops
+    reaches = next(
+        (p for p in range(board + 1, len(stops)) if stops[p].station in destinations), None
+    )
+    # A train that goes on to the destination is ridden there; getting off early only loses time.
+    if reaches is not None:
+        yield Journey(legs=(Leg(first, board, reaches, service_day),))
+        return
     for position in range(board + 1, len(stops)):
         station = stops[position].station
-        if station in destinations:
-            yield Journey(legs=(Leg(first, board, position, service_day),))
-            return  # past a destination, a change can only be slower
         if station in origins:
             continue
         first_leg = Leg(first, board, position, service_day)

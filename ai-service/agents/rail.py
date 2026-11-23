@@ -25,6 +25,7 @@ TIMETABLE_DOWN = "The train timetable is unavailable right now."
 DAYS_BEFORE_CHECK_IN = 2
 DAYS_AFTER_CHECK_OUT = 1
 ROUTED_RAILHEADS = 2
+CHECK_OUT_TIME = time(10, 0)
 WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 
@@ -62,10 +63,13 @@ def make_rail_node(timetable: TimetablePort, places: PlaceFinderPort, router: Ro
         if {s.code for s in ends + heads} & start_codes:
             return update
 
+        checked_out = datetime.combine(dates.check_out, CHECK_OUT_TIME)
         if ends:
             end_codes = {station.code for station in ends}
             trains_out = find_journeys(table, start_codes, end_codes, out_days, arrive_by=arrive_by)
-            trains_back = find_journeys(table, end_codes, start_codes, back_days)
+            trains_back = find_journeys(
+                table, end_codes, start_codes, back_days, depart_after=checked_out
+            )
         else:
             choice = _best_railhead(
                 table, heads, start_codes, destination.point, out_days, arrive_by, router
@@ -74,7 +78,13 @@ def make_rail_node(timetable: TimetablePort, places: PlaceFinderPort, router: Ro
                 trains_out, trains_back = [], []
             else:
                 head, trains_out, drive, road_failed = choice
-                trains_back = find_journeys(table, {head.code}, start_codes, back_days)
+                # Back at the railhead only after checking out and driving down again.
+                at_railhead = checked_out + timedelta(
+                    minutes=_road_minutes(drive, head, destination.point)
+                )
+                trains_back = find_journeys(
+                    table, {head.code}, start_codes, back_days, depart_after=at_railhead
+                )
                 if drive is not None:
                     update["road_leg"] = road_route(drive, _title(head.name), request.destination)
                 if road_failed:
@@ -101,6 +111,7 @@ def _best_railhead(table, heads, start_codes, point: GeoPoint, out_days, arrive_
     """
     candidates = []
     for head in heads:
+        # Reaching the railhead on check-in day is enough: a long hill drive can run into the night.
         journeys = find_journeys(table, start_codes, {head.code}, out_days, arrive_by=arrive_by)
         if journeys:
             rough = estimated_road_minutes(distance_km(head.point, point))
@@ -120,11 +131,18 @@ def _best_railhead(table, heads, start_codes, point: GeoPoint, out_days, arrive_
                 road_failed = True
         total = estimate
         if drive is not None:
-            total = travel_minutes(journeys[0]) + drive.hours * SLOW_FACTOR_LOW * 60
+            total = travel_minutes(journeys[0]) + _road_minutes(drive, head, point)
         if best is None or total < best[0]:
             best = (total, head, journeys, drive)
     _, head, journeys, drive = best
     return head, journeys, drive, road_failed
+
+
+def _road_minutes(drive: Drive | None, head: Station, point: GeoPoint) -> float:
+    """Routed drive time slowed for hills, or the rough estimate when routing is unavailable."""
+    if drive is not None:
+        return drive.hours * SLOW_FACTOR_LOW * 60
+    return estimated_road_minutes(distance_km(head.point, point))
 
 
 def _title(name: str) -> str:
