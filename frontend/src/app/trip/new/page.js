@@ -13,6 +13,7 @@ import AgentProgressCard from "@/components/trip/AgentProgressCard";
 import TripBriefBuilder from "@/components/trip/TripBriefBuilder";
 import SegmentedControl from "@/components/ui/SegmentedControl";
 import { EXAMPLE_TRIPS } from "@/lib/exampleTrips";
+import { formatInr } from "@/lib/tripView";
 
 const WELCOME = {
   role: "assistant",
@@ -21,13 +22,21 @@ const WELCOME = {
 };
 
 const FIELD_META = {
-  origin: { label: "Origin", placeholder: "e.g. Pune", quick: "Starting from Mumbai" },
-  destination: { label: "Destination", placeholder: "e.g. Goa", quick: "Going to Goa" },
-  duration_days: { label: "Duration", placeholder: "e.g. 3 days", quick: "For 3 days" },
-  budget: { label: "Budget (INR)", placeholder: "e.g. ₹35,000", quick: "Total Budget ₹30,000" },
-  party_size: { label: "Party Size", placeholder: "e.g. 2 people", quick: "2 people" },
-  travel_style: { label: "Travel Style", placeholder: "e.g. relaxed", quick: "Relaxed style" },
+  origin: { label: "Origin", placeholder: "e.g. Pune", example: "Mumbai" },
+  destination: { label: "Destination", placeholder: "e.g. Goa", example: "Goa" },
+  duration_days: { label: "Duration", placeholder: "e.g. 3 days", example: "3" },
+  budget: { label: "Budget (INR)", placeholder: "e.g. ₹35,000", example: "30000" },
+  party_size: { label: "Party Size", placeholder: "e.g. 2 people", example: "2" },
+  travel_style: { label: "Travel Style", placeholder: "e.g. relaxed", example: "Relaxed" },
 };
+
+function chipLabel(field, suggestions) {
+  const value = suggestions[field];
+  if (value == null) return FIELD_META[field]?.label ?? field;
+  if (field === "budget") return `Use ${formatInr(value)}`;
+  if (field === "duration_days") return `Use ${value} days`;
+  return `Use ${String(value)}`;
+}
 
 const PLANNING_METHODS = [
   { value: "chat", label: "Describe your trip" },
@@ -59,6 +68,7 @@ function TripPlanner() {
   const [tripId, setTripId] = useState(searchParams.get("tripId"));
   const [messages, setMessages] = useState([WELCOME]);
   const [missingFields, setMissingFields] = useState([]);
+  const [suggestions, setSuggestions] = useState({});
   const [clarificationDraft, setClarificationDraft] = useState({});
   const [prompt, setPrompt] = useState(initialPrompt);
   const [briefVersion, setBriefVersion] = useState(0);
@@ -77,6 +87,7 @@ function TripPlanner() {
       if (trip.status === "planned") return router.replace(`/trip/${trip._id}`);
       setMessages([WELCOME, ...trip.conversation]);
       setMissingFields(trip.status === "draft" ? (trip.clarification?.missingFields ?? []) : []);
+      setSuggestions(trip.status === "draft" ? (trip.clarification?.suggestions ?? {}) : {});
       setShowBrief(false);
     } catch {
       setTripId(null);
@@ -113,6 +124,7 @@ function TripPlanner() {
     setMessages((prev) => [...prev, { role: "traveler", content: trimmed }]);
     setPrompt("");
     setMissingFields([]);
+    setSuggestions({});
     setClarificationDraft({});
     setShowBrief(false);
     setLoading(true);
@@ -127,6 +139,7 @@ function TripPlanner() {
       } else {
         setMessages((prev) => [...prev, { role: "assistant", content: trip.clarification.question }]);
         setMissingFields(trip.clarification.missingFields ?? []);
+        setSuggestions(trip.clarification.suggestions ?? {});
       }
     } catch (error) {
       if (error.response?.status === 401) return router.replace("/login");
@@ -148,6 +161,7 @@ function TripPlanner() {
     setBriefVersion((version) => version + 1);
     setMessages([WELCOME]);
     setMissingFields([]);
+    setSuggestions({});
     setClarificationDraft({});
     setPrompt("");
     setShowBrief(false);
@@ -155,11 +169,9 @@ function TripPlanner() {
   };
 
   const addQuickAnswer = (field) => {
-    const answer = FIELD_META[field]?.quick;
-    if (answer) {
-      setPrompt((prev) => (prev ? `${prev}, ${answer}` : answer));
-      inputRef.current?.focus();
-    }
+    const value = suggestions[field] ?? FIELD_META[field]?.example;
+    if (value == null) return;
+    setClarificationDraft((prev) => ({ ...prev, [field]: String(value) }));
   };
 
   const submitClarificationInline = (event) => {
@@ -365,7 +377,7 @@ function TripPlanner() {
                       className="inline-flex min-h-tap items-center gap-1 rounded-xl border border-border bg-bg px-3 text-sm font-medium text-ink-soft hover:border-primary/40 hover:text-primary"
                     >
                       <Plus className="h-4 w-4" aria-hidden />
-                      {FIELD_META[field]?.label ?? field}
+                      {chipLabel(field, suggestions)}
                     </button>
                   ))}
                 </div>
