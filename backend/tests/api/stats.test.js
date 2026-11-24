@@ -1,6 +1,8 @@
+import jwt from "jsonwebtoken";
 import request from "supertest";
 import { describe, expect, it } from "vitest";
 import app from "../../src/app.js";
+import { env } from "../../src/config/env.js";
 import Feedback from "../../src/models/feedback.model.js";
 import Trip from "../../src/models/trip.model.js";
 import User from "../../src/models/user.model.js";
@@ -220,5 +222,40 @@ describe("usage stats for an admin", () => {
     expect(retentionRes.body.retention.cohorts).toHaveLength(4);
     expect((await admin.get("/api/stats/retention?weeks=1")).status).toBe(400);
     expect((await admin.get("/api/stats/retention?weeks=20")).status).toBe(400);
+  });
+
+  it("leaves non-INR trips out of INR budget averages and counts them", async () => {
+    const ashaUser = await User.create({ name: "Asha", email: "asha@example.com", password: PASSWORD });
+    const adminUser = await User.create({ name: "Admin", email: ADMIN_EMAIL, password: PASSWORD });
+    const cookie = `token=${jwt.sign({ id: adminUser._id }, env.JWT_SECRET)}`;
+
+    await Trip.create([
+      {
+        userId: ashaUser._id,
+        status: "planned",
+        destination: "Goa",
+        plan: {
+          request: { origin: "Ahmedabad", destination: "Goa", budget: 40000, currency: "INR" },
+          estimated_cost: { hotel_total: 18000, travel_total: 10000, total: 28000, currency: "INR" },
+        },
+      },
+      {
+        userId: ashaUser._id,
+        status: "planned",
+        destination: "New York",
+        plan: {
+          request: { origin: "Los Angeles", destination: "New York", budget: 1000, currency: "USD" },
+          estimated_cost: { hotel_total: 300, travel_total: 300, total: 600, currency: "USD" },
+        },
+      },
+    ]);
+
+    const tripsRes = await request(app).get("/api/stats/trips?days=30").set("Cookie", cookie);
+    expect(tripsRes.status).toBe(200);
+    expect(tripsRes.body.trips.budgetAnalysis.avgBudgetInr).toBe(40000);
+    expect(tripsRes.body.trips.budgetAnalysis.nonInrTrips).toBe(1);
+
+    const usersRes = await request(app).get("/api/stats/users").set("Cookie", cookie);
+    expect(usersRes.body.users[0].avgBudgetInr).toBe(40000);
   });
 });
