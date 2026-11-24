@@ -77,6 +77,20 @@ const TRAVEL_PLAN = {
 };
 
 describe("Travel panel", () => {
+  it("shows the web fare found for a train, and nothing for a train without one", () => {
+    const [priced, unpriced] = TRAVEL_PLAN.trains_out;
+    const plan = {
+      ...TRAVEL_PLAN,
+      trains_out: [{ ...priced, ac3: { low: 1800, high: 2100 }, sleeper: { low: 650, high: 650 } }, unpriced],
+    };
+
+    render(<TravelPanel plan={plan} />);
+
+    const cards = within(screen.getByRole("region", { name: "Getting there by train" })).getAllByRole("listitem");
+    expect(cards[0]).toHaveTextContent("Sleeper ₹650 · 3AC ₹1,800–₹2,100 one way per person");
+    expect(cards[1]).not.toHaveTextContent("one way per person");
+  });
+
   it("lists trains there with times, next-day arrival, duration and running days", () => {
     render(<TravelPanel plan={TRAVEL_PLAN} />);
 
