@@ -33,6 +33,13 @@ def test_hand_list_wins_where_bundled_data_has_no_single_answer():
     assert airport_code("Paris") == "CDG"
 
 
+@pytest.mark.parametrize(
+    ("place", "code"), [("Melbourne", "MEL"), ("San Salvador", "SAL"), ("Sydney", "SYD")]
+)
+def test_hand_list_picks_the_main_airport_where_bundled_data_picks_a_minor_one(place, code):
+    assert airport_code(place) == code
+
+
 def test_uppercase_iata_code_is_used_as_given():
     assert airport_code("BOM") == "BOM"
 
