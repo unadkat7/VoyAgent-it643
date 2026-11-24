@@ -37,7 +37,7 @@ def kind_problem(field, name, kind, area) -> PlaceProblem | None:
             "Want to pick somewhere else?",
             "unreachable",
         )
-    if kind == "multi_country":
+    if kind == "multi_country" and field == "origin":
         return PlaceProblem(
             field, f"{name} covers several countries. Which country or city should I plan?"
         )

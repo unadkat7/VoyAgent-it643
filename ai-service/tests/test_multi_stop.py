@@ -13,7 +13,6 @@ from schemas.trip_request import TripRequest
 from tests.fakes import FakeLLM, SequenceSearch
 from tests.test_planning_engine import SUMMARY, TODAY, ask, flight, hotel
 
-
 CITIES = [("Paris", "CDG"), ("Brussels", "BRU"), ("Amsterdam", "AMS"), ("Berlin", "BER")]
 STOPS = [RouteStop(city=city, days=2, airport_code=code) for city, code in CITIES]
 LEGS = [

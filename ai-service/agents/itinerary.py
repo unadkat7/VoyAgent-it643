@@ -1,3 +1,4 @@
+from domain.route_rules import route_label, tag_days
 from graph.state import PlanningState
 from ports.llm import LLMPort
 from schemas.itinerary import Itinerary
@@ -10,8 +11,8 @@ rides only (0 if free). Meals, food, drinks and local taxis are counted separate
 estimated_cost is always 0.
 Do not suggest hotels or flights.
 Do not assume how the Travelers arrive or leave (flight, train, bus or car). Never name an
-airport, railway station or bus stand. Day 1 starts with checking in at the stay; on the last
-day, plan around checking out."""
+airport, railway station or bus stand. On the first day in a new city plan travel and check-in.
+Plan around each check-out. Set stop on every day using the zero-based city index."""
 
 
 def make_itinerary_node(llm: LLMPort):
@@ -21,10 +22,11 @@ def make_itinerary_node(llm: LLMPort):
         request, dates = state["request"], state["dates"]
         prompt = (
             f"Trip Request: {request.model_dump_json()}\n"
+            f"Stops: {route_label(state['route'])}\n"
             f"Travel Dates: {dates.check_in.isoformat()} to {dates.check_out.isoformat()} "
             f"({request.duration_days} days, {dates.nights} nights)."
         )
         result = llm.generate(Itinerary, system=SYSTEM, prompt=prompt)
-        return {"itinerary": result.days}
+        return {"itinerary": tag_days(result.days, state["route"])}
 
     return itinerary

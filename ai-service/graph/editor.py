@@ -4,12 +4,14 @@ from datetime import date
 from agents.itinerary import SYSTEM as ITINERARY_SYSTEM
 from domain.budget import BudgetCaps
 from domain.dates import TripDates
+from domain.route_rules import route_label, tag_days
 from domain.spend import assumed_budget
 from ports.llm import LLMPort
 from schemas.api import ConversationTurn, EditPlanRequest, EditPlanResponse
 from schemas.edit import PlanEdit
 from schemas.itinerary import Itinerary
 from schemas.plan import TripPlan
+from schemas.route import RouteStop
 
 SYSTEM = """You help a Traveler adjust their VoyAgent Trip plan. Read their latest message
 with the plan below.
@@ -107,6 +109,7 @@ class PlanEditor:
             request = request.model_copy(
                 update={
                     "budget": assumed_budget(
+                        area=request.destination_area,
                         travel_style=request.travel_style,
                         days=request.duration_days,
                         party_size=request.party_size,
@@ -116,13 +119,20 @@ class PlanEditor:
         state = {"request": request, "assumed_fields": assumed, "notes": []}
         if body.travel_mode:
             state["travel_mode"] = body.travel_mode
-        if not days_change and set(changed) <= DAYS_UNAFFECTED:
+        if (
+            request.destination_kind != "multi_country"
+            and not days_change
+            and set(changed) <= DAYS_UNAFFECTED
+        ):
             state["itinerary"] = plan.itinerary
         reply = f"Updated the plan for {_describe(changed)}. Stays, travel and costs re-checked."
         return self._run(body, state, reply, "request")
 
     def _edit_days(self, body: EditPlanRequest, days_change: str) -> EditPlanResponse:
         plan = body.plan
+        route = [RouteStop.model_validate(s.model_dump()) for s in plan.stops] or [
+            RouteStop(city=plan.request.destination, days=plan.request.duration_days)
+        ]
         no_pins = {"activities": {"__all__": {"coordinates"}}}
         current = [day.model_dump(exclude=no_pins) for day in plan.itinerary]
         edited = self._llm.generate(
@@ -130,6 +140,7 @@ class PlanEditor:
             system=EDIT_DAYS_SYSTEM,
             prompt=(
                 f"Trip Request: {plan.request.model_dump_json()}\n"
+                f"Stops: {route_label(route)}\n"
                 f"Current days: {current}\n"
                 f"Change: {days_change}"
             ),
@@ -148,7 +159,15 @@ class PlanEditor:
             ),
             "hotels": plan.hotels,
             "flights": plan.flights,
-            "itinerary": edited.days,
+            "route": route,
+            "legs": plan.legs,
+            "stop_dates": [
+                TripDates(date.fromisoformat(s.check_in), date.fromisoformat(s.check_out))
+                for s in plan.stops
+            ]
+            or [dates],
+            "stop_hotels": [s.hotels for s in plan.stops] or [plan.hotels],
+            "itinerary": tag_days(edited.days, route),
             "trains_out": plan.trains_out,
             "trains_back": plan.trains_back,
             "road_route": plan.road_route,

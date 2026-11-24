@@ -15,6 +15,7 @@ from agents.locate import make_locate_node
 from agents.prepare import make_prepare_node
 from agents.rail import make_rail_node
 from agents.road import make_road_node
+from agents.route import make_route_node
 from agents.understand import make_understand_node, route_after_understand
 from graph.state import PlanningState
 from ports.fares import FarePort
@@ -51,6 +52,7 @@ def build_planning_graph(
     graph.add_node("understand", make_understand_node(llm, today))
     graph.add_node("clarify", clarify)
     graph.add_node("check_places", make_check_places_node(geocoder))
+    graph.add_node("route", make_route_node(llm, geocoder))
     graph.add_node("prepare", make_prepare_node(today))
     graph.add_node("hotels", make_hotel_node(hotel_search))
     graph.add_node("flights", make_flight_node(flight_search))
@@ -75,7 +77,10 @@ def build_planning_graph(
     graph.add_conditional_edges(START, route_start, ["understand", "check_places", "budget_check"])
     graph.add_conditional_edges("understand", route_after_understand, ["clarify", "check_places"])
     graph.add_conditional_edges(
-        "check_places",
+        "check_places", lambda state: END if state.get("clarification") else "route", [END, "route"]
+    )
+    graph.add_conditional_edges(
+        "route",
         lambda state: END if state.get("clarification") else "prepare",
         [END, "prepare"],
     )
