@@ -15,6 +15,9 @@ def make_road_node(places: PlaceFinderPort, router: RouterPort):
         request = state["request"]
         if not request.origin:
             return {}  # the flight step asks for the Origin once
+        # The router drives across continents (Mumbai to Paris), so only same-area trips get a car.
+        if (request.origin_area or "india") != (request.destination_area or "india"):
+            return {}
         try:
             origin, origin_note = find_place(places, request.origin)
             destination, destination_note = find_place(places, request.destination)

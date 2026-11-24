@@ -93,15 +93,18 @@ DRIVES = {
 }
 
 
-def request_to(destination, origin="Surat"):
+def request_to(destination, origin="Surat", **fields):
     return TripRequest(
-        origin=origin,
-        destination=destination,
-        duration_days=5,
-        budget=40_000,
-        party_size=2,
-        travel_style="spiritual",
-        start_date="2026-12-16",
+        **{
+            "origin": origin,
+            "destination": destination,
+            "duration_days": 5,
+            "budget": 40_000,
+            "party_size": 2,
+            "travel_style": "spiritual",
+            "start_date": "2026-12-16",
+            **fields,
+        }
     )
 
 
@@ -128,11 +131,18 @@ class TrainFareFinder:
 
 
 def make_engine(
-    destination, *, origin="Surat", timetable=None, places=None, router=None, fares=None
+    destination,
+    *,
+    origin="Surat",
+    timetable=None,
+    places=None,
+    router=None,
+    fares=None,
+    **request_fields,
 ):
     llm = FakeLLM(
         {
-            TripRequest: request_to(destination, origin),
+            TripRequest: request_to(destination, origin, **request_fields),
             Itinerary: Itinerary(
                 days=[
                     ItineraryDay(
@@ -335,3 +345,42 @@ def test_place_outside_india_skips_trains_and_roads():
 
     assert plan.trains_out == [] and plan.road_route is None
     assert any("Dubai wasn't found, so road routes were skipped." in note for note in plan.notes)
+
+
+def test_no_car_option_across_world_areas_even_when_the_router_finds_a_road():
+    # The routing Provider happily drives Mumbai to Muscat over land; it is not a real option.
+    router = FakeRouter(default=Drive(km=3_927, hours=60.0))
+    places = FakePlaces({**PLACES, "Muscat": [place("Muscat", GeoPoint(lat=23.59, lng=58.41))]})
+
+    plan = plan_for(
+        "Muscat",
+        places=places,
+        router=router,
+        budget=400_000,
+        origin_area="india",
+        destination_area="middle_east",
+    )
+
+    assert plan.road_route is None
+    assert router.calls == []
+    assert all(option.mode != "car" for option in plan.travel_options)
+
+
+def test_car_option_stays_for_trips_within_one_world_area():
+    la, ny = GeoPoint(lat=34.05, lng=-118.24), GeoPoint(lat=40.71, lng=-74.0)
+    places = FakePlaces(
+        {"Los Angeles": [place("Los Angeles", la)], "New York": [place("New York", ny)]}
+    )
+
+    plan = plan_for(
+        "New York",
+        origin="Los Angeles",
+        places=places,
+        router=FakeRouter(default=Drive(km=4_500, hours=40.0)),
+        budget=400_000,
+        origin_area="americas",
+        destination_area="americas",
+    )
+
+    assert plan.road_route is not None
+    assert plan.road_route.distance_km == 4_500
