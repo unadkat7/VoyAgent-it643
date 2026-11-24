@@ -9,7 +9,12 @@ vi.mock("leaflet", () => ({ default: { divIcon: () => ({}), latLngBounds: () => 
 vi.mock("react-leaflet", () => ({
   MapContainer: ({ children }) => <div>{children}</div>,
   TileLayer: () => null,
-  Marker: ({ children }) => <div data-testid="pin">{children}</div>,
+  Marker: ({ children, title, eventHandlers }) => (
+    <div data-testid="pin">
+      <button aria-label={title} onClick={eventHandlers?.click} />
+      {children}
+    </div>
+  ),
   Popup: ({ children }) => <div>{children}</div>,
   Polyline: () => <div data-testid="route" />,
   useMap: () => ({ fitBounds: vi.fn(), setView: vi.fn(), whenReady: fn => fn(), off: vi.fn(),
@@ -18,13 +23,17 @@ vi.mock("react-leaflet", () => ({
 }));
 
 describe("TripMap", () => {
-  it("pins every located place with its details", () => {
+  it("opens numbered activities when a day marker is selected", async () => {
     render(<TripMap plan={LOCATED_PLAN} />);
 
-    expect(screen.getAllByTestId("pin")).toHaveLength(4);
+    expect(screen.getAllByTestId("pin")).toHaveLength(3);
     expect(screen.queryByText("Destination")).not.toBeInTheDocument();
-    expect(screen.getByText("Fort Aguada")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Show Day 2 activities" })).toBeInTheDocument();
     expect(screen.getByText(/₹3,200 \/ night/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Show Day 1 activities" }));
+    expect(screen.getAllByTestId("pin")).toHaveLength(2);
+    expect(screen.getByText("Baga Beach")).toBeVisible();
+    expect(screen.getByText("Tito\'s Lane")).toBeVisible();
   });
 
   it("filters to one day and draws its route", async () => {
@@ -44,7 +53,7 @@ describe("TripMap", () => {
     expect(screen.queryByRole("button", { name: "Stays" })).not.toBeInTheDocument();
 
     rerender(<TripMap plan={LOCATED_PLAN} selectedDay="all" />);
-    expect(screen.getAllByTestId("pin")).toHaveLength(4);
+    expect(screen.getAllByTestId("pin")).toHaveLength(3);
     expect(screen.getByRole("button", { name: "Stays" })).toBeInTheDocument();
     vi.unstubAllGlobals();
   });
@@ -64,7 +73,7 @@ describe("TripMap", () => {
     await user.click(screen.getByRole("button", { name: "Map options" }));
     const sheet = screen.getByRole("dialog", { name: "Map options" });
     expect(sheet).toContainElement(screen.getByRole("button", { name: "Satellite" }));
-    await user.click(screen.getByRole("button", { name: /Fort Aguada/ }));
+    await user.click(screen.getByRole("button", { name: "Day 2 · Forts" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   });
 
