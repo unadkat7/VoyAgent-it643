@@ -3,7 +3,7 @@ import re
 from adapters.no_geocoder import NoGeocoder
 from agents.check_places import ask_about
 from domain.place_rules import PlaceProblem
-from domain.route_rules import destination_bases, feasibility_problem, fit_stops
+from domain.route_rules import connect_stops, destination_bases, feasibility_problem, fit_stops
 from graph.state import PlanningState
 from ports.geocoder import GeocodeError, GeocoderPort
 from ports.llm import LLMPort
@@ -46,16 +46,7 @@ def make_route_node(llm: LLMPort, geocoder: GeocoderPort):
                 )
             )
         stops, _ = fit_stops(known, request.duration_days)
-        connections = {
-            (leg.from_city.casefold(), leg.to_city.casefold()): leg for leg in proposed.legs
-        }
-        legs = []
-        for a, b in zip(stops, stops[1:], strict=False):
-            leg = connections.get((a.city.casefold(), b.city.casefold()))
-            if leg is None:
-                break
-            legs.append(leg)
-        if not stops or len(legs) != len(stops) - 1:
+        if not stops:
             return ask_about(
                 PlaceProblem(
                     "destination",
@@ -63,6 +54,7 @@ def make_route_node(llm: LLMPort, geocoder: GeocoderPort):
                     "Which countries or cities should I include?",
                 )
             )
-        return {"route": stops, "legs": legs, "notes": notes}
+        legs, unpriced = connect_stops(stops, proposed.legs)
+        return {"route": stops, "legs": legs, "notes": notes + unpriced}
 
     return route
