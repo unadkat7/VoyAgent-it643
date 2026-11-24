@@ -61,9 +61,9 @@ def test_estimated_flights_are_always_labelled_estimated():
     assert flights[0].price_source == "estimated"
 
 
-def test_estimate_prompt_carries_destination_and_cap():
+def test_estimate_prompt_carries_destination_without_price_ceiling():
     def answer(prompt: str) -> HotelRecommendations:
-        assert "Manali" in prompt and "3000" in prompt
+        assert "Manali" in prompt and "3000" not in prompt
         return HotelRecommendations(hotels=[])
 
     assert EstimateSearch(FakeLLM({HotelRecommendations: answer})).search_hotels(HOTEL_QUERY) == []
