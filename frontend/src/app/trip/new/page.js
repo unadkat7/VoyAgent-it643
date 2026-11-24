@@ -429,7 +429,7 @@ function TripPlanner() {
               role="alert"
               className="mb-2.5 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-warning/30 bg-warning-light px-3.5 py-2 text-xs font-medium text-warning sm:text-sm"
             >
-              <span>AI planning is paused until Groq or Cloudflare Workers AI limits reset.</span>
+              <span>AI planning is paused — LLM models API limit reached.</span>
               {serviceStatus.availableAt && (
                 <span className="font-mono font-semibold tabular-nums">
                   Resumes in {formatCountdown(remainingMs)}
