@@ -2,6 +2,7 @@ from datetime import date
 
 import pytest
 
+from adapters.no_geocoder import NoGeocoder
 from graph.engine import PlanningEngine
 from ports.fares import FareError
 from ports.llm import LLMError
@@ -12,7 +13,7 @@ from schemas.plan import TripSummary
 from schemas.recommendations import FlightRecommendation, HotelRecommendation
 from schemas.travel import FareRange, TravelFares
 from schemas.trip_request import TripRequest
-from tests.fakes import FakeGeocoder, FakeLLM, SequenceSearch
+from tests.fakes import FakeLLM, SequenceSearch
 
 TODAY = date(2026, 11, 22)
 GOA = TripRequest(
@@ -81,7 +82,7 @@ def engine_for(llm, hotels, flights, fares=None):
         llm=llm,
         hotel_search=SequenceSearch(*hotels),
         flight_search=SequenceSearch(*flights),
-        geocoder=FakeGeocoder(),
+        geocoder=NoGeocoder(),
         today=lambda: TODAY,
         fares=fares,
     )
@@ -229,17 +230,27 @@ def test_llm_outage_is_raised_for_the_api_to_report():
         say(engine, plan, "make it cheaper")
 
 
-@pytest.mark.parametrize(("edit", "reason"), [
-    (PlanEdit(changes=TripRequest(destination="Pluto", destination_kind="not_on_earth")), "not_on_earth"),
-    (PlanEdit(off_topic=True), "off_topic"),
-])
+@pytest.mark.parametrize(
+    ("edit", "reason"),
+    [
+        (
+            PlanEdit(changes=TripRequest(destination="Pluto", destination_kind="not_on_earth")),
+            "not_on_earth",
+        ),
+        (PlanEdit(off_topic=True), "off_topic"),
+    ],
+)
 def test_invalid_chat_returns_reason_and_preserves_plan(edit, reason):
     llm = ScriptedLLM([days("Baga")])
     engine = engine_for(llm, hotels=[[]], flights=[[]])
     plan = first_plan(engine)
     llm.edit = edit
 
-    response = say(engine, plan, "change destination to Pluto" if reason == "not_on_earth" else "write me a poem")
+    response = say(
+        engine,
+        plan,
+        "change destination to Pluto" if reason == "not_on_earth" else "write me a poem",
+    )
 
     assert response.plan is None
     assert response.reason == reason

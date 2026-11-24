@@ -2,6 +2,7 @@
 
 from datetime import date
 
+from adapters.no_geocoder import NoGeocoder
 from domain.places import PlaceMatch
 from domain.roads import Drive
 from domain.timetable import Station, Stop, Timetable, Train
@@ -15,7 +16,7 @@ from schemas.itinerary import Activity, Itinerary, ItineraryDay
 from schemas.plan import TripSummary
 from schemas.recommendations import HotelRecommendation
 from schemas.trip_request import TripRequest
-from tests.fakes import FakeGeocoder, FakeLLM, FakePlaces, FakeRouter, FakeTimetable, SequenceSearch
+from tests.fakes import FakeLLM, FakePlaces, FakeRouter, FakeTimetable, SequenceSearch
 
 TODAY = date(2026, 11, 24)
 SURAT = GeoPoint(lat=21.209, lng=72.832)
@@ -132,7 +133,7 @@ def make_engine(destination, *, origin="Surat", timetable=None, places=None, rou
         llm=llm,
         hotel_search=SequenceSearch([stay]),
         flight_search=SequenceSearch([]),  # only Dubai has an airport; no flights are found
-        geocoder=FakeGeocoder(),
+        geocoder=NoGeocoder(),
         today=lambda: TODAY,
         timetable=timetable or FakeTimetable(make_timetable()),
         places=places or FakePlaces(PLACES),

@@ -4,10 +4,14 @@ from domain.place_rules import kind_problem, number_problem
 from schemas.trip_request import TripRequest
 
 
-@pytest.mark.parametrize(("kind", "area", "reason"), [
-    ("not_a_place", None, "not_a_place"), ("not_on_earth", None, "not_on_earth"),
-    ("region", "polar", "unreachable"),
-])
+@pytest.mark.parametrize(
+    ("kind", "area", "reason"),
+    [
+        ("not_a_place", None, "not_a_place"),
+        ("not_on_earth", None, "not_on_earth"),
+        ("region", "polar", "unreachable"),
+    ],
+)
 def test_invalid_place_explains_why(kind, area, reason):
     problem = kind_problem("destination", "Example", kind, area)
 
@@ -20,7 +24,9 @@ def test_ordinary_places_pass_classification(kind):
     assert kind_problem("destination", "Goa", kind, "india") is None
 
 
-@pytest.mark.parametrize(("field", "limit"), [("duration_days", 30), ("nights", 30), ("party_size", 20)])
+@pytest.mark.parametrize(
+    ("field", "limit"), [("duration_days", 30), ("nights", 30), ("party_size", 20)]
+)
 def test_numeric_limits_are_inclusive(field, limit):
     assert number_problem(TripRequest(**{field: limit})) is None
 
