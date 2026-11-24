@@ -58,6 +58,17 @@ describe("TripBriefBuilder", () => {
     expect(onSubmitPrompt).toHaveBeenCalledWith(expect.stringContaining("total budget ₹75,000"));
   });
 
+  it("rescales the budget and the preset buttons when the currency changes", async () => {
+    const user = userEvent.setup();
+    render(<TripBriefBuilder onSubmitPrompt={vi.fn()} />);
+
+    await user.selectOptions(screen.getByRole("combobox", { name: /currency/i }), "USD");
+
+    expect(screen.getByRole("textbox", { name: /total budget/i })).toHaveValue("480");
+    expect(screen.getByRole("button", { name: "Budget $240" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Budget $20,000" })).not.toBeInTheDocument();
+  });
+
   it("lets the traveler pick USD and composes the prompt in dollars", async () => {
     const user = userEvent.setup();
     const onSubmitPrompt = vi.fn();
