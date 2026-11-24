@@ -91,24 +91,34 @@ def test_hotels_are_mapped_from_serpapi_fields_and_unpriced_ones_skipped():
     assert hotel.coordinates == GeoPoint(lat=15.5439, lng=73.7553)
 
 
-def test_hotel_request_asks_for_inr_without_a_price_cap_and_caps_adults():
-    client = FakeClient()
+def test_hotel_request_asks_for_trip_currency_and_region_without_a_price_cap():
+    client = FakeClient(HOTELS_PAYLOAD)
+    query = replace(HOTEL_QUERY, currency="USD", country="us")
 
-    SerpApiSearch(client).search_hotels(HOTEL_QUERY)
+    hotels = SerpApiSearch(client).search_hotels(query)
 
     params, feature = client.calls[0]
     assert feature == "search"
     assert params["engine"] == "google_hotels"
-    assert params["currency"] == "INR"
+    assert params["currency"] == "USD"
+    assert params["gl"] == "us"
     assert params["adults"] == 6
     assert "max_price" not in params
+    assert hotels[0].currency == "USD"
 
 
 def test_flights_are_mapped_and_empty_options_skipped():
-    flights = SerpApiSearch(FakeClient(FLIGHTS_PAYLOAD)).search_flights(FLIGHT_QUERY)
+    query = replace(FLIGHT_QUERY, currency="USD", country="us")
+    client = FakeClient(FLIGHTS_PAYLOAD)
 
+    flights = SerpApiSearch(client).search_flights(query)
+
+    params, _ = client.calls[0]
+    assert params["currency"] == "USD"
+    assert params["gl"] == "us"
     assert len(flights) == 1
     assert flights[0].price_per_traveler == 5200
+    assert flights[0].currency == "USD"
     assert flights[0].duration == "2h 5m"
     assert flights[0].arrival_airport == "Goa (GOI)"
 
@@ -147,9 +157,11 @@ def test_web_results_with_snippets_are_returned_top_five():
     assert params == {
         "engine": "google",
         "q": "12951 train fare Mumbai to Delhi",
-        "gl": "in",
         "hl": "en",
     }
+
+    SerpApiWebSearch(client).search("12951 train fare Mumbai to Delhi", gl="us")
+    assert client.calls[1][0]["gl"] == "us"
 
 
 def test_web_refusal_becomes_web_search_error():

@@ -47,3 +47,10 @@ def test_two_equally_known_places_far_apart_are_ambiguous():
 
 def test_nothing_found_is_none():
     assert pick_place([]) is None
+
+
+def test_two_springfields_of_similar_importance_are_ambiguous():
+    illinois = match("city", 0.52, 39.7817, -89.6501, "Springfield")
+    missouri = match("city", 0.50, 37.2090, -93.2923, "Springfield")
+
+    assert pick_place([illinois, missouri]) is None

@@ -13,8 +13,9 @@ from schemas.recommendations import (
 logger = logging.getLogger(__name__)
 
 SYSTEM = (
-    "You are a travel pricing assistant for Indian travellers. Suggest realistic options that "
-    "exist today, with typical prices in INR. Never claim availability or a confirmed price."
+    "You are a travel pricing assistant for travellers. Suggest realistic options that "
+    "exist today, with typical prices in the requested currency. "
+    "Never claim availability or a confirmed price."
 )
 MAX_SNIPPET_CHARS = 600
 
@@ -33,10 +34,14 @@ class EstimateSearch:
         prompt = (
             f"Suggest up to 3 {query.accommodation_type or 'hotels'} in {query.destination} for "
             f"{query.adults} adults per room from {query.check_in} to {query.check_out}, style "
-            f"'{query.travel_style or 'any'}'. Give realistic INR prices per room per night."
+            f"'{query.travel_style or 'any'}'. Give realistic {query.currency} prices per room "
+            "per night."
         )
         result = self._ask(HotelRecommendations, prompt)
-        return [hotel.model_copy(update={"price_source": "estimated"}) for hotel in result.hotels]
+        return [
+            hotel.model_copy(update={"price_source": "estimated", "currency": query.currency})
+            for hotel in result.hotels
+        ]
 
     def search_flights(self, query: FlightQuery) -> list[FlightRecommendation]:
         direction = "round-trip" if query.return_date else "one-way"
@@ -44,7 +49,7 @@ class EstimateSearch:
         prompt = (
             f"Suggest up to 3 {direction} economy flights from {query.origin_airport} to "
             f"{query.destination_airport}, leaving {query.outbound_date}{returning}. "
-            f"Give the realistic {direction} fare per traveller in INR, "
+            f"Give the realistic {direction} fare per traveller in {query.currency}, "
             "even if it is high."
         )
         if found := self._web_fares(query):
@@ -54,7 +59,8 @@ class EstimateSearch:
             )
         result = self._ask(FlightRecommendations, prompt)
         return [
-            flight.model_copy(update={"price_source": "estimated"}) for flight in result.flights
+            flight.model_copy(update={"price_source": "estimated", "currency": query.currency})
+            for flight in result.flights
         ]
 
     def _web_fares(self, query: FlightQuery) -> str:
@@ -65,7 +71,7 @@ class EstimateSearch:
         try:
             results = self._web.search(
                 f"{query.origin_airport} to {query.destination_airport} {direction} flight "
-                f"price {month} INR"
+                f"price {month} {query.currency}"
             )
         except WebSearchError as error:
             logger.warning("Web fare search failed, estimating without it: %s", error)

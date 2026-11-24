@@ -18,6 +18,8 @@ class HotelQuery:
     max_price_per_night: int
     travel_style: str | None
     accommodation_type: str | None
+    currency: str = "INR"
+    country: str | None = None
 
 
 @dataclass(frozen=True)
@@ -27,6 +29,8 @@ class FlightQuery:
     outbound_date: date
     return_date: date | None
     max_price_per_traveler: int
+    currency: str = "INR"
+    country: str | None = None
 
 
 class HotelSearchPort(Protocol):

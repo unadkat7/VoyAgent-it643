@@ -48,7 +48,7 @@ def make_geocoder():
 
 
 @respx.mock
-def test_settlements_are_searched_in_india_only():
+def test_settlements_are_searched_worldwide():
     route = respx.get(URL).respond(200, json=BADRINATH)
 
     make_geocoder().find_settlements("Badrinath")
@@ -56,7 +56,7 @@ def test_settlements_are_searched_in_india_only():
     params = route.calls.last.request.url.params
     assert params["q"] == "Badrinath"
     assert params["featureType"] == "settlement"
-    assert params["countrycodes"] == "in"
+    assert "countrycodes" not in params
     assert params["limit"] == "5"
 
 

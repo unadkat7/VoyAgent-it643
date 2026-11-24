@@ -38,6 +38,7 @@ def make_flight_node(search: FlightSearchPort):
                 "notes": [f"Flights were skipped: no airport is known for {place}.{alt}"],
             }
 
+        country = (request.origin_country or "").lower() or None
         if len(state["route"]) > 1:
             selected, notes = [], []
             for direction, start, end, day in [
@@ -46,7 +47,15 @@ def make_flight_node(search: FlightSearchPort):
             ]:
                 try:
                     found = search.search_flights(
-                        FlightQuery(start, end, day, None, caps.flight_search_limit)
+                        FlightQuery(
+                            start,
+                            end,
+                            day,
+                            None,
+                            caps.flight_search_limit,
+                            currency=request.currency,
+                            country=country,
+                        )
                     )
                 except SearchError:
                     found = []
@@ -69,6 +78,8 @@ def make_flight_node(search: FlightSearchPort):
             outbound_date=dates.check_in,
             return_date=dates.check_out,
             max_price_per_traveler=caps.flight_search_limit,
+            currency=request.currency,
+            country=country,
         )
         try:
             found = search.search_flights(query)

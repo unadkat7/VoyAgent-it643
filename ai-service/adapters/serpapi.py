@@ -9,7 +9,7 @@ ROUND_TRIP, ONE_WAY = 1, 2
 
 
 class SerpApiSearch:
-    """Live Provider: SerpAPI google_hotels and google_flights, priced in INR.
+    """Live Provider: SerpAPI google_hotels and google_flights.
 
     Same shape as SearchApi.io's engines; used as its backup to save the small SerpAPI plan.
     """
@@ -25,8 +25,8 @@ class SerpApiSearch:
                 "check_in_date": query.check_in.isoformat(),
                 "check_out_date": query.check_out.isoformat(),
                 "adults": min(query.adults, MAX_HOTEL_ADULTS),
-                "currency": "INR",
-                "gl": "in",
+                "currency": query.currency,
+                **({"gl": query.country} if query.country else {}),
                 "hl": "en",
             }
         )
@@ -34,7 +34,7 @@ class SerpApiSearch:
         return [
             hotel
             for item in properties
-            if (hotel := _to_hotel(item, query.destination)) is not None
+            if (hotel := _to_hotel(item, query.destination, query.currency)) is not None
         ]
 
     def search_flights(self, query: FlightQuery) -> list[FlightRecommendation]:
@@ -48,13 +48,17 @@ class SerpApiSearch:
                 **({"return_date": query.return_date.isoformat()} if query.return_date else {}),
                 "type": ROUND_TRIP if query.return_date else ONE_WAY,
                 "adults": 1,
-                "currency": "INR",
-                "gl": "in",
+                "currency": query.currency,
+                **({"gl": query.country} if query.country else {}),
                 "hl": "en",
             }
         )
         options = (payload.get("best_flights") or []) + (payload.get("other_flights") or [])
-        return [flight for item in options if (flight := _to_flight(item)) is not None]
+        return [
+            flight
+            for item in options
+            if (flight := _to_flight(item, query.currency)) is not None
+        ]
 
     def _get(self, params: dict[str, Any]) -> dict[str, Any]:
         try:
@@ -63,7 +67,9 @@ class SerpApiSearch:
             raise SearchError(str(error)) from error
 
 
-def _to_hotel(item: dict[str, Any], destination: str) -> HotelRecommendation | None:
+def _to_hotel(
+    item: dict[str, Any], destination: str, currency: str = "INR"
+) -> HotelRecommendation | None:
     price = (item.get("rate_per_night") or {}).get("extracted_lowest")
     if not price or not item.get("name"):
         return None
@@ -73,6 +79,7 @@ def _to_hotel(item: dict[str, Any], destination: str) -> HotelRecommendation | N
         name=item["name"],
         location=nearby[0].get("name", destination) if nearby else destination,
         price_per_night=float(price),
+        currency=currency,
         rating=item.get("overall_rating"),
         hotel_class=item.get("hotel_class"),
         booking_url=item.get("link"),
