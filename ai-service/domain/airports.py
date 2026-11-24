@@ -53,6 +53,8 @@ CITY_AIRPORT_CODES: dict[str, str] = {
     "bali": "DPS",
     "zurich": "ZRH",
     "sydney": "SYD",
+    "melbourne": "MEL",
+    "san salvador": "SAL",
     "kathmandu": "KTM",
     "colombo": "CMB",
     "male": "MLE",

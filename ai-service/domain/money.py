@@ -126,7 +126,10 @@ def trip_currency(
         code = stated.strip().upper()
         if code in INR_PER_UNIT:
             return code, None  # type: ignore[return-value]
-        return "USD", f"I planned in US dollars because I don't support {code} yet."
+        return "USD", (
+            f"I can't plan in {code} yet, so I ignored that budget and assumed one in US dollars. "
+            "Give me a budget in USD, EUR, GBP or another supported currency to set it."
+        )
     if origin_country and origin_country.strip():
         country_code = COUNTRY_CURRENCY.get(origin_country.strip().upper())
         if country_code:

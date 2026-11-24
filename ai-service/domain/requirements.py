@@ -37,6 +37,9 @@ def fill_defaults(
         filled.get("origin_country"),  # type: ignore[arg-type]
     )
     filled["currency"] = currency
+    if currency_note:
+        # An amount in a currency we can't convert would be read as dollars, so it is dropped.
+        trip_request = {**trip_request, "budget": None}
     assumed = [f for f in ASSUMABLE_FIELDS if _is_missing(f, trip_request.get(f))]
     nights = trip_request.get("nights")
     if "duration_days" in assumed and isinstance(nights, int) and nights > 0:

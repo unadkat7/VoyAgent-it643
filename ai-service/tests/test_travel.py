@@ -368,7 +368,9 @@ def test_no_car_option_across_world_areas_even_when_the_router_finds_a_road():
 
 def test_car_option_stays_for_trips_within_one_world_area():
     la, ny = GeoPoint(lat=34.05, lng=-118.24), GeoPoint(lat=40.71, lng=-74.0)
-    places = FakePlaces({"Los Angeles": [place("Los Angeles", la)], "New York": [place("New York", ny)]})
+    places = FakePlaces(
+        {"Los Angeles": [place("Los Angeles", la)], "New York": [place("New York", ny)]}
+    )
 
     plan = plan_for(
         "New York",
