@@ -8,10 +8,10 @@ frontend (Next.js) --cookie--> backend (Express + MongoDB) --X-Internal-Key--> a
                                                                                  ports/  <-implemented by-  adapters/ (Groq, Cloudflare, SearchApi.io, Nominatim)
 ```
 
-## Six rules the product enforces
+## Rules the product enforces
 
 1. **Plan first, ask after.** Only the Destination is required; without it the Traveler gets a Clarification. Anything else left out gets a stated default (3 days, 2 Travelers, relaxed style, a Budget that matches the style), and a missing Origin leaves travel out. The Trip Plan lists what was assumed and asks for those details so the Trip can be refined. Code decides the defaults, not the LLM.
-   `ai-service/domain/requirements.py:21` (`find_missing_fields`), `ai-service/domain/requirements.py:26` (`fill_defaults`), applied at `ai-service/agents/understand.py:34` (`find_missing_fields`).
+   `ai-service/domain/requirements.py:21` (`find_missing_fields`), `ai-service/domain/requirements.py:26` (`fill_defaults`), applied at `ai-service/agents/understand.py:40` (`find_missing_fields`).
 2. **Budget Caps.** A Hotel is recommended only if one room-night costs at most 50% of the Budget divided by Nights and rooms (two Travelers share a room). A Flight fits if its fare is at most 35% of the Budget divided by Party Size, plus a 15% grace margin. Fitting fares come first; when none fits, the cheapest are still shown, flagged "Over your flight budget", so the Traveler can compare them with train, bus and car.
    `ai-service/domain/budget.py:34` (`allows_hotel`), `ai-service/domain/budget.py:37` (`allows_flight`), applied at `ai-service/agents/hotels.py:35` (`allows_hotel`) and `ai-service/agents/flights.py:44` (`allows_flight`).
 3. **Planned only when a stay fits the Budget.** If Hotels were found but none fits the nightly cap, VoyAgent does not produce a plan. It asks the Traveler to raise the Budget, shorten the Trip or pick another Destination, and quotes the cheapest stay it found. The stay and the counted way to travel (the Traveler's pick, else the cheapest Travel Option) must also fit the Budget; food, local travel and Activities are shown in the Estimated Cost but are rough, so they never block a plan. A Budget the Traveler never gave is only a guess and never blocks a plan either.
@@ -22,6 +22,7 @@ frontend (Next.js) --cookie--> backend (Express + MongoDB) --X-Internal-Key--> a
    `backend/src/domain/trip.js:52` (`isOwnedBy`), `backend/src/services/trip.service.js:16` (`findOwnedTrip`).
 6. **Trains and roads come from data, and a place is never guessed.** Train numbers and times come only from the timetable, and road distances only from the routing Provider; the LLM may describe them but not write them. A place name that matches two far-apart places of similar size and fame is not guessed: trains and roads are skipped with a Note asking for the state.
    `ai-service/agents/rail.py:32` (`make_rail_node`), `ai-service/domain/places.py:22` (`pick_place`), with the LLM told not to invent them at `ai-service/agents/compose.py:9` (`train times`).
+7. **Plan only real places on Earth.** Ask for a reachable destination and flag trips over 30 days or nights or 20 travelers before searching.
 
 ## Three design decisions
 
@@ -49,7 +50,7 @@ frontend (Next.js) --cookie--> backend (Express + MongoDB) --X-Internal-Key--> a
 
 **Where the outside world begins:** `adapters/` (Groq, Cloudflare Workers AI, SearchApi.io, Wikipedia, Nominatim, plus the cache, fallback and estimate wrappers), `settings.py`, `container.py` and the FastAPI app. Source dependencies point inward: adapters import ports, and the core never imports an adapter. `container.py` is the only file that knows which Providers are plugged in (`ai-service/container.py:40` (`build_engine`)).
 
-The Trip Map reused this boundary. Coordinates come from `GeocoderPort`; Wikipedia is tried first for landmarks, falling back to the free OpenStreetMap Nominatim adapter (`ai-service/adapters/nominatim.py:20` (`NominatimGeocoder`)), which keeps Nominatim's one-request-a-second limit and caches answers. The locate step runs after `budget_check`, so only Feasible plans spend lookups (`ai-service/graph/builder.py:82` (`"locate", "compose"`)). It never fails a plan: an outage leaves Coordinates empty and adds a Note. The LLM is never asked for Coordinates, because `coordinates` is hidden from the JSON Schema it sees (`ai-service/schemas/itinerary.py:14` (`SkipJsonSchema`)); invented lat/long would put pins kilometres away.
+The Trip Map reused this boundary. Coordinates come from `GeocoderPort`; Wikipedia is tried first for landmarks, falling back to the free OpenStreetMap Nominatim adapter (`ai-service/adapters/nominatim.py:20` (`NominatimGeocoder`)), which keeps Nominatim's one-request-a-second limit and caches answers. The locate step runs after `budget_check`, so only Feasible plans spend lookups (`ai-service/graph/builder.py:89` (`"locate", "compose"`)). It never fails a plan: an outage leaves Coordinates empty and adds a Note. The LLM is never asked for Coordinates, because `coordinates` is hidden from the JSON Schema it sees (`ai-service/schemas/itinerary.py:14` (`SkipJsonSchema`)); invented lat/long would put pins kilometres away.
 
 **What it protects us from:** volatile external Providers. During development we paired Groq with a Cloudflare Workers AI fallback, adjusted Groq and Cloudflare wire handling, added `EstimateSearch` behind SearchApi.io for when the free quota runs out, and placed Wikipedia in front of Nominatim for landmark accuracy. None of these changes touched a domain rule or a test of a rule.
 
