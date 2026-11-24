@@ -17,6 +17,7 @@ const plannerResponseSchema = z.discriminatedUnion("status", [
       missing_fields: z.array(z.string()),
       question: z.string().min(1),
       reason: z.string().nullish(),
+      suggestions: z.record(z.string(), z.number()).nullish(),
     }),
   }),
   z.object({
@@ -81,6 +82,9 @@ export async function requestPlan({ tripId, conversation }) {
         missingFields: result.clarification.missing_fields,
         question: result.clarification.question,
         reason: result.clarification.reason ?? null,
+        ...(result.clarification.suggestions && Object.keys(result.clarification.suggestions).length
+          ? { suggestions: result.clarification.suggestions }
+          : {}),
       },
     };
   }
