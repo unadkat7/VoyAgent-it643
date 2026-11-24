@@ -2,7 +2,7 @@
 // have reached their API limits. Zero Express or Mongoose imports.
 
 export const DEFAULT_DOWNTIME_MESSAGE =
-  "AI trip planning is temporarily paused because both Groq and Cloudflare Workers AI have reached their API limits. You can still view your saved and shared trips.";
+  "AI trip planning is temporarily paused — LLM models API limit reached. You can still view your saved and shared trips.";
 
 function toDate(value) {
   if (!value) return null;

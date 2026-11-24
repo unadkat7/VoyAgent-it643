@@ -27,7 +27,7 @@ describe("ServiceStatusBanner and ServiceStatusControl", () => {
 
     const activeStatus = {
       isDown: true,
-      message: "Both Groq and Cloudflare limits reached.",
+      message: "LLM models API limit reached.",
       groqResetAt: "2026-11-25T00:00:00.000Z",
       cloudflareResetAt: "2026-11-25T01:00:00.000Z",
       availableAt: "2026-11-25T00:00:00.000Z",
@@ -41,8 +41,10 @@ describe("ServiceStatusBanner and ServiceStatusControl", () => {
       </ServiceStatusProvider>
     );
 
-    expect(screen.getByTestId("service-status-banner")).toBeInTheDocument();
-    expect(screen.getByText("Both Groq and Cloudflare limits reached.")).toBeInTheDocument();
+    const banner = screen.getByTestId("service-status-banner");
+    expect(banner).toBeInTheDocument();
+    expect(screen.getByText("LLM models API limit reached.")).toBeInTheDocument();
+    expect(banner).not.toHaveTextContent(/groq|cloudflare/i);
     expect(screen.getByTestId("service-status-countdown")).toHaveTextContent("00:00:02");
 
     await act(async () => {

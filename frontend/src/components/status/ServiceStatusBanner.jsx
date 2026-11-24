@@ -1,22 +1,13 @@
 "use client";
 
 import { Clock, AlertTriangle } from "lucide-react";
-import {
-  formatCountdown,
-  formatResetTime,
-  providerLabel,
-} from "@/lib/serviceStatus";
+import { formatCountdown, formatResetTime } from "@/lib/serviceStatus";
 import { useServiceStatus } from "./ServiceStatusProvider";
 
 export default function ServiceStatusBanner() {
-  const { status, remainingMs, groqRemainingMs, cloudflareRemainingMs } = useServiceStatus();
+  const { status, remainingMs } = useServiceStatus();
 
   if (!status?.isDown) return null;
-
-  const showBothProviders =
-    Boolean(status.groqResetAt) &&
-    Boolean(status.cloudflareResetAt) &&
-    status.groqResetAt !== status.cloudflareResetAt;
 
   return (
     <div
@@ -48,18 +39,7 @@ export default function ServiceStatusBanner() {
                 {formatCountdown(remainingMs)}
               </span>
               <span className="hidden text-label text-bg/65 sm:inline">
-                ({providerLabel(status.resumingProvider)} · {formatResetTime(status.availableAt)})
-              </span>
-            </div>
-          )}
-
-          {showBothProviders && (
-            <div className="flex flex-wrap items-center gap-1.5 text-label text-bg/75">
-              <span className="rounded-lg border border-bg/10 bg-bg/5 px-2 py-1 font-mono tabular-nums">
-                Groq {formatCountdown(groqRemainingMs)}
-              </span>
-              <span className="rounded-lg border border-bg/10 bg-bg/5 px-2 py-1 font-mono tabular-nums">
-                Cloudflare {formatCountdown(cloudflareRemainingMs)}
+                ({formatResetTime(status.availableAt)})
               </span>
             </div>
           )}
