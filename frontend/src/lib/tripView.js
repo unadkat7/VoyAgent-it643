@@ -55,10 +55,11 @@ export function tripLink(trip) {
 const hasPoint = (coordinates) =>
   Number.isFinite(coordinates?.lat) && Number.isFinite(coordinates?.lng);
 
-// Pins for the Trip map. `day` is "all" or a day number; Destination and Hotels always show.
+// Day views frame activities only. The whole-trip view includes base cities and stays.
 export function mapPoints(plan, day) {
   const points = [];
-  planStops(plan).forEach((stop, index) => {
+  const stops = day === "all" ? planStops(plan) : [];
+  stops.forEach((stop, index) => {
     if (hasPoint(stop.coordinates)) {
       points.push({ key: `destination-${index}`, kind: "destination",
         title: stop.city ?? "Destination", ...stop.coordinates });

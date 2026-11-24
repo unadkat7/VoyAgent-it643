@@ -12,7 +12,8 @@ vi.mock("react-leaflet", () => ({
   Marker: ({ children }) => <div data-testid="pin">{children}</div>,
   Popup: ({ children }) => <div>{children}</div>,
   Polyline: () => <div data-testid="route" />,
-  useMap: () => ({ fitBounds: vi.fn(), setView: vi.fn() }),
+  useMap: () => ({ fitBounds: vi.fn(), setView: vi.fn(), whenReady: fn => fn(), off: vi.fn(),
+    invalidateSize: vi.fn(), getContainer: () => document.body }),
   useMapEvents: () => null,
 }));
 
@@ -30,9 +31,21 @@ describe("TripMap", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Day 1" }));
 
-    expect(screen.getAllByTestId("pin")).toHaveLength(4);
+    expect(screen.getAllByTestId("pin")).toHaveLength(2);
     expect(screen.queryByText("Fort Aguada")).not.toBeInTheDocument();
     expect(screen.getByTestId("route")).toBeInTheDocument();
+  });
+
+  it("restores stays and all pins when leaving the selected day", () => {
+    vi.stubGlobal("matchMedia", () => ({ matches: true, addEventListener() {}, removeEventListener() {} }));
+    const { rerender } = render(<TripMap plan={LOCATED_PLAN} selectedDay={2} />);
+    expect(screen.getAllByTestId("pin")).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: "Stays" })).not.toBeInTheDocument();
+
+    rerender(<TripMap plan={LOCATED_PLAN} selectedDay="all" />);
+    expect(screen.getAllByTestId("pin")).toHaveLength(5);
+    expect(screen.getByRole("button", { name: "Stays" })).toBeInTheDocument();
+    vi.unstubAllGlobals();
   });
 
   it("explains an empty map for plans without Coordinates", () => {

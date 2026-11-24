@@ -33,10 +33,10 @@ describe("mapPoints", () => {
     expect(titos).toMatchObject({ day: 1, order: 3, lat: 15.556, lng: 73.752 });
   });
 
-  it("shows one day's Activities but keeps the Destination and Hotels", () => {
+  it("shows only the selected day's activities", () => {
     const points = mapPoints(LOCATED_PLAN, 2);
 
-    expect(points.map((p) => p.title)).toEqual(["Goa", "Sea Breeze Resort", "Fort Aguada"]);
+    expect(points.map((p) => p.title)).toEqual(["Fort Aguada"]);
   });
 
   it("is empty for a plan made before Coordinates existed", () => {

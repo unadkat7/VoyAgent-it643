@@ -102,12 +102,6 @@ function spreadOverlapping(points) {
   });
 }
 
-// A region's centre (e.g. "Goa") can be far inland, so frame the stops and stays instead.
-function framedPoints(points) {
-  const stops = points.filter((p) => p.kind !== "destination");
-  return stops.length > 0 ? stops : points;
-}
-
 function MapViewportController({ points, focusedPoint, fitTrigger, expanded }) {
   const map = useMap();
 
@@ -125,15 +119,22 @@ function MapViewportController({ points, focusedPoint, fitTrigger, expanded }) {
     }
 
     map.closePopup?.();
-    const valid = points.filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng));
-    if (valid.length === 1) {
-      map.setView([valid[0].lat, valid[0].lng], 13, { animate: false });
-    } else if (valid.length > 1) {
-      const bounds = L.latLngBounds(valid.map((p) => [p.lat, p.lng]));
-      if (bounds?.isValid?.() !== false) {
+    const fit = () => {
+      map.invalidateSize(false);
+      if (points.length === 1) {
+        map.setView([points[0].lat, points[0].lng], 13, { animate: false });
+      } else if (points.length > 1) {
+        const bounds = L.latLngBounds(points.map((p) => [p.lat, p.lng]));
         map.fitBounds(bounds, { padding: [48, 48], maxZoom: 14, animate: false });
       }
-    }
+    };
+    map.whenReady(fit);
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(fit);
+    observer?.observe(map.getContainer());
+    return () => {
+      observer?.disconnect();
+      map.off("load", fit);
+    };
   }, [map, points, focusedPoint, fitTrigger, expanded]);
 
   return null;
@@ -226,10 +227,7 @@ export default function TripMap({
     [dayPoints, showActivities, showStays]
   );
 
-  const framed = useMemo(() => {
-    const candidate = framedPoints(points);
-    return candidate.length > 0 ? candidate : framedPoints(allPoints);
-  }, [points, allPoints]);
+  const center = points[0] ?? allPoints[0];
 
   const focusedPoint = useMemo(
     () => (activeFocusKey ? points.find((p) => p.key === activeFocusKey) ?? null : null),
@@ -324,9 +322,9 @@ export default function TripMap({
       <LayerToggle pressed={showActivities} onClick={toggleActivities} swatch="rounded-full bg-primary">
         Activities (numbered by day)
       </LayerToggle>
-      <LayerToggle pressed={showStays} onClick={toggleStays} swatch="rounded bg-ink">
+      {day === "all" && <LayerToggle pressed={showStays} onClick={toggleStays} swatch="rounded bg-ink">
         Stays
-      </LayerToggle>
+      </LayerToggle>}
     </>
   );
 
@@ -400,7 +398,7 @@ export default function TripMap({
         } ${canvasHeight}`}
       >
         <MapContainer
-          center={[framed[0].lat, framed[0].lng]}
+          center={[center.lat, center.lng]}
           zoom={12}
           zoomSnap={0.5}
           wheelPxPerZoomLevel={90}
@@ -415,7 +413,7 @@ export default function TripMap({
           />
           <WheelZoomAfterClick />
           <MapViewportController
-            points={framed}
+            points={points}
             focusedPoint={focusedPoint}
             fitTrigger={fitTrigger}
             expanded={expanded}
