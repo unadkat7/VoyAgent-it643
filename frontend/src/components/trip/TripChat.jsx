@@ -23,6 +23,7 @@ function errorReply(error) {
 // Chat about a planned Trip: ask questions, or say what to change and the plan is edited in place.
 export default function TripChat({ trip, open, onOpenChange, onTripChange, onTrack }) {
   const [message, setMessage] = useState("");
+  const [pending, setPending] = useState(null);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
   const [lastOutcome, setLastOutcome] = useState(null);
@@ -31,7 +32,7 @@ export default function TripChat({ trip, open, onOpenChange, onTripChange, onTra
 
   useEffect(() => {
     if (open) bottomRef.current?.scrollIntoView({ block: "nearest" });
-  }, [open, turns.length, sending]);
+  }, [open, turns.length, sending, pending]);
 
   const send = async (text) => {
     const trimmed = text.trim();
@@ -39,6 +40,7 @@ export default function TripChat({ trip, open, onOpenChange, onTripChange, onTra
     setSending(true);
     setError(null);
     setMessage("");
+    setPending(trimmed);
     try {
       const { trip: updated, outcome } = await chatAboutTrip(trip._id, trimmed);
       setLastOutcome(outcome);
@@ -47,6 +49,7 @@ export default function TripChat({ trip, open, onOpenChange, onTripChange, onTra
       setMessage(trimmed);
       setError(errorReply(err));
     } finally {
+      setPending(null);
       setSending(false);
     }
   };
@@ -153,6 +156,13 @@ export default function TripChat({ trip, open, onOpenChange, onTripChange, onTra
               </li>
             );
           })}
+          {pending && (
+            <li className="flex justify-end">
+              <div className="max-w-[85%] whitespace-pre-line rounded-2xl rounded-tr-sm bg-ink px-3.5 py-2.5 text-sm text-bg">
+                {pending}
+              </div>
+            </li>
+          )}
           {sending && (
             <li className="flex items-center gap-2 text-sm text-muted">
               <Loader2 className="h-4 w-4 animate-spin text-primary" aria-hidden />

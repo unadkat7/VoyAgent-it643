@@ -100,6 +100,21 @@ describe("Trip page actions", () => {
     expect(within(chat).getByText("Plan updated")).toBeInTheDocument();
   });
 
+  it("shows the sent message while the plan is being changed", async () => {
+    chatAboutTrip.mockReturnValue(new Promise(() => {}));
+    const user = userEvent.setup();
+    render(<TripDetailPage />);
+    await user.click(await screen.findByRole("button", { name: "Ask or change" }));
+    const chat = screen.getByRole("dialog", { name: "Ask or change your plan" });
+
+    const textbox = within(chat).getByRole("textbox");
+    await user.type(textbox, "redraw the trip");
+    await user.click(within(chat).getByRole("button", { name: "Send" }));
+
+    expect(within(chat).getByText("redraw the trip")).toBeInTheDocument();
+    expect(textbox).toHaveValue("");
+  });
+
   it("sends the chat message on Enter and adds a new line on Shift+Enter", async () => {
     chatAboutTrip.mockResolvedValue({ outcome: "answered", trip: structuredClone(TRIP) });
     const user = userEvent.setup();
