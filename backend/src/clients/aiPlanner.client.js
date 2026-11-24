@@ -18,6 +18,7 @@ const plannerResponseSchema = z.discriminatedUnion("status", [
       question: z.string().min(1),
       reason: z.string().nullish(),
       suggestions: z.record(z.string(), z.number()).nullish(),
+      currency: z.string().nullish(),
     }),
   }),
   z.object({
@@ -85,6 +86,7 @@ export async function requestPlan({ tripId, conversation }) {
         ...(result.clarification.suggestions && Object.keys(result.clarification.suggestions).length
           ? { suggestions: result.clarification.suggestions }
           : {}),
+        ...(result.clarification.currency ? { currency: result.clarification.currency } : {}),
       },
     };
   }

@@ -278,7 +278,15 @@ export async function getUsersAnalytics() {
             $sum: { $cond: [{ $and: [{ $ne: ["$shareId", null] }, { $gt: ["$shareId", ""] }] }, 1, 0] },
           },
           totalShareViews: { $sum: { $ifNull: ["$shareViews", 0] } },
-          budgets: { $push: "$plan.request.budget" },
+          budgets: {
+            $push: {
+              $cond: [
+                { $eq: [{ $ifNull: ["$plan.estimated_cost.currency", "INR"] }, "INR"] },
+                "$plan.request.budget",
+                null,
+              ],
+            },
+          },
           destinations: { $push: "$destination" },
         },
       },
@@ -893,6 +901,7 @@ export async function getTripIntelligence(days = 30) {
   let estimatedHotels = 0;
   let liveFlights = 0;
   let estimatedFlights = 0;
+  let nonInrTrips = 0;
 
   for (const trip of trips) {
     if (trip.status === TripStatus.PLANNED) plannedTrips += 1;
@@ -918,13 +927,15 @@ export async function getTripIntelligence(days = 30) {
     const req = plan?.request;
     const destination = cleanLabel(req?.destination || trip.destination);
     const origin = cleanLabel(req?.origin);
-    const budget = Number(req?.budget);
-    const costTotal = Number(plan?.estimated_cost?.total);
-    const hotelTotal = Number(plan?.estimated_cost?.hotel_total);
+    const isInr = (plan?.estimated_cost?.currency ?? "INR") === "INR";
+    if (plan && !isInr) nonInrTrips += 1;
+    const budget = isInr ? Number(req?.budget) : NaN;
+    const costTotal = isInr ? Number(plan?.estimated_cost?.total) : NaN;
+    const hotelTotal = isInr ? Number(plan?.estimated_cost?.hotel_total) : NaN;
     // Newer plans count the chosen way to travel; older ones only had flights.
-    const flightTotal = Number(
-      plan?.estimated_cost?.travel_total ?? plan?.estimated_cost?.flight_total
-    );
+    const flightTotal = isInr
+      ? Number(plan?.estimated_cost?.travel_total ?? plan?.estimated_cost?.flight_total)
+      : NaN;
     const durationDays = Number(req?.duration_days ?? (plan?.nights ? plan.nights + 1 : NaN));
     const partySize = Number(req?.party_size);
 
@@ -1124,6 +1135,7 @@ export async function getTripIntelligence(days = 30) {
     partySizes: Object.entries(partyBuckets).map(([label, count]) => ({ label, count })),
     durationBuckets: Object.entries(durationBuckets).map(([label, count]) => ({ label, count })),
     budgetAnalysis: {
+      nonInrTrips,
       totalPlannedBudgetInr: budgets.reduce((sum, n) => sum + n, 0),
       totalEstimatedCostInr: Math.round(costs.reduce((sum, n) => sum + n, 0)),
       avgBudgetInr: budgets.length ? Math.round(avgOf(budgets)) : null,
