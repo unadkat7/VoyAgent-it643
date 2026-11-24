@@ -2,7 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Loader2, MessageCircle, Send } from "lucide-react";
+import { useServiceStatus } from "@/components/status/ServiceStatusProvider";
 import Sheet from "@/components/ui/Sheet";
+import { formatCountdown } from "@/lib/serviceStatus";
 import { chatAboutTrip } from "@/services/trip.service";
 
 const CHIPS = [
@@ -17,11 +19,16 @@ function errorReply(error) {
   const status = error.response?.status;
   if (status === 409) return "This plan is Final. Switch it to Draft to change it.";
   if (status === 429) return error.response?.data?.message || "You have reached the planning limit for now. Try again in an hour.";
+  if (status === 503 && error.response?.data?.code === "AI_LIMIT_REACHED") {
+    return error.response?.data?.message || "AI trip chat is temporarily paused until provider limits reset.";
+  }
   return "The planner is unavailable right now. Please send it again in a minute.";
 }
 
 // Chat about a planned Trip: ask questions, or say what to change and the plan is edited in place.
 export default function TripChat({ trip, open, onOpenChange, onTripChange, onTrack }) {
+  const { status: serviceStatus, remainingMs, refreshStatus } = useServiceStatus();
+  const isPaused = Boolean(serviceStatus?.isDown);
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(null);
   const [sending, setSending] = useState(false);
@@ -36,7 +43,7 @@ export default function TripChat({ trip, open, onOpenChange, onTripChange, onTra
 
   const send = async (text) => {
     const trimmed = text.trim();
-    if (!trimmed || sending) return;
+    if (!trimmed || sending || isPaused) return;
     setSending(true);
     setError(null);
     setMessage("");
@@ -46,6 +53,9 @@ export default function TripChat({ trip, open, onOpenChange, onTripChange, onTra
       setLastOutcome(outcome);
       onTripChange(updated);
     } catch (err) {
+      if (err.response?.status === 503 && err.response?.data?.code === "AI_LIMIT_REACHED") {
+        refreshStatus();
+      }
       setMessage(trimmed);
       setError(errorReply(err));
     } finally {
@@ -92,12 +102,25 @@ export default function TripChat({ trip, open, onOpenChange, onTripChange, onTra
             }}
             className="space-y-2"
           >
+            {isPaused && (
+              <div
+                role="alert"
+                className="flex flex-wrap items-center justify-between gap-1.5 rounded-xl border border-warning/30 bg-warning-light px-3 py-2 text-xs font-medium text-warning"
+              >
+                <span>AI edits paused while provider limits reset.</span>
+                {serviceStatus.availableAt && (
+                  <span className="font-mono font-semibold tabular-nums">
+                    {formatCountdown(remainingMs)}
+                  </span>
+                )}
+              </div>
+            )}
             <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
               {CHIPS.map((chip) => (
                 <button
                   key={chip.id}
                   type="button"
-                  disabled={sending}
+                  disabled={sending || isPaused}
                   onClick={() => {
                     onTrack?.("chat_chip_used", chip.id);
                     send(chip.text);
@@ -117,16 +140,16 @@ export default function TripChat({ trip, open, onOpenChange, onTripChange, onTra
                 rows={1}
                 value={message}
                 maxLength={MAX_MESSAGE}
-                disabled={sending}
+                disabled={sending || isPaused}
                 onChange={(event) => setMessage(event.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="e.g. swap day 2 for a beach day"
-                className="min-h-tap max-h-32 min-w-0 flex-1 resize-none overflow-y-auto rounded-xl bg-transparent px-2.5 py-2.5 text-base leading-6 text-ink placeholder-faint focus:outline-none"
+                placeholder={isPaused ? "AI chat is temporarily paused" : "e.g. swap day 2 for a beach day"}
+                className="min-h-tap max-h-32 min-w-0 flex-1 resize-none overflow-y-auto rounded-xl bg-transparent px-2.5 py-2.5 text-base leading-6 text-ink placeholder-faint focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
               />
               <button
                 type="submit"
                 aria-label="Send"
-                disabled={sending || !message.trim()}
+                disabled={sending || isPaused || !message.trim()}
                 className="inline-flex size-tap shrink-0 items-center justify-center rounded-xl bg-primary text-white hover:bg-primary-hover disabled:opacity-40"
               >
                 <Send className="h-4 w-4" aria-hidden />

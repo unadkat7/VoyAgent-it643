@@ -18,6 +18,7 @@ import ConversionFunnel from "./ConversionFunnel";
 import FeatureEngagementPanel from "./FeatureEngagementPanel";
 import KpiGrid from "./KpiGrid";
 import RetentionCohortTable from "./RetentionCohortTable";
+import ServiceStatusControl from "./ServiceStatusControl";
 import TrafficTrendChart from "./TrafficTrendChart";
 import TravelIntelligencePanel, { StatusDonut } from "./TravelIntelligencePanel";
 import UsersTable from "./UsersTable";
@@ -153,6 +154,8 @@ export default function AdminPage() {
           refreshing={refreshing}
           lastUpdatedAt={lastUpdatedAt}
         />
+
+        <ServiceStatusControl />
 
         {/* Section tabs: one sticky row that scrolls sideways on phones */}
         <div className="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-20 -mx-4 bg-bg sm:top-[calc(4rem+env(safe-area-inset-top))] sm:-mx-6">
