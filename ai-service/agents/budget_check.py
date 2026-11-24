@@ -52,7 +52,7 @@ def budget_check(state: PlanningState) -> PlanningState:
         daily_spend_per_traveler=daily_spend_per_traveler(request.travel_style),
         days=request.duration_days,
     )
-    # Guard: the caps keep this true today, but the shares are tunable constants.
+    # Intercity legs and over-cap flights can push the combined travel and stays over budget.
     if not budget_guessed and not is_within_budget(cost, request.budget):
         question = (
             f"The stay and travel I found come to about ₹{float(cost.stay_and_travel):,.0f}, "

@@ -7,6 +7,18 @@ from schemas.trip_request import TripRequest
 MIN_DAYS_PER_STOP = 2
 
 
+def destination_bases(stops: list[RouteStop], request: TripRequest) -> list[RouteStop]:
+    origin = (request.origin or "").strip().casefold()
+    destination = request.destination.casefold()
+    includes_india = request.destination_area in ("india", "south_asia") or "india" in destination
+    return [
+        s
+        for s in stops
+        if s.city.strip().casefold() != origin
+        and (includes_india or (s.country or "").strip().casefold() != "india")
+    ]
+
+
 def fit_stops(stops: list[RouteStop], duration_days: int) -> tuple[list[RouteStop], list[str]]:
     count = max(1, duration_days // MIN_DAYS_PER_STOP)
     kept, dropped = stops[:count], stops[count:]
