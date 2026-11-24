@@ -21,7 +21,8 @@ describe("TripMap", () => {
   it("pins every located place with its details", () => {
     render(<TripMap plan={LOCATED_PLAN} />);
 
-    expect(screen.getAllByTestId("pin")).toHaveLength(5);
+    expect(screen.getAllByTestId("pin")).toHaveLength(4);
+    expect(screen.queryByText("Destination")).not.toBeInTheDocument();
     expect(screen.getByText("Fort Aguada")).toBeInTheDocument();
     expect(screen.getByText(/₹3,200 \/ night/)).toBeInTheDocument();
   });
@@ -43,7 +44,7 @@ describe("TripMap", () => {
     expect(screen.queryByRole("button", { name: "Stays" })).not.toBeInTheDocument();
 
     rerender(<TripMap plan={LOCATED_PLAN} selectedDay="all" />);
-    expect(screen.getAllByTestId("pin")).toHaveLength(5);
+    expect(screen.getAllByTestId("pin")).toHaveLength(4);
     expect(screen.getByRole("button", { name: "Stays" })).toBeInTheDocument();
     vi.unstubAllGlobals();
   });

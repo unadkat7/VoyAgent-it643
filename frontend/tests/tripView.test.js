@@ -15,11 +15,10 @@ import {
 import { LOCATED_PLAN, PLAN } from "./fixtures";
 
 describe("mapPoints", () => {
-  it("puts the Destination, located Hotels and located Activities on the map", () => {
+  it("maps located stays and activities without a destination pin", () => {
     const points = mapPoints(LOCATED_PLAN, "all");
 
     expect(points.map((p) => [p.kind, p.title])).toEqual([
-      ["destination", "Goa"],
       ["hotel", "Sea Breeze Resort"],
       ["activity", "Baga Beach"],
       ["activity", "Tito's Lane"],
