@@ -60,6 +60,19 @@ describe("POST /api/trips/plan", () => {
     ]);
   });
 
+  it("stores and returns clarification suggestions when provided", async () => {
+    const agent = await signedInAgent();
+    aiAnswers({
+      ...CLARIFICATION,
+      clarification: { ...CLARIFICATION.clarification, suggestions: { budget: 110000 } },
+    });
+
+    const response = await agent.post("/api/trips/plan").send({ prompt: "Goa with my wife" });
+
+    expect(response.status).toBe(200);
+    expect(response.body.trip.clarification.suggestions).toEqual({ budget: 110000 });
+  });
+
   it("continues the same Trip and sends the whole conversation", async () => {
     const agent = await signedInAgent();
     aiAnswers(CLARIFICATION);
