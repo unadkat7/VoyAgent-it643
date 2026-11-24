@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from fractions import Fraction
 from math import floor
 
+from domain.spend import rooms_for
+
 HOTEL_SHARE = Fraction(50, 100)
 FLIGHT_SHARE = Fraction(35, 100)
 FLIGHT_GRACE = Fraction(15, 100)
@@ -9,7 +11,7 @@ FLIGHT_GRACE = Fraction(15, 100)
 
 @dataclass(frozen=True)
 class BudgetCaps:
-    """Rule 2: how much of the Budget one Hotel night and one Flight ticket may use."""
+    """Rule 2: how much of the Budget one Hotel room-night and one Flight ticket may use."""
 
     hotel_per_night: Fraction
     flight_per_traveler: Fraction
@@ -19,7 +21,8 @@ class BudgetCaps:
         if budget <= 0 or nights <= 0 or party_size <= 0:
             raise ValueError("budget, nights and party_size must all be positive")
         return cls(
-            hotel_per_night=Fraction(budget) * HOTEL_SHARE / nights,
+            # Two Travelers share a room, so a bigger party splits the stay share across rooms.
+            hotel_per_night=Fraction(budget) * HOTEL_SHARE / nights / rooms_for(party_size),
             flight_per_traveler=Fraction(budget) * FLIGHT_SHARE / party_size,
         )
 

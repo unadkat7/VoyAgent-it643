@@ -13,6 +13,8 @@ def make_road_node(places: PlaceFinderPort, router: RouterPort):
 
     def road(state: PlanningState) -> PlanningState:
         request = state["request"]
+        if not request.origin:
+            return {}  # the flight step asks for the Origin once
         try:
             origin, origin_note = find_place(places, request.origin)
             destination, destination_note = find_place(places, request.destination)

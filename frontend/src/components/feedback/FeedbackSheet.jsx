@@ -98,7 +98,7 @@ export default function FeedbackSheet({ open, onClose, page }) {
             maxLength={1000}
             rows={3}
             placeholder="What worked well, or what felt off?"
-            className="w-full resize-none rounded-xl border border-border bg-surface-warm px-3 py-2.5 text-base text-ink placeholder-faint focus:border-primary focus:bg-surface focus:outline-none"
+            className="w-full resize-none rounded-xl border border-border bg-surface-warm px-3 py-2.5 text-base text-ink placeholder-faint focus:border-primary focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary/15"
           />
         </label>
 

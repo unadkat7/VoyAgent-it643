@@ -21,6 +21,8 @@ const EVENT_LABELS = {
   trip_clarification_requested: "Got clarification",
   trip_planned: "Got a Trip Plan",
   trip_plan_failed: "Planning failed",
+  trip_plan_edited: "Changed a plan in chat",
+  trip_plan_edit_failed: "Chat edit failed",
   trip_viewed: "Opened a Trip",
   trip_deleted: "Deleted a Trip",
   trip_shared: "Shared a Trip",
@@ -43,6 +45,10 @@ const INTERACTION_LABELS = {
   brief_builder_prefilled: "Edited Brief in chat",
   starter_trip_selected: "Picked starter Trip",
   clarification_inline_submitted: "Sent inline details",
+  trip_chat_opened: "Opened the trip chat",
+  chat_chip_used: "Used a chat quick chip",
+  travel_mode_selected: "Picked travel for the total",
+  plan_stage_changed: "Switched Draft/Final",
 };
 
 const EVENT_GROUPS = [
@@ -62,6 +68,8 @@ function matchesEventGroup(event, group) {
       "trip_clarification_requested",
       "trip_planned",
       "trip_plan_failed",
+      "trip_plan_edited",
+      "trip_plan_edit_failed",
       "trip_viewed",
       "trip_deleted",
     ].includes(event.type);
@@ -77,7 +85,7 @@ function matchesEventGroup(event, group) {
 
 function eventToneDot(type) {
   if (type === "trip_planned" || type === "signup") return "bg-success";
-  if (type === "trip_plan_failed") return "bg-danger";
+  if (type === "trip_plan_failed" || type === "trip_plan_edit_failed") return "bg-danger";
   if (type === "trip_clarification_requested" || type === "feedback_submitted") {
     return "bg-star";
   }

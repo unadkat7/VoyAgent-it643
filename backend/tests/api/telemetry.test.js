@@ -155,6 +155,27 @@ describe("POST /api/events/interaction", () => {
     ).toBe(400);
   });
 
+  it.each([
+    ["trip_chat_opened", "assumptions_card"],
+    ["chat_chip_used", "cheaper"],
+    ["travel_mode_selected", "train"],
+    ["plan_stage_changed", "final"],
+  ])("records the trip chat and plan interaction %s", async (action, value) => {
+    const response = await request(app).post("/api/events/interaction").send({ action, value });
+
+    expect(response.status).toBe(204);
+    const event = await Event.findOne({ type: "feature_interaction" }).lean();
+    expect(event.meta).toMatchObject({ action, value });
+  });
+
+  it("no longer accepts the old refine action", async () => {
+    const response = await request(app)
+      .post("/api/events/interaction")
+      .send({ action: "trip_refine_started" });
+
+    expect(response.status).toBe(400);
+  });
+
   it("persists feedback category and signup source safely", async () => {
     const agent = request.agent(app);
     await agent.post("/api/auth/signup").send({

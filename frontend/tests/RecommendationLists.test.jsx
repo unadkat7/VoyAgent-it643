@@ -16,6 +16,14 @@ describe("HotelList", () => {
     expect(within(estimated).getByText("Estimated Cost")).toBeInTheDocument();
   });
 
+  it("leads with the whole stay's price, rooms included, and keeps the nightly price below", () => {
+    render(<HotelList hotels={PLAN.hotels} nights={3} rooms={2} />);
+
+    const card = screen.getByTestId("hotel-Sea Breeze Resort");
+    expect(within(card).getByText("₹19,200 for 3 nights · 2 rooms")).toBeInTheDocument();
+    expect(within(card).getByText("₹3,200 a night per room")).toBeInTheDocument();
+  });
+
   it("never invents a rating or amenities that the plan does not have", () => {
     render(<HotelList hotels={[PLAN.hotels[1]]} />);
 

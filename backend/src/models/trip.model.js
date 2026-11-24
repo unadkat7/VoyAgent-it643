@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { TripStatus } from "../domain/trip.js";
+import { TRAVEL_MODES, TripStatus } from "../domain/trip.js";
 
 const conversationTurnSchema = new mongoose.Schema(
   {
@@ -33,6 +33,10 @@ const tripSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.Mixed,
       default: null,
     },
+    // Draft/Final switch for a planned Trip: Final locks the plan against chat edits.
+    finalized: { type: Boolean, default: false },
+    // The way to travel the owner picked for the total; unset means the cheapest.
+    travelMode: { type: String, enum: TRAVEL_MODES },
     // Set only while the owner shares the Trip through a public link.
     shareId: { type: String, unique: true, sparse: true },
     shareViews: { type: Number, default: 0 },

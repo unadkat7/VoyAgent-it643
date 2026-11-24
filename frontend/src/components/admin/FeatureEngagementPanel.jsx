@@ -37,6 +37,26 @@ const PIN_LABELS = {
   locate_from_itinerary: "Locate from Itinerary",
 };
 
+// Chat and Draft/Final use on planned Trips; older stats responses have no tripChat.
+function tripChatRows(tripChat) {
+  if (!tripChat) return [];
+  const picks = Object.entries(tripChat.travelModePicks ?? {})
+    .map(([mode, count]) => `${mode} ${count}`)
+    .join(" · ");
+  return [
+    { label: "Trip chat opened", value: tripChat.opens },
+    { label: "Chat quick chips used", value: tripChat.chipUses },
+    { label: "Chat edits: plan updated", value: tripChat.edits?.updated ?? 0 },
+    { label: "Chat edits: question answered", value: tripChat.edits?.answered ?? 0 },
+    { label: "Chat edits: asked back", value: tripChat.edits?.needs_clarification ?? 0 },
+    { label: "Plans set to Final", value: tripChat.finalized },
+    {
+      label: `Travel picked for total (${picks})`,
+      value: Object.values(tripChat.travelModePicks ?? {}).reduce((sum, n) => sum + n, 0),
+    },
+  ];
+}
+
 export default function FeatureEngagementPanel({ featureEngagement, compact = false }) {
   const [allActions, setAllActions] = useState(false);
   const { tripMap, dossierTabs, hotelOutbound, creationFlow } = featureEngagement;
@@ -68,6 +88,7 @@ export default function FeatureEngagementPanel({ featureEngagement, compact = fa
     { label: "Curated Starters (Studio)", value: creationFlow.starterStudio },
     { label: "Curated Starters (Dashboard)", value: creationFlow.starterDashboard },
     { label: "Inline Clarification submitted", value: creationFlow.clarificationInlineSubmitted },
+    ...tripChatRows(featureEngagement.tripChat),
   ];
   const maxCreation = Math.max(1, ...creationRows.map((r) => r.value));
 

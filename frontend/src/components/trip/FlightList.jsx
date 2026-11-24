@@ -45,8 +45,13 @@ export default function FlightList({ flights, partySize, notes = [] }) {
                       {flight.flight_number}
                     </p>
                   )}
-                  <div className="mt-1.5">
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
                     <PriceSourceBadge source={flight.price_source} />
+                    {flight.over_budget && (
+                      <span className="rounded-full bg-warning-light px-2.5 py-0.5 text-label font-semibold text-warning">
+                        Over your flight budget
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

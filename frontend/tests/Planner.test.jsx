@@ -47,4 +47,5 @@ describe("Trip planner", () => {
     expect(origin.className).toMatch(/min-h-tap/);
     expect(origin.className).toMatch(/text-base/);
   });
+
 });

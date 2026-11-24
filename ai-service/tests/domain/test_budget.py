@@ -40,6 +40,13 @@ def test_search_limits_are_whole_rupees_rounded_down():
     assert caps.flight_search_limit == 402  # 350 * 1.15 = 402.5
 
 
+def test_hotel_cap_is_per_room_for_bigger_parties():
+    # 50% of 24,000 over 3 nights = 4,000 a night, split over 2 rooms for 4 Travelers.
+    caps = BudgetCaps.for_trip(budget=24_000, nights=3, party_size=4)
+
+    assert caps.hotel_search_limit == 2_000
+
+
 @pytest.mark.parametrize(
     ("budget", "nights", "party_size"),
     [(0, 3, 1), (-1, 3, 1), (10_000, 0, 1), (10_000, 3, 0)],

@@ -298,7 +298,7 @@ export default function TravelIntelligencePanel({ trips, showMap = true }) {
               </div>
               <div className="rounded-xl bg-success-light border border-success/15 p-3 col-span-2 sm:col-span-1">
                 <p className="text-label uppercase tracking-wider font-semibold text-success">
-                  Avg Est. Cost
+                  Avg full trip estimate
                 </p>
                 <p className="font-mono text-base font-semibold text-success mt-0.5">
                   {formatInr(budgetAnalysis.avgEstimatedCostInr)}
@@ -324,7 +324,7 @@ export default function TravelIntelligencePanel({ trips, showMap = true }) {
                   <div
                     className="bg-ink h-full"
                     style={{ width: `${budgetAnalysis.avgFlightSharePct ?? 0}%` }}
-                    title={`Flights: ${formatPercent(budgetAnalysis.avgFlightSharePct)}`}
+                    title={`Travel: ${formatPercent(budgetAnalysis.avgFlightSharePct)}`}
                   />
                   <div
                     className="bg-success/35 h-full"
@@ -339,7 +339,7 @@ export default function TravelIntelligencePanel({ trips, showMap = true }) {
                   </span>
                   <span className="inline-flex items-center gap-1.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-ink" />
-                    Flights {formatPercent(budgetAnalysis.avgFlightSharePct)}
+                    Travel {formatPercent(budgetAnalysis.avgFlightSharePct)}
                   </span>
                   <span className="inline-flex items-center gap-1.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-success/45" />

@@ -17,7 +17,7 @@ import { EXAMPLE_TRIPS } from "@/lib/exampleTrips";
 const WELCOME = {
   role: "assistant",
   content:
-    "Hi! I'm VoyAgent. Tell me your Origin, Destination, how many days, Party Size, total INR Budget and Travel Style. Or switch to the brief builder above.",
+    "Hi! I'm VoyAgent. Tell me where you want to go, even just \"Mumbai to Ooty\" is enough. I'll plan it right away, and you can add days, group size or budget after. Or use the brief builder above.",
 };
 
 const FIELD_META = {
@@ -73,6 +73,7 @@ function TripPlanner() {
       if (!tripId) return;
 
       const { trip } = await getTripById(tripId);
+      // A planned Trip is changed in the chat on its plan page.
       if (trip.status === "planned") return router.replace(`/trip/${trip._id}`);
       setMessages([WELCOME, ...trip.conversation]);
       setMissingFields(trip.status === "draft" ? (trip.clarification?.missingFields ?? []) : []);
@@ -100,6 +101,8 @@ function TripPlanner() {
     const box = inputRef.current;
     if (!box) return;
     box.style.height = "auto";
+    // Scroll only once the text is taller than the box can grow; no stray scrollbar before that.
+    box.style.overflowY = box.scrollHeight > MAX_COMPOSER_HEIGHT ? "auto" : "hidden";
     if (!prompt) return;
     if (box.scrollHeight > 0) box.style.height = `${Math.min(box.scrollHeight, MAX_COMPOSER_HEIGHT)}px`;
   }, [prompt]);
@@ -346,7 +349,7 @@ function TripPlanner() {
                             }))
                           }
                           placeholder={meta.placeholder}
-                          className="min-h-tap rounded-xl border border-border bg-surface-warm px-3 text-base text-ink placeholder-faint focus:border-primary focus:bg-surface focus:outline-none"
+                          className="min-h-tap rounded-xl border border-border bg-surface-warm px-3 text-base text-ink placeholder-faint focus:border-primary focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary/15"
                         />
                       </label>
                     );
@@ -400,13 +403,13 @@ function TripPlanner() {
               id="trip-prompt"
               rows={1}
               enterKeyHint="send"
-              placeholder="e.g. 3 days in Goa for 2, ₹30,000"
+              placeholder={hasStarted ? "e.g. 4 people, ₹60k, 2 nights" : "Where to? e.g. Pune to Goa"}
               value={prompt}
               maxLength={MAX_PROMPT_LENGTH}
               onChange={(event) => setPrompt(event.target.value)}
               onKeyDown={handleComposerKeyDown}
               disabled={loading}
-              className="min-h-tap min-w-0 flex-1 resize-none bg-transparent px-2.5 py-2.5 text-base leading-6 text-ink placeholder-faint focus:outline-none"
+              className="min-h-tap min-w-0 flex-1 resize-none overflow-hidden rounded-xl bg-transparent px-2.5 py-2.5 text-base leading-6 text-ink placeholder-faint focus:outline-none"
             />
             <button
               type="submit"

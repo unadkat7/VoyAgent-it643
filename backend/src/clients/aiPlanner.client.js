@@ -34,22 +34,16 @@ const RETRYABLE_STATUS = new Set([502, 503, 504]);
 const isTransient = (error) =>
   error.response ? RETRYABLE_STATUS.has(error.response.status) : error.code !== "ECONNABORTED";
 
-function postPlan(body) {
-  return axios.post(`${env.AI_SERVICE_URL}/planner/plan-trip`, body, {
+function post(path, body) {
+  return axios.post(`${env.AI_SERVICE_URL}/planner/${path}`, body, {
     headers: { "X-Internal-Key": env.INTERNAL_API_KEY },
     timeout: PLAN_TIMEOUT_MS,
   });
 }
 
-// Adapter for the Planning Engine (ai-service). The rest of the backend never sees its wire format.
-export async function requestPlan({ tripId, conversation }) {
-  const body = {
-    trip_id: tripId,
-    conversation: conversation.map(({ role, content }) => ({ role, content })),
-  };
-  let data;
+async function postWithRetry(path, body) {
   try {
-    data = (await postPlan(body)).data;
+    return (await post(path, body)).data;
   } catch (firstError) {
     if (!isTransient(firstError)) {
       throw unavailable(firstError);
@@ -57,11 +51,21 @@ export async function requestPlan({ tripId, conversation }) {
     console.warn(`Planning Engine request failed, retrying once: ${describe(firstError)}`);
     await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
     try {
-      data = (await postPlan(body)).data;
+      return (await post(path, body)).data;
     } catch (secondError) {
       throw unavailable(secondError);
     }
   }
+}
+
+const wireTurns = (conversation) => conversation.map(({ role, content }) => ({ role, content }));
+
+// Adapter for the Planning Engine (ai-service). The rest of the backend never sees its wire format.
+export async function requestPlan({ tripId, conversation }) {
+  const data = await postWithRetry("plan-trip", {
+    trip_id: tripId,
+    conversation: wireTurns(conversation),
+  });
 
   const parsed = plannerResponseSchema.safeParse(data);
   if (!parsed.success) {
@@ -79,4 +83,27 @@ export async function requestPlan({ tripId, conversation }) {
     };
   }
   return { outcome: "planned", plan: result.plan };
+}
+
+const editResponseSchema = z.object({
+  outcome: z.enum(["updated", "answered", "needs_clarification"]),
+  change: z.enum(["request", "itinerary", "question"]),
+  reply: z.string().min(1),
+  plan: z.looseObject({ request: z.looseObject({ destination: z.string().nullish() }) }).nullish(),
+});
+
+// One chat message about a planned Trip: the planner answers it or returns an edited plan.
+export async function requestEdit({ tripId, conversation, plan, travelMode }) {
+  const data = await postWithRetry("edit-plan", {
+    trip_id: tripId,
+    conversation: wireTurns(conversation),
+    plan,
+    travel_mode: travelMode ?? null,
+  });
+  const parsed = editResponseSchema.safeParse(data);
+  if (!parsed.success || (parsed.data.outcome === "updated" && !parsed.data.plan)) {
+    throw new PlannerUnavailableError("Planning Engine sent an unexpected edit response");
+  }
+  const { outcome, change, reply, plan: newPlan } = parsed.data;
+  return { outcome, change, reply, plan: newPlan ?? null };
 }

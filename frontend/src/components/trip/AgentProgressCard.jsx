@@ -10,10 +10,10 @@ import {
   IndianRupee,
   Loader2,
   MapPin,
-  Plane,
+  Route,
 } from "lucide-react";
 
-// Mirrors the three parallel branches in ai-service/graph/builder.py
+// Mirrors the parallel branches in ai-service/graph/builder.py
 const PARALLEL_NODES = [
   {
     id: "hotels",
@@ -22,28 +22,28 @@ const PARALLEL_NODES = [
     accent: "#B45309",
     bg: "#FEF7E6",
     border: "#F59E0B",
-    doing: "Searching stays within 50%/night cap...",
-    done: "Eligible stays shortlisted",
+    doing: "Finding stays that fit your budget...",
+    done: "Stays picked",
   },
   {
-    id: "flights",
-    label: "Flights",
-    icon: Plane,
+    id: "travel",
+    label: "Travel",
+    icon: Route,
     accent: "#0369A1",
     bg: "#F0F9FF",
     border: "#38BDF8",
-    doing: "Checking IATA codes & fares...",
-    done: "Routes & fares checked",
+    doing: "Checking flights, trains and the drive...",
+    done: "Ways to get there checked",
   },
   {
     id: "itinerary",
-    label: "Itinerary",
+    label: "Day plan",
     icon: Calendar,
     accent: "#15803D",
     bg: "#ECFDF3",
     border: "#22C55E",
-    doing: "Drafting day-by-day Activities...",
-    done: "Daily schedule drafted",
+    doing: "Planning each day...",
+    done: "Days planned",
   },
 ];
 
@@ -87,8 +87,8 @@ function BranchLines({ active, direction = "out" }) {
   );
 }
 
-// Visualizes the real LangGraph Planning Engine stages while awaiting /api/trips/plan:
-// 1. understand -> 2. parallel (hotels, flights, itinerary) -> 3. budget_check -> 4. locate & compose
+// Shows the Planning Engine's stages while awaiting /api/trips/plan. The timings are a guide,
+// not live progress: 1. read the request -> 2. stays, travel, days -> 3. budget -> 4. map and tips
 export default function AgentProgressCard({ loading }) {
   const [phase, setPhase] = useState(1);
 
@@ -116,37 +116,27 @@ export default function AgentProgressCard({ loading }) {
       className="w-full bg-white border border-border rounded-3xl p-4 sm:p-6 my-2"
     >
       {/* Masthead */}
-      <div className="flex items-center justify-between gap-2 mb-4">
+      <div className="mb-4">
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-primary animate-pulse" aria-hidden />
-          <span className="font-display text-base font-semibold text-ink">
-            Planning Engine Active
-          </span>
+          <span className="font-display text-base font-semibold text-ink">Planning your trip</span>
         </div>
-        <span className="hidden sm:inline font-mono text-label uppercase tracking-wider text-muted bg-bg border border-border px-2.5 py-1 rounded-full">
-          3-Way Parallel Graph
-        </span>
+        <p className="mt-0.5 pl-4 text-xs text-muted">Usually takes 20–40 seconds.</p>
       </div>
 
-      {/* Stage 1: Understand Trip Request */}
+      {/* Stage 1: Read the request */}
       <div
         className={`flex items-center gap-3 p-3.5 rounded-2xl border transition-colors ${
           phase >= 1 ? "border-primary/30 bg-primary-light/65" : "border-border bg-bg"
         }`}
       >
         <div className="w-8 h-8 rounded-xl bg-white border border-border flex items-center justify-center shrink-0">
-          {phase >= 2 ? (
-            <CheckCircle2 className="w-4 h-4 text-success" aria-hidden />
-          ) : (
-            <Compass className="w-4 h-4 text-primary" aria-hidden />
-          )}
+          <Compass className="w-4 h-4 text-primary" aria-hidden />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-bold text-ink">01 · Understand Trip Request</p>
+          <p className="text-sm font-bold text-ink">Reading your request</p>
           <p className="text-xs text-muted">
-            {phase >= 2
-              ? "Required fields parsed — fanning out to 3 specialists"
-              : "Reading Origin, Destination, Days, Party Size, Budget & Style..."}
+            {phase >= 2 ? "Got it: where, how long, who and budget" : "Where, how long, who and budget..."}
           </p>
         </div>
         {phase === 1 && <Loader2 className="w-4 h-4 text-primary animate-spin shrink-0" />}
@@ -155,7 +145,7 @@ export default function AgentProgressCard({ loading }) {
 
       <BranchLines active={phase >= 2} direction="out" />
 
-      {/* Stage 2: Parallel Specialist Nodes */}
+      {/* Stage 2: Stays, travel and days, side by side */}
       <div className="grid grid-cols-3 gap-2 mt-2 sm:gap-2.5 sm:mt-0">
         {PARALLEL_NODES.map((node, idx) => {
           const Icon = node.icon;
@@ -168,27 +158,28 @@ export default function AgentProgressCard({ loading }) {
               initial={{ opacity: 0.4, scale: 0.98 }}
               animate={isActive ? { opacity: 1, scale: 1 } : { opacity: 0.4, scale: 0.98 }}
               transition={{ delay: idx * 0.1, duration: 0.25 }}
-              className="p-2.5 sm:p-3.5 rounded-2xl border transition-colors"
+              className="min-w-0 p-2.5 sm:p-3.5 rounded-2xl border transition-colors"
               style={{
                 borderColor: isActive ? `${node.border}55` : "#E7E0D5",
                 backgroundColor: isActive ? node.bg : "#FAF8F4",
               }}
             >
-              <div className="flex items-center justify-between mb-1.5">
-                <span
-                  className="text-xs font-bold flex items-center gap-1.5"
-                  style={{ color: isActive ? node.accent : "#73685E" }}
-                >
-                  <Icon className="w-3.5 h-3.5" aria-hidden />
-                  {node.label}
-                </span>
+              {/* Icon and status on top, so the label below gets the full width on a phone */}
+              <div className="flex items-center justify-between">
+                <Icon className="w-4 h-4" style={{ color: isActive ? node.accent : "#73685E" }} aria-hidden />
                 {isActive && !isDone && (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: node.accent }} />
                 )}
                 {isDone && <CheckCircle2 className="w-3.5 h-3.5 text-success" />}
               </div>
-              <p className="hidden sm:block text-label leading-relaxed text-ink-soft/85">
-                {!isActive ? "Queued..." : isDone ? node.done : node.doing}
+              <p
+                className="mt-1.5 text-sm font-bold leading-tight"
+                style={{ color: isActive ? node.accent : "#73685E" }}
+              >
+                {node.label}
+              </p>
+              <p className="hidden sm:block mt-1 text-label leading-relaxed text-ink-soft/85">
+                {!isActive ? "Waiting..." : isDone ? node.done : node.doing}
               </p>
               {isActive && !isDone && (
                 <div
@@ -210,7 +201,7 @@ export default function AgentProgressCard({ loading }) {
 
       <BranchLines active={phase >= 3} direction="in" />
 
-      {/* Stage 3: Deterministic Budget Check */}
+      {/* Stage 3: Budget */}
       <div
         className={`mt-2 sm:mt-0 flex items-center gap-3 p-3.5 rounded-2xl border transition-all ${
           phase >= 3
@@ -225,20 +216,20 @@ export default function AgentProgressCard({ loading }) {
           />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-bold text-ink">03 · INR Budget Feasibility Check</p>
+          <p className="text-sm font-bold text-ink">Checking it fits your budget</p>
           <p className="text-xs text-muted">
             {phase >= 4
-              ? "Budget Caps verified — Trip is Feasible"
+              ? "Costs added up"
               : phase === 3
-              ? "Verifying nightly stay cap & total Estimated Cost in INR..."
-              : "Waiting for parallel searches to join..."}
+              ? "Adding up stay, travel, activities and food..."
+              : "Waiting for stays, travel and days..."}
           </p>
         </div>
         {phase === 3 && <Loader2 className="w-4 h-4 text-success animate-spin shrink-0" />}
         {phase >= 4 && <CheckCircle2 className="w-4 h-4 text-success shrink-0" />}
       </div>
 
-      {/* Stage 4: Locate Coordinates & Compose Plan */}
+      {/* Stage 4: Map and tips */}
       {phase >= 4 && (
         <motion.div
           initial={{ opacity: 0, y: 6 }}
@@ -249,10 +240,8 @@ export default function AgentProgressCard({ loading }) {
             <MapPin className="w-4 h-4 text-primary-soft" aria-hidden />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-bold">04 · Locate Pins &amp; Compose Trip Plan</p>
-            <p className="text-xs text-bg/65">
-              Geocoding Coordinates for your Trip Map and writing travel tips...
-            </p>
+            <p className="text-sm font-bold">Adding map pins and tips</p>
+            <p className="text-xs text-bg/65">Almost done...</p>
           </div>
           <Loader2 className="w-4 h-4 text-primary-soft animate-spin shrink-0" />
         </motion.div>

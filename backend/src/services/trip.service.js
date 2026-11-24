@@ -1,7 +1,14 @@
 import crypto from "node:crypto";
 import mongoose from "mongoose";
-import { PlannerUnavailableError, requestPlan } from "../clients/aiPlanner.client.js";
-import { canContinue, canShare, isOwnedBy, nextStatus } from "../domain/trip.js";
+import { PlannerUnavailableError, requestEdit, requestPlan } from "../clients/aiPlanner.client.js";
+import {
+  TripStatus,
+  canContinue,
+  canEditPlan,
+  canShare,
+  isOwnedBy,
+  nextStatus,
+} from "../domain/trip.js";
 import Trip from "../models/trip.model.js";
 import { HttpError } from "../utils/httpError.js";
 
@@ -57,7 +64,75 @@ export async function planTrip({ userId, prompt, tripId }) {
     trip.plan = result.plan;
     trip.destination = result.plan.request.destination ?? undefined;
     trip.clarification = undefined;
+    // The follow-up gives the first chat message its context ("Tell me your budget…").
+    trip.conversation.push({
+      role: "assistant",
+      content: result.plan.follow_up || PLAN_READY,
+    });
   }
+  await trip.save();
+  return trip;
+}
+
+const PLAN_READY = "Your Trip plan is ready. Ask me anything, or tell me what to change.";
+// The planner reads only the latest turns; it gets the plan itself, so older talk adds little.
+const EDIT_CONTEXT_TURNS = 20;
+
+export async function editTrip({ userId, tripId, message }) {
+  const trip = await findOwnedTrip(tripId, userId);
+  if (trip.status !== TripStatus.PLANNED) {
+    throw new HttpError(409, "Only a planned Trip can be changed in the chat.");
+  }
+  if (!canEditPlan(trip)) {
+    throw new HttpError(409, "This plan is Final. Switch it to Draft to change it.");
+  }
+  const turns = [...trip.conversation, { role: "traveler", content: message }];
+  const startedAt = Date.now();
+  let result;
+  try {
+    result = await requestEdit({
+      tripId: trip.id,
+      conversation: turns.slice(-EDIT_CONTEXT_TURNS),
+      plan: trip.plan,
+      travelMode: trip.travelMode,
+    });
+  } catch (error) {
+    if (!(error instanceof PlannerUnavailableError)) {
+      throw error;
+    }
+    console.error(error.message);
+    // Nothing is saved: the plan and the conversation stay as they were.
+    throw new HttpError(503, "The planner is unavailable right now. Please try again shortly.", {
+      tripId: trip.id,
+    });
+  }
+
+  trip.conversation.push({ role: "traveler", content: message });
+  trip.conversation.push({ role: "assistant", content: result.reply });
+  if (result.outcome === "updated") {
+    trip.plan = result.plan;
+    trip.destination = result.plan.request.destination ?? undefined;
+    // A picked travel mode the new plan no longer offers falls back to the cheapest.
+    if (!travelModes(trip.plan).includes(trip.travelMode)) trip.travelMode = undefined;
+  }
+  await trip.save();
+  return { trip, outcome: result.outcome, change: result.change, durationMs: Date.now() - startedAt };
+}
+
+const travelModes = (plan) => (plan?.travel_options ?? []).map((option) => option.mode);
+
+export async function updateTrip({ userId, tripId, finalized, travelMode }) {
+  const trip = await findOwnedTrip(tripId, userId);
+  if (trip.status !== TripStatus.PLANNED) {
+    throw new HttpError(409, "Only a planned Trip can be changed.");
+  }
+  if (travelMode !== undefined) {
+    if (!travelModes(trip.plan).includes(travelMode)) {
+      throw new HttpError(400, "This plan has no such way to travel.");
+    }
+    trip.travelMode = travelMode;
+  }
+  if (finalized !== undefined) trip.finalized = finalized;
   await trip.save();
   return trip;
 }
@@ -98,7 +173,13 @@ export async function viewSharedTrip(shareId) {
   }
   return {
     tripId: trip._id,
-    view: { destination: trip.destination, plan: trip.plan, createdAt: trip.createdAt },
+    view: {
+      destination: trip.destination,
+      plan: trip.plan,
+      // The owner's travel choice, so a shared total matches what the owner sees.
+      travelMode: trip.travelMode,
+      createdAt: trip.createdAt,
+    },
   };
 }
 

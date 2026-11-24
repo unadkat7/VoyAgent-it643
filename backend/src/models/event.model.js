@@ -8,6 +8,8 @@ export const EVENT_TYPES = Object.freeze([
   "trip_clarification_requested",
   "trip_planned",
   "trip_plan_failed",
+  "trip_plan_edited",
+  "trip_plan_edit_failed",
   "trip_viewed",
   "trip_deleted",
   "trip_shared",
@@ -30,6 +32,10 @@ export const INTERACTION_ACTIONS = Object.freeze([
   "brief_builder_prefilled",
   "starter_trip_selected",
   "clarification_inline_submitted",
+  "trip_chat_opened",
+  "chat_chip_used",
+  "travel_mode_selected",
+  "plan_stage_changed",
 ]);
 
 const RETENTION_SECONDS = 90 * 24 * 60 * 60;
@@ -48,6 +54,10 @@ const eventSchema = new mongoose.Schema({
     outcome: { type: String, maxlength: 40 },
     destination: { type: String, maxlength: 120 },
     missingFields: [{ type: String, maxlength: 40 }],
+    // Fields a plan guessed because the Traveler left them out.
+    assumedFields: [{ type: String, maxlength: 40 }],
+    // For plan edits: request, itinerary or question.
+    change: { type: String, maxlength: 20 },
     statusCode: { type: Number },
     category: { type: String, maxlength: 40 },
   },

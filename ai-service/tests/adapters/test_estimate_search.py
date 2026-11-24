@@ -2,6 +2,7 @@ from datetime import date
 
 from adapters.estimate_search import EstimateSearch
 from ports.search import FlightQuery, HotelQuery
+from ports.web_search import WebResult, WebSearchError
 from schemas.recommendations import (
     FlightRecommendation,
     FlightRecommendations,
@@ -66,3 +67,46 @@ def test_estimate_prompt_carries_destination_and_cap():
         return HotelRecommendations(hotels=[])
 
     assert EstimateSearch(FakeLLM({HotelRecommendations: answer})).search_hotels(HOTEL_QUERY) == []
+
+
+class FakeWeb:
+    def __init__(self, results=None, error=None):
+        self._results = results or []
+        self._error = error
+        self.queries: list[str] = []
+
+    def search(self, query: str):
+        self.queries.append(query)
+        if self._error:
+            raise self._error
+        return self._results
+
+
+def test_web_fares_ground_the_flight_estimate():
+    prompts = []
+
+    def answer(prompt: str) -> FlightRecommendations:
+        prompts.append(prompt)
+        return FlightRecommendations(flights=[])
+
+    web = FakeWeb([WebResult(title="Fares", url="https://f.example", content="From ₹7,200")])
+
+    EstimateSearch(FakeLLM({FlightRecommendations: answer}), web).search_flights(FLIGHT_QUERY)
+
+    assert web.queries == ["DEL to KUU round trip flight price December 2026 INR"]
+    assert "From ₹7,200" in prompts[0]
+
+
+def test_failed_web_search_still_estimates_flights():
+    flight = FlightRecommendation(
+        airline="Alliance Air",
+        departure_airport="DEL",
+        arrival_airport="KUU",
+        price_per_traveler=7000,
+    )
+    search = EstimateSearch(
+        FakeLLM({FlightRecommendations: FlightRecommendations(flights=[flight])}),
+        FakeWeb(error=WebSearchError("quota")),
+    )
+
+    assert [f.airline for f in search.search_flights(FLIGHT_QUERY)] == ["Alliance Air"]

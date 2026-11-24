@@ -30,6 +30,7 @@ Free tiers: **MongoDB Atlas** (database) and **Vercel** (frontend, backend and a
    | `GROQ_API_KEY` | Groq key (primary LLM) |
    | `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN` | Optional fallback LLM |
    | `SEARCHAPI_KEY` | Optional live Hotels and Flights |
+   | `TAVILY_API_KEY` | Optional web search, so estimated flight fares follow real prices for the dates |
    | `OSRM_URL` | Optional. Road routing server; defaults to the free public OSRM server |
 
 3. Deploy. Check that `https://<domain>/api/health` returns `{"status":"ok"}`.

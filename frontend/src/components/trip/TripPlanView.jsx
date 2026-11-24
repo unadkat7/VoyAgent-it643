@@ -3,9 +3,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import useWideLayout from "@/lib/useWideLayout";
 import dynamic from "next/dynamic";
-import { ArrowLeft, ChevronRight } from "lucide-react";
+import toast from "react-hot-toast";
+import { ArrowLeft, ChevronRight, Wand2 } from "lucide-react";
 import {
   budgetBreakdown,
+  daysAndNights,
   formatDateRange,
   formatInr,
   mapPoints,
@@ -15,10 +17,12 @@ import {
 import HotelList from "@/components/trip/HotelList";
 import TravelPanel from "@/components/trip/TravelPanel";
 import ItineraryList from "@/components/trip/ItineraryList";
+import TripChat from "@/components/trip/TripChat";
 import TripOverview from "@/components/trip/TripOverview";
 import SegmentedControl from "@/components/ui/SegmentedControl";
 import Skeleton from "@/components/ui/Skeleton";
 import { trackInteraction } from "@/services/event.service";
+import { updateTrip } from "@/services/trip.service";
 
 // Leaflet needs `window`, so the map only loads in the browser.
 const TripMap = dynamic(() => import("@/components/trip/TripMap"), {
@@ -39,9 +43,12 @@ const TABS = [
 // Height of the sticky app header, so the tab bar sticks right under it.
 const STICKY_TOP = "top-[calc(3.5rem+env(safe-area-inset-top))] sm:top-[calc(4rem+env(safe-area-inset-top))]";
 
-// The read-only Trip Plan: masthead, tabs and content. Used by the owner's page and the share page.
-export default function TripPlanView({ trip }) {
+// The Trip Plan: masthead, tabs and content. Used by the owner's page and the share page.
+// Only the owner's page passes onTripChange, so a shared plan never offers chat, Draft/Final or
+// a travel choice.
+export default function TripPlanView({ trip, onTripChange = null }) {
   const [activeTab, setActiveTab] = useState("itinerary");
+  const [chatOpen, setChatOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState("all");
   const [focusedPointKey, setFocusedPointKey] = useState(null);
 
@@ -136,13 +143,29 @@ export default function TripPlanView({ trip }) {
     }
   };
 
+  // Saves a Draft/Final or travel choice; the screen changes at once and rolls back on failure.
+  const saveChoice = async (changes, action, value) => {
+    handleTrack(action, value);
+    const previous = trip;
+    onTripChange({ ...trip, ...changes });
+    try {
+      const { trip: saved } = await updateTrip(trip._id, changes);
+      onTripChange(saved);
+    } catch {
+      onTripChange(previous);
+      toast.error("Could not save that change. Please try again.");
+    }
+  };
+
   const { plan } = trip;
+  const editable = Boolean(onTripChange);
+  const canChat = editable && !trip.finalized;
   const route = tripRouteLabel(trip);
-  const breakdown = budgetBreakdown(plan);
+  const breakdown = budgetBreakdown(plan, trip.travelMode);
   const partySize = plan.request?.party_size;
   const meta = [
     formatDateRange(plan.check_in, plan.check_out),
-    `${plan.nights} ${plan.nights === 1 ? "night" : "nights"}`,
+    daysAndNights(plan),
     partySize ? `${partySize} ${partySize === 1 ? "traveler" : "travelers"}` : null,
     plan.request?.travel_style,
   ].filter(Boolean);
@@ -158,6 +181,42 @@ export default function TripPlanView({ trip }) {
               {tripTitle(trip)}
             </h1>
             <p className="mt-1.5 text-sm text-muted">{meta.join(" · ")}</p>
+            {editable && (
+              <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                <div role="group" aria-label="Plan stage" className="inline-flex rounded-xl bg-bg p-1">
+                  {[
+                    { value: false, label: "Draft" },
+                    { value: true, label: "Final" },
+                  ].map((stage) => (
+                    <button
+                      key={stage.label}
+                      type="button"
+                      aria-pressed={Boolean(trip.finalized) === stage.value}
+                      onClick={() =>
+                        Boolean(trip.finalized) !== stage.value &&
+                        saveChoice(
+                          { finalized: stage.value },
+                          "plan_stage_changed",
+                          stage.label.toLowerCase()
+                        )
+                      }
+                      className={`min-h-9 rounded-lg px-4 text-sm font-semibold ${
+                        Boolean(trip.finalized) === stage.value
+                          ? "bg-surface text-ink shadow-sm"
+                          : "text-muted hover:text-ink"
+                      }`}
+                    >
+                      {stage.label}
+                    </button>
+                  ))}
+                </div>
+                <span className="text-sm text-muted">
+                  {trip.finalized
+                    ? "Locked. Switch to Draft to change it."
+                    : "You can still change it in the chat."}
+                </span>
+              </div>
+            )}
           </div>
 
           {plan.estimated_cost && (
@@ -168,17 +227,51 @@ export default function TripPlanView({ trip }) {
             >
               <span className="min-w-0">
                 <span className="block text-label font-semibold uppercase tracking-wider text-muted">Estimated cost</span>{" "}
-                <span className="font-mono text-xl font-semibold text-success">{formatInr(plan.estimated_cost.total)}</span>
-                {breakdown.budget > 0 && (
-                  <span className="ml-2 text-sm text-muted">
-                    {breakdown.usedPercent}% of {formatInr(breakdown.budget)}
+                <span className="font-mono text-xl font-semibold text-success">{formatInr(breakdown.total)}</span>
+                {breakdown.perPerson > 0 && partySize > 1 && (
+                  <span className="ml-2 text-sm font-semibold text-ink-soft">
+                    {formatInr(breakdown.perPerson)} per person
                   </span>
                 )}
+                <span className="block text-sm text-muted">
+                  Stay, travel, activities and food
+                  {breakdown.budget > 0 && ` · ${breakdown.usedPercent}% of ${formatInr(breakdown.budget)}`}
+                </span>
               </span>
               <ChevronRight className="h-5 w-5 shrink-0 text-muted" aria-hidden />
             </button>
           )}
         </div>
+
+        {plan.assumptions?.length > 0 && (
+          <div className="mx-auto max-w-7xl px-4 pb-4 sm:px-6">
+            <div className="rounded-2xl border border-primary-border bg-primary-light/60 p-4">
+              <p className="flex items-center gap-2 text-sm font-semibold text-ink">
+                <Wand2 className="h-4 w-4 text-primary" aria-hidden />
+                I filled in a few things
+              </p>
+              <ul className="mt-1.5 list-disc space-y-0.5 pl-5 text-sm text-ink-soft">
+                {plan.assumptions.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
+              {plan.follow_up && canChat && <p className="mt-2 text-sm text-ink-soft">{plan.follow_up}</p>}
+              {canChat && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleTrack("trip_chat_opened", "assumptions_card");
+                    setChatOpen(true);
+                  }}
+                  className="mt-3 inline-flex min-h-tap w-full items-center justify-center gap-1.5 rounded-xl bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-hover sm:w-auto"
+                >
+                  Add details
+                  <ChevronRight className="h-4 w-4" aria-hidden />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </section>
 
       {/* ── Sticky section tabs ── */}
@@ -253,13 +346,39 @@ export default function TripPlanView({ trip }) {
         )}
 
         {activeTab === "hotels" && (
-          <HotelList hotels={plan.hotels} nights={plan.nights} notes={plan.notes} onTrack={handleTrack} />
+          <HotelList
+            hotels={plan.hotels}
+            nights={plan.nights}
+            rooms={breakdown.rooms}
+            notes={plan.notes}
+            onTrack={handleTrack}
+          />
         )}
 
-        {activeTab === "flights" && <TravelPanel plan={plan} />}
+        {activeTab === "flights" && (
+          <TravelPanel
+            plan={plan}
+            travelMode={trip.travelMode}
+            onSelectMode={
+              editable
+                ? (mode) => saveChoice({ travelMode: mode }, "travel_mode_selected", mode)
+                : null
+            }
+          />
+        )}
 
-        {activeTab === "summary" && <TripOverview plan={plan} />}
+        {activeTab === "summary" && <TripOverview plan={plan} travelMode={trip.travelMode} />}
       </main>
+
+      {canChat && (
+        <TripChat
+          trip={trip}
+          open={chatOpen}
+          onOpenChange={setChatOpen}
+          onTripChange={onTripChange}
+          onTrack={handleTrack}
+        />
+      )}
     </>
   );
 }

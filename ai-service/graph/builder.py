@@ -6,6 +6,7 @@ from langgraph.graph import END, START, StateGraph
 from agents.budget_check import budget_check, route_after_budget_check
 from agents.clarify import clarify
 from agents.compose import make_compose_node
+from agents.fares import make_fares_node
 from agents.flights import make_flight_node
 from agents.hotels import make_hotel_node
 from agents.itinerary import make_itinerary_node
@@ -15,12 +16,22 @@ from agents.rail import make_rail_node
 from agents.road import make_road_node
 from agents.understand import make_understand_node, route_after_understand
 from graph.state import PlanningState
+from ports.fares import FarePort
 from ports.geocoder import GeocoderPort
 from ports.llm import LLMPort
 from ports.places import PlaceFinderPort
 from ports.roads import RouterPort
 from ports.search import FlightSearchPort, HotelSearchPort
 from ports.timetable import TimetablePort
+
+
+def route_start(state: PlanningState) -> str:
+    """An edited Itinerary only needs costs, pins and prose; a changed request needs searches."""
+    if state.get("finish_only"):
+        return "budget_check"
+    if state.get("request"):
+        return "prepare"
+    return "understand"
 
 
 def build_planning_graph(
@@ -33,6 +44,7 @@ def build_planning_graph(
     timetable: TimetablePort | None = None,
     places: PlaceFinderPort | None = None,
     router: RouterPort | None = None,
+    fares: FarePort | None = None,
 ):
     graph = StateGraph(PlanningState)
     graph.add_node("understand", make_understand_node(llm, today))
@@ -53,8 +65,12 @@ def build_planning_graph(
     if places is not None and router is not None:
         graph.add_node("road", make_road_node(places, router))
         searches.append("road")
+    if fares is not None:
+        graph.add_node("fares", make_fares_node(fares))
+        searches.append("fares")
 
-    graph.add_edge(START, "understand")
+    # A new Conversation starts at understand; a plan edit starts later (see route_start).
+    graph.add_conditional_edges(START, route_start, ["understand", "prepare", "budget_check"])
     graph.add_conditional_edges("understand", route_after_understand, ["clarify", "prepare"])
     graph.add_edge("clarify", END)
 

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { TRAVEL_MODES } from "../domain/trip.js";
 import { INTERACTION_ACTIONS } from "../models/event.model.js";
 import { FEEDBACK_CATEGORIES } from "../models/feedback.model.js";
 
@@ -23,6 +24,18 @@ export const planTripSchema = z.object({
   prompt: z.string().trim().min(1).max(2000),
   tripId: objectId.optional(),
 });
+
+export const tripChatSchema = z.object({
+  message: z.string().trim().min(1).max(1000),
+});
+
+export const updateTripSchema = z
+  .object({
+    finalized: z.boolean().optional(),
+    travelMode: z.enum(TRAVEL_MODES).optional(),
+  })
+  .strict()
+  .refine((body) => Object.keys(body).length > 0, "Nothing to update");
 
 // Only same-site paths, so a page view can never carry a full URL.
 export const pageviewSchema = z.object({

@@ -3,11 +3,13 @@ import { formatShortDate } from "@/lib/tripView";
 import FlightList from "./FlightList";
 import RoadRouteCard from "./RoadRouteCard";
 import TrainList from "./TrainList";
+import TravelOptions from "./TravelOptions";
 
 const IRCTC_URL = "https://www.irctc.co.in/nget/train-search";
 
-// The Travel tab: flights, trains there and back, and the drive. Older plans have flights only.
-export default function TravelPanel({ plan }) {
+// The Travel tab: priced ways to travel, then flights, trains there and back, and the drive.
+// Older plans have flights only.
+export default function TravelPanel({ plan, travelMode = null, onSelectMode = null }) {
   const flights = plan.flights ?? [];
   const trainsOut = plan.trains_out ?? [];
   const trainsBack = plan.trains_back ?? [];
@@ -16,6 +18,7 @@ export default function TravelPanel({ plan }) {
 
   return (
     <div className="max-w-3xl space-y-8">
+      <TravelOptions plan={plan} travelMode={travelMode} onSelectMode={onSelectMode} />
       <section aria-labelledby="flights-heading" className="space-y-3">
         {hasOtherWays && (
           <h2 id="flights-heading" className="font-display text-xl font-semibold text-ink">

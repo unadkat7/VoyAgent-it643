@@ -282,6 +282,17 @@ export function normalizeAdminOverview(raw = {}) {
           starterStudio: fe.creationFlow?.starterStudio ?? 0,
           clarificationInlineSubmitted: fe.creationFlow?.clarificationInlineSubmitted ?? 0,
         },
+        // Trip chat and Draft/Final use; older stats responses have none, so the rows are hidden.
+        tripChat: fe.tripChat
+          ? {
+              opens: fe.tripChat.opens ?? 0,
+              chipUses: fe.tripChat.chipUses ?? 0,
+              finalized: fe.tripChat.finalized ?? 0,
+              backToDraft: fe.tripChat.backToDraft ?? 0,
+              travelModePicks: fe.tripChat.travelModePicks ?? {},
+              edits: fe.tripChat.edits ?? {},
+            }
+          : null,
       },
     },
     feedback,

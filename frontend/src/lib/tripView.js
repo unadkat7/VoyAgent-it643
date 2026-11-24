@@ -96,41 +96,88 @@ export function formatDateRange(checkIn, checkOut) {
   return `${start} – ${end}`;
 }
 
+// The way to travel that is counted: the owner's pick if the plan has it, else the plan's default.
+export function chosenTravel(plan, travelMode) {
+  const options = plan?.travel_options ?? [];
+  const mode = travelMode ?? plan?.estimated_cost?.travel_mode;
+  return options.find((option) => option.mode === mode) ?? options[0] ?? null;
+}
+
 // Compute INR Budget allocation proportions for visual feasibility bars.
-export function budgetBreakdown(plan) {
+// Plans made before activities, daily spend or travel options were counted have 0 for them,
+// and older plans priced travel as flight_total.
+export function budgetBreakdown(plan, travelMode = null) {
+  const cost = plan?.estimated_cost ?? {};
   const budget = Number(plan?.request?.budget) || 0;
-  const hotelTotal = Number(plan?.estimated_cost?.hotel_total) || 0;
-  const flightTotal = Number(plan?.estimated_cost?.flight_total) || 0;
-  const total = Number(plan?.estimated_cost?.total) || hotelTotal + flightTotal;
+  const partySize = Number(plan?.request?.party_size) || 0;
+  const hotelTotal = Number(cost.hotel_total) || 0;
+  const travel = chosenTravel(plan, travelMode);
+  const travelTotal = travel
+    ? travel.total
+    : Number(cost.travel_total ?? cost.flight_total) || 0;
+  const activitiesTotal = Number(cost.activities_total) || 0;
+  const dailySpendTotal = Number(cost.daily_spend_total) || 0;
+  // Recomputed rather than read, so picking another way to travel moves the total.
+  const total = hotelTotal + travelTotal + activitiesTotal + dailySpendTotal;
+  const perPerson = partySize > 0 ? Math.round(total / partySize) : 0;
+  const budgetGuessed = Boolean(plan?.assumed_fields?.includes("budget"));
+  const base = {
+    budget,
+    budgetGuessed,
+    hotelTotal,
+    travel,
+    travelTotal,
+    activitiesTotal,
+    dailySpendTotal,
+    total,
+    perPerson,
+    rooms: Number(cost.rooms) || 1,
+  };
 
   if (budget <= 0) {
-    return {
-      budget: 0,
-      hotelTotal,
-      flightTotal,
-      total,
-      remaining: 0,
-      usedPercent: 0,
-      hotelPercent: 0,
-      flightPercent: 0,
-    };
+    return { ...base, budget: 0, remaining: 0, overBy: 0, usedPercent: 0, segments: [] };
   }
 
-  const remaining = Math.max(0, budget - total);
-  const usedPercent = Math.min(100, Math.round((total / budget) * 100));
-  const hotelPercent = Math.min(100, Math.round((hotelTotal / budget) * 100));
-  const flightPercent = Math.min(100 - hotelPercent, Math.round((flightTotal / budget) * 100));
+  // Each part's share of the bar, in order, never filling past 100% together.
+  let left = 100;
+  const segments = [
+    ["hotel", hotelTotal],
+    ["travel", travelTotal],
+    ["activities", activitiesTotal],
+    ["daily", dailySpendTotal],
+  ].map(([key, amount]) => {
+    const percent = Math.min(left, Math.round((amount / budget) * 100));
+    left -= percent;
+    return { key, percent };
+  });
 
   return {
-    budget,
-    hotelTotal,
-    flightTotal,
-    total,
-    remaining,
-    usedPercent,
-    hotelPercent,
-    flightPercent,
+    ...base,
+    remaining: Math.max(0, budget - total),
+    overBy: Math.max(0, total - budget),
+    usedPercent: Math.round((total / budget) * 100),
+    segments,
   };
+}
+
+export function fareRange(option) {
+  if (!option) return "—";
+  const { per_person_low: low, per_person_high: high } = option;
+  return low === high ? formatInr(low) : `${formatInr(low)}–${formatInr(high)}`;
+}
+
+export function stayLabel(nights, rooms) {
+  const nightText = `${nights} ${nights === 1 ? "night" : "nights"}`;
+  return rooms > 1 ? `${nightText} · ${rooms} rooms` : nightText;
+}
+
+export function daysAndNights(plan) {
+  const days = Number(plan?.request?.duration_days);
+  const nights = Number(plan?.nights);
+  const parts = [];
+  if (days > 0) parts.push(`${days} ${days === 1 ? "day" : "days"}`);
+  if (nights > 0) parts.push(`${nights} ${nights === 1 ? "night" : "nights"}`);
+  return parts.join(", ");
 }
 
 // Train and road helpers. Train times are local "YYYY-MM-DDTHH:MM" strings with no time zone,
