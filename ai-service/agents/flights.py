@@ -1,4 +1,5 @@
-from domain.airports import airport_code
+from domain.airports import airport_code, known_code
+from domain.money import format_money
 from graph.state import PlanningState
 from ports.search import FlightQuery, FlightSearchPort, SearchError
 
@@ -12,10 +13,12 @@ def make_flight_node(search: FlightSearchPort):
         if not request.origin:
             return {"flights": [], "notes": [NO_ORIGIN]}
         budget_guessed = "budget" in state.get("assumed_fields", [])
-        origin_code = airport_code(request.origin)
+        origin_code = airport_code(request.origin) or known_code(request.origin_airport)
         first, last = state["route"][0], state["route"][-1]
-        destination_code = airport_code(first.city) or first.airport_code
-        return_code = airport_code(last.city) or last.airport_code
+        single_stop = len(state["route"]) == 1
+        dest_hint = known_code(request.destination_airport) if single_stop else None
+        destination_code = airport_code(first.city) or first.airport_code or dest_hint
+        return_code = airport_code(last.city) or last.airport_code or dest_hint
         # Rule 4: an unknown place is never swapped for another city's airport.
         if not origin_code or not destination_code or not return_code:
             place = (
@@ -25,12 +28,14 @@ def make_flight_node(search: FlightSearchPort):
                 if not destination_code
                 else last.city
             )
+            alt = (
+                " Consider train or road travel."
+                if request.origin_area in (None, "india")
+                else ""
+            )
             return {
                 "flights": [],
-                "notes": [
-                    f"Flights were skipped: no airport is known for {place}. "
-                    "Consider train or road travel."
-                ],
+                "notes": [f"Flights were skipped: no airport is known for {place}.{alt}"],
             }
 
         if len(state["route"]) > 1:
@@ -80,12 +85,14 @@ def make_flight_node(search: FlightSearchPort):
             return {"flights": (fitting or by_price)[:MAX_FLIGHTS]}
         # Over-cap fares are still shown, flagged, so the Traveler can compare them with trains.
         flagged = [f.model_copy(update={"over_budget": True}) for f in by_price[:MAX_FLIGHTS]]
+        cur = request.currency
         return {
             "flights": flagged,
             "notes": [
                 f"Flights cost more than the flight share of your Budget (about "
-                f"₹{caps.flight_search_limit:,} per Traveler; cheapest found "
-                f"₹{by_price[0].price_per_traveler:,.0f}). Compare them with train, bus and car."
+                f"{format_money(caps.flight_search_limit, cur)} per Traveler; cheapest found "
+                f"{format_money(by_price[0].price_per_traveler, cur)}). "
+                "Compare them with train, bus and car."
             ],
         }
 

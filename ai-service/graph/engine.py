@@ -51,6 +51,8 @@ class PlanningEngine:
     def plan(self, request: PlanTripRequest) -> PlanTripResponse:
         state = self._graph.invoke({"conversation": request.conversation, "notes": []})
         if clarification := state.get("clarification"):
+            if (req := state.get("request")) and clarification.currency is None:
+                clarification = clarification.model_copy(update={"currency": req.currency})
             return PlanTripResponse(
                 status="needs_clarification", trip_id=request.trip_id, clarification=clarification
             )

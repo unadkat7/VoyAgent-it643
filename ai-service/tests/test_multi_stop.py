@@ -17,7 +17,7 @@ from tests.test_planning_engine import SUMMARY, TODAY, ask, flight, hotel
 CITIES = [("Paris", "CDG"), ("Brussels", "BRU"), ("Amsterdam", "AMS"), ("Berlin", "BER")]
 STOPS = [RouteStop(city=city, days=2, airport_code=code) for city, code in CITIES]
 LEGS = [
-    StopLeg(from_city=a.city, to_city=b.city, mode="train", est_inr_per_person=1000)
+    StopLeg(from_city=a.city, to_city=b.city, mode="train", est_per_person=1000)
     for a, b in zip(STOPS, STOPS[1:], strict=False)
 ]
 
@@ -213,7 +213,7 @@ def test_leg_names_match_stops_despite_extra_detail():
 
 
 def test_expensive_intercity_legs_trigger_trip_wide_cost_guard():
-    expensive = [leg.model_copy(update={"est_inr_per_person": 100000}) for leg in LEGS]
+    expensive = [leg.model_copy(update={"est_per_person": 100000}) for leg in LEGS]
     engine, _, _ = engine_for(europe(10, 500000), route=RoutePlan(stops=STOPS, legs=expensive))
 
     clarification = ask(engine, "Europe").clarification

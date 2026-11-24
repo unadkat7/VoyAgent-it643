@@ -1,7 +1,6 @@
-from typing import Literal
-
 from pydantic import BaseModel, Field
 
+from domain.money import CurrencyCode
 from schemas.geo import GeoPoint
 from schemas.itinerary import ItineraryDay
 from schemas.recommendations import FlightRecommendation, HotelRecommendation
@@ -20,7 +19,7 @@ class TripSummary(BaseModel):
 class EstimatedCost(BaseModel):
     hotel_total: float
     total: float
-    currency: Literal["INR"] = "INR"
+    currency: CurrencyCode = "INR"
     # The chosen way to get there and back; plans saved before this only had flight_total.
     legs_total: float = 0
     travel_total: float = 0

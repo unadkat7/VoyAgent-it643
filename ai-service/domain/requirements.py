@@ -1,6 +1,7 @@
 from collections.abc import Mapping
 
-from domain.spend import MIN_DAYS, assumed_budget
+from domain.money import trip_currency
+from domain.spend import assumed_budget, min_days
 
 # Rule 1: only the Destination is needed to plan; everything else gets a stated default.
 REQUIRED_FIELDS: tuple[str, ...] = ("destination",)
@@ -23,12 +24,19 @@ def find_missing_fields(trip_request: Mapping[str, object]) -> list[str]:
     return [field for field in REQUIRED_FIELDS if _is_missing(field, trip_request.get(field))]
 
 
-def fill_defaults(trip_request: Mapping[str, object]) -> tuple[dict[str, object], list[str]]:
-    """Defaults for the fields the Traveler left out, and which fields were assumed.
+def fill_defaults(
+    trip_request: Mapping[str, object],
+) -> tuple[dict[str, object], list[str], str | None]:
+    """Defaults for the fields the Traveler left out, assumed fields, and an optional currency Note.
 
     A missing Origin stays empty: there is no sensible guess for where someone lives.
     """
     filled = dict(trip_request)
+    currency, currency_note = trip_currency(
+        filled.get("budget_currency"),  # type: ignore[arg-type]
+        filled.get("origin_country"),  # type: ignore[arg-type]
+    )
+    filled["currency"] = currency
     assumed = [f for f in ASSUMABLE_FIELDS if _is_missing(f, trip_request.get(f))]
     nights = trip_request.get("nights")
     if "duration_days" in assumed and isinstance(nights, int) and nights > 0:
@@ -38,7 +46,7 @@ def fill_defaults(trip_request: Mapping[str, object]) -> tuple[dict[str, object]
     elif "duration_days" in assumed:
         filled["duration_days"] = max(
             DEFAULT_DURATION_DAYS,
-            MIN_DAYS.get(filled.get("destination_area"), 1),
+            min_days(filled.get("destination_area"), filled.get("origin_area")),  # type: ignore[arg-type]
             4 if filled.get("destination_kind") == "multi_country" else 1,
         )
     if "party_size" in assumed:
@@ -49,12 +57,14 @@ def fill_defaults(trip_request: Mapping[str, object]) -> tuple[dict[str, object]
         filled["budget"] = assumed_budget(
             travel_style=filled["travel_style"],
             area=filled.get("destination_area"),
+            origin_area=filled.get("origin_area"),
             days=filled["duration_days"],
             party_size=filled["party_size"],
+            currency=currency,
         )
     if "origin" in assumed:
         filled["origin"] = None
-    return filled, assumed
+    return filled, assumed, currency_note
 
 
 def _is_missing(field: str, value: object) -> bool:

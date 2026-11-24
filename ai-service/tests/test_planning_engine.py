@@ -13,7 +13,14 @@ from schemas.itinerary import Activity, Itinerary, ItineraryDay
 from schemas.plan import TripSummary
 from schemas.recommendations import FlightRecommendation, HotelRecommendation
 from schemas.trip_request import TripRequest
-from tests.fakes import BrokenLLM, FakeGeocoder, FakeLLM, SequenceSearch
+from tests.fakes import (
+    BrokenLLM,
+    FakeGeocoder,
+    FakeLLM,
+    FakePlaces,
+    FakeTimetable,
+    SequenceSearch,
+)
 
 TODAY = date(2026, 11, 22)
 
@@ -65,7 +72,7 @@ def ask(engine: PlanningEngine, *messages: str):
     return engine.plan(PlanTripRequest(trip_id="trip-1", conversation=turns))
 
 
-def make_engine(llm, hotels=None, flights=None, geocoder=None):
+def make_engine(llm, hotels=None, flights=None, geocoder=None, timetable=None, places=None):
     hotel_search = SequenceSearch(*hotels) if hotels is not None else SequenceSearch()
     flight_search = SequenceSearch(*flights) if flights is not None else SequenceSearch()
     return PlanningEngine(
@@ -74,6 +81,8 @@ def make_engine(llm, hotels=None, flights=None, geocoder=None):
         flight_search=flight_search,
         geocoder=geocoder or NoGeocoder(),
         today=lambda: TODAY,
+        timetable=timetable,
+        places=places,
     )
 
 
@@ -429,6 +438,8 @@ def test_us_domestic_trip_plans_in_usd_with_india_only_rail_note():
         llm_for(LA_TO_NY_REQUEST),
         hotels=[[hotel("Midtown Inn", 150, 4.4)]],
         flights=[[flight("Delta", 300)]],
+        timetable=FakeTimetable(),
+        places=FakePlaces(),
     )
 
     response = ask(engine, "LA to NY $1000 budget solo business trip for 2 days")

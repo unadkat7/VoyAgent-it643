@@ -30,6 +30,7 @@ class Clarification(BaseModel):
     question: str
     reason: RejectionReason | None = None
     suggestions: dict[str, int] = Field(default_factory=dict)
+    currency: str | None = None
 
 
 class PlanTripResponse(BaseModel):

@@ -5,7 +5,7 @@ QUESTIONS = {
     "origin": "Where will you be starting from (which city)?",
     "destination": "Where would you like to go?",
     "duration_days": "How many days will the Trip be?",
-    "budget": "What is your total Budget in INR for everyone?",
+    "budget": "What is your total Budget for everyone, and in which currency?",
     "party_size": "How many Travelers are going, including you?",
     "travel_style": "What style of Trip do you want (budget, relaxed, luxury, adventure, family)?",
 }

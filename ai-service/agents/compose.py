@@ -1,3 +1,4 @@
+from domain.money import format_money
 from domain.route_rules import route_label
 from domain.spend import rooms_for
 from graph.state import PlanningState
@@ -26,7 +27,10 @@ def assumption_lines(request: TripRequest, assumed: list[str]) -> list[str]:
         "duration_days": f"{request.duration_days} days, since you didn't say how long.",
         "party_size": f"{request.party_size} travellers, since you didn't say how many.",
         "travel_style": f"A {request.travel_style} pace, since you didn't pick a style.",
-        "budget": f"A budget of about ₹{request.budget:,} for everyone, since you didn't give one.",
+        "budget": (
+            f"A budget of about {format_money(request.budget, request.currency)} for everyone, "
+            "since you didn't give one."
+        ),
     }
     return [lines[field] for field in assumed if field in lines]
 
@@ -96,6 +100,7 @@ def make_compose_node(llm: LLMPort):
             itinerary=itinerary,
             estimated_cost=EstimatedCost(
                 hotel_total=float(cost.hotel_total),
+                currency=cost.currency,
                 legs_total=state.get("legs_total", 0),
                 travel_total=float(cost.travel_total),
                 travel_mode=state.get("travel_mode"),

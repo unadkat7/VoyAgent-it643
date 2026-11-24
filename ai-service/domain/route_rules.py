@@ -1,8 +1,9 @@
 import re
 from itertools import pairwise
 
+from domain.money import format_money, from_inr
 from domain.place_rules import PlaceProblem
-from domain.spend import MIN_DAYS, MIN_RETURN_FLIGHT_PER_TRAVELER, minimum_trip_cost
+from domain.spend import _flight_floor_inr, min_days, minimum_trip_cost
 from schemas.itinerary import ItineraryDay
 from schemas.route import RouteStop, StopLeg
 from schemas.trip_request import TripRequest
@@ -33,13 +34,19 @@ def connect_stops(stops: list[RouteStop], legs: list[StopLeg]) -> tuple[list[Sto
 
 def destination_bases(stops: list[RouteStop], request: TripRequest) -> list[RouteStop]:
     origin = (request.origin or "").strip().casefold()
-    destination = request.destination.casefold()
-    includes_india = request.destination_area in ("india", "south_asia") or "india" in destination
+    origin_area = request.origin_area or "india"
+    home_country = (request.origin_country or "IN").strip().casefold()
+    home_names = {home_country} | ({"india"} if home_country == "in" else set())
+    drop_home = (
+        request.destination_area is not None
+        and request.destination_area != origin_area
+        and not (home_country == "in" and request.destination_area == "south_asia")
+    )
     return [
         s
         for s in stops
         if s.city.strip().casefold() != origin
-        and (includes_india or (s.country or "").strip().casefold() != "india")
+        and (not drop_home or (s.country or "").strip().casefold() not in home_names)
     ]
 
 
@@ -81,17 +88,24 @@ def route_label(route: list[RouteStop]) -> str:
 
 def feasibility_problem(request: TripRequest, assumed_fields=()) -> PlaceProblem | None:
     area, days, party = request.destination_area, request.duration_days, request.party_size
-    floor = minimum_trip_cost(area, days, party)
-    needed = MIN_DAYS.get(area, 1)
+    cur = request.currency
+    floor = minimum_trip_cost(area, days, party, origin_area=request.origin_area, currency=cur)
+    needed = min_days(area, origin_area=request.origin_area)
     if "budget" not in assumed_fields and request.budget < floor:
-        flight = MIN_RETURN_FLIGHT_PER_TRAVELER[area] * party
-        airfare = f" Return flights from India alone are about ₹{flight:,}." if flight else ""
+        flight = from_inr(_flight_floor_inr(area, request.origin_area) * party, cur)
+        if flight:
+            where = f"from {request.origin}" if request.origin else "alone"
+            airfare = f" Return flights {where} are about {format_money(flight, cur)}."
+        else:
+            airfare = ""
         duration = f" Allow at least {needed} days including flights." if days < needed else ""
+        party_text = "1 person" if party == 1 else f"{party} people"
         return PlaceProblem(
             "budget",
-            f"₹{request.budget:,} for {party} people for {days} days in "
-            f"{request.destination} won't work.{airfare} You'd need about ₹{floor:,} "
-            f"for those dates.{duration} Want to raise the budget or pick another place?",
+            f"{format_money(request.budget, cur)} for {party_text} for {days} days in "
+            f"{request.destination} won't work.{airfare} You'd need about "
+            f"{format_money(floor, cur)} for those dates.{duration} "
+            "Want to raise the budget or pick another place?",
             suggestion=floor,
         )
     if days < needed:

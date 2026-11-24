@@ -12,8 +12,6 @@ def make_road_node(places: PlaceFinderPort, router: RouterPort):
     """Origin to Destination by road: a travel option of its own, next to flights and trains."""
 
     def road(state: PlanningState) -> PlanningState:
-        if state["request"].destination_area not in (None, "india"):
-            return {}
         request = state["request"]
         if not request.origin:
             return {}  # the flight step asks for the Origin once

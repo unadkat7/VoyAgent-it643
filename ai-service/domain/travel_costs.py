@@ -1,5 +1,6 @@
 from math import ceil
 
+from domain.money import format_money, from_inr
 from schemas.recommendations import FlightRecommendation
 from schemas.travel import FareRange, TrainFare, TrainOption, TravelFares, TravelOption
 
@@ -14,9 +15,9 @@ def cars_for(party_size: int) -> int:
     return max(1, ceil(party_size / TRAVELERS_PER_CAR))
 
 
-def car_cost(distance_km: float, party_size: int) -> int:
+def car_cost(distance_km: float, party_size: int, currency: str = "INR") -> int:
     """There and back by car: the cost is per car, not per Traveler."""
-    return round(distance_km * 2 * CAR_RUPEES_PER_KM * cars_for(party_size))
+    return from_inr(distance_km * 2 * CAR_RUPEES_PER_KM * cars_for(party_size), currency)
 
 
 def travel_options(
@@ -27,6 +28,7 @@ def travel_options(
     party_size: int,
     trains_out: list[TrainOption] | None = None,
     trains_back: list[TrainOption] | None = None,
+    currency: str = "INR",
 ) -> list[TravelOption]:
     """Every priced way there and back for the whole Travel Party, cheapest first."""
     options: list[TravelOption] = []
@@ -72,12 +74,12 @@ def travel_options(
         if train and not by_train:
             seat = "3AC" if fares.train_ac3 else "Sleeper"
             other = fares.train_sleeper if fares.train_ac3 else None
-            detail = f"Sleeper from ₹{other.low:,} one way" if other else None
+            detail = f"Sleeper from {format_money(other.low, currency)} one way" if other else None
             options.append(_fare_option("train", f"Train · {seat}", train, party_size, detail))
         if fares.bus:
             options.append(_fare_option("bus", "Bus", fares.bus, party_size, None))
     if road_km:
-        total = car_cost(road_km, party_size)
+        total = car_cost(road_km, party_size, currency=currency)
         cars = cars_for(party_size)
         options.append(
             TravelOption(

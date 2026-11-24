@@ -3,6 +3,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 from pydantic.json_schema import SkipJsonSchema
 
+from domain.money import CurrencyCode
 from schemas.geo import GeoPoint
 
 # "live" came from a Provider search; "estimated" was produced by the LLM (an Estimated Cost).
@@ -13,7 +14,7 @@ class HotelRecommendation(BaseModel):
     name: str
     location: str
     price_per_night: float = Field(ge=0)
-    currency: Literal["INR"] = "INR"
+    currency: CurrencyCode = "INR"
     rating: float | None = None
     hotel_class: str | None = None
     booking_url: str | None = None
@@ -34,9 +35,9 @@ class FlightRecommendation(BaseModel):
     arrival_time: str | None = None
     duration: str | None = None
     price_per_traveler: float = Field(
-        ge=0, description="Fare for the requested journey for one Traveler in INR"
+        ge=0, description="Fare for the requested journey for one Traveler in the Trip currency"
     )
-    currency: Literal["INR"] = "INR"
+    currency: CurrencyCode = "INR"
     stops: int = Field(0, ge=0)
     price_source: PriceSource = "estimated"
     # Set by the planner when the fare is over the flight share of the Budget; hidden from the LLM.
