@@ -55,9 +55,7 @@ class SerpApiSearch:
         )
         options = (payload.get("best_flights") or []) + (payload.get("other_flights") or [])
         return [
-            flight
-            for item in options
-            if (flight := _to_flight(item, query.currency)) is not None
+            flight for item in options if (flight := _to_flight(item, query.currency)) is not None
         ]
 
     def _get(self, params: dict[str, Any]) -> dict[str, Any]:

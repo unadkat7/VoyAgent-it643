@@ -29,9 +29,7 @@ def make_flight_node(search: FlightSearchPort):
                 else last.city
             )
             alt = (
-                " Consider train or road travel."
-                if request.origin_area in (None, "india")
-                else ""
+                " Consider train or road travel." if request.origin_area in (None, "india") else ""
             )
             return {
                 "flights": [],
