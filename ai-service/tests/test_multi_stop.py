@@ -56,7 +56,7 @@ def europe(days=None, budget=None):
     )
 
 
-def engine_for(request, edit=None):
+def engine_for(request, edit=None, route=None):
     def itinerary(_):
         return Itinerary(
             days=[
@@ -68,7 +68,7 @@ def engine_for(request, edit=None):
     llm = FakeLLM(
         {
             TripRequest: request,
-            RoutePlan: RoutePlan(stops=STOPS, legs=LEGS),
+            RoutePlan: route or RoutePlan(stops=STOPS, legs=LEGS),
             Itinerary: itinerary,
             TripSummary: SUMMARY,
             PlanEdit: edit or PlanEdit(),
@@ -158,3 +158,28 @@ def test_chat_preserves_or_replans_route_for_the_requested_change(change_days):
     else:
         assert result.plan.stops == plan.stops
         assert len(stays.queries) == 4
+
+
+@pytest.mark.parametrize(("origin", "transit"), [("Mumbai", "Mumbai"), (None, "Delhi")])
+def test_overseas_route_uses_only_destination_bases(origin, transit):
+    request = europe(10, 500000).model_copy(update={"origin": origin})
+    proposed = RoutePlan(
+        stops=[RouteStop(city=transit, country="India", days=2), *STOPS], legs=LEGS
+    )
+    engine, stays, _ = engine_for(request, route=proposed)
+
+    plan = ask(engine, "Europe").plan
+
+    assert [s.city for s in plan.stops] == [s.city for s in STOPS]
+    assert [q.destination for q in stays.queries] == [s.city for s in STOPS]
+    assert sum(s.days for s in plan.stops) == 10
+
+
+def test_expensive_intercity_legs_trigger_trip_wide_cost_guard():
+    expensive = [leg.model_copy(update={"est_inr_per_person": 100000}) for leg in LEGS]
+    engine, _, _ = engine_for(europe(10, 500000), route=RoutePlan(stops=STOPS, legs=expensive))
+
+    clarification = ask(engine, "Europe").clarification
+
+    assert clarification.missing_fields == ["budget"]
+    assert "stay and travel" in clarification.question

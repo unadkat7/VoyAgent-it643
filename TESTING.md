@@ -1,6 +1,6 @@
 # Testing
 
-Terms follow [UBIQUITOUS_LANGUAGE.md](UBIQUITOUS_LANGUAGE.md), and the six product rules are the ones in [DESIGN.md](DESIGN.md). Each rule's test was written before its implementation (red commit, then green commit — for example `126bc19` → `1bc0180`, `9f4c17e` → `d647d01`). Citations use `file:line` (`text on that line`), and CI verifies every one with `scripts/check_doc_refs.py`.
+Terms follow [UBIQUITOUS_LANGUAGE.md](UBIQUITOUS_LANGUAGE.md), and the eight product rules are the ones in [DESIGN.md](DESIGN.md). Each rule's test was written before its implementation (red commit, then green commit — for example `126bc19` → `1bc0180`, `9f4c17e` → `d647d01`). Citations use `file:line` (`text on that line`), and CI verifies every one with `scripts/check_doc_refs.py`.
 
 ## Rule table
 
@@ -8,12 +8,12 @@ Terms follow [UBIQUITOUS_LANGUAGE.md](UBIQUITOUS_LANGUAGE.md), and the six produ
 |---|---|---|
 | 1. Plan first, ask after | `ai-service/tests/domain/test_requirements.py:15` (`test_only_the_destination_is_required`), `ai-service/tests/test_planning_engine.py:83` (`test_request_without_a_destination_asks_only_where_to_go`) | Nothing now. `find_missing_fields` and `fill_defaults` are pure, and the LLM sits behind `ai-service/ports/llm.py:12` (`LLMPort`), filled with `FakeLLM` in `ai-service/graph/engine.py:16` (`PlanningEngine`). If the LLM decided missing fields, testing would require a paid, non-deterministic Provider call. |
 | 2. Budget Caps | `ai-service/tests/domain/test_budget.py:11` (`test_hotel_cap_on_and_off_points`), `ai-service/tests/domain/test_budget.py:30` (`test_flight_cap_on_and_off_points_include_grace`), `ai-service/tests/test_planning_engine.py:139` (`test_complete_request_is_planned_with_recommendations_inside_the_caps`) | Nothing now. The caps are pure arithmetic tested on their on-points and off-points, and search sits behind `ai-service/ports/search.py:32` (`HotelSearchPort`) and `ai-service/ports/search.py:36` (`FlightSearchPort`). If filtering lived inside the search adapter next to HTTP, there would be no seam to test it without the network. |
-| 3. Planned only when a stay fits the Budget | `ai-service/tests/test_planning_engine.py:288` (`test_when_no_hotel_fits_the_nightly_cap_traveler_is_asked_to_raise_budget`), `ai-service/tests/domain/test_feasibility.py:18` (`test_plan_is_feasible_only_when_total_fits_budget`) | Nothing for the "no stay fits" path. The second check — that the Estimated Cost fits the Budget — is unit-tested only. Through the Planning Engine it cannot fail today because the Budget Caps sum to less than 100% of the Budget (see "Structure and coverage" below). |
+| 3. Planned only when a stay fits the Budget | `ai-service/tests/test_planning_engine.py:288` (`test_when_no_hotel_fits_the_nightly_cap_traveler_is_asked_to_raise_budget`), `ai-service/tests/domain/test_feasibility.py:18` (`test_plan_is_feasible_only_when_total_fits_budget`) | Per-stop stays, travel and transfers are checked together. Expensive transfers exercise the total-cost guard. |
 | 4. No silent Destination swap | `ai-service/tests/domain/test_airports.py:26` (`test_unknown_place_has_no_airport_instead_of_a_fallback`), `ai-service/tests/test_planning_engine.py:322` (`test_destination_without_known_airport_skips_flights_instead_of_guessing`) | Nothing now. `airport_code` is a pure lookup, and the engine test passes an empty `SequenceSearch` for flights so any unintended flight search fails the test immediately. If airport resolution lived inside the live flight adapter, a silent fallback could only be caught by spending a live search. |
 | 5. Only the owner can use a Trip | `backend/tests/domain/trip.test.js:59` (`is true only for the account`), `backend/tests/api/trips.test.js:384` (`forbids another account`), `backend/tests/api/trips.test.js:91` (`refuses to re-plan a planned Trip`), `backend/tests/api/trips.test.js:226` (`Chat about a planned Trip`) | Nothing now. Ownership and status rules need a database and a signed-in User session. `backend/tests/setup.js:9` (`MongoMemoryServer.create`) supplies an isolated in-memory MongoDB, `supertest` carries the session cookie, and the Planning Engine HTTP call is stubbed at `backend/tests/api/trips.test.js:31` (`function aiAnswers`). |
 | 6. Trains and roads come from data, and a place is never guessed | `ai-service/tests/domain/test_rail.py:49` (`test_direct_train_on_a_day_it_runs`), `ai-service/tests/domain/test_places.py:41` (`test_two_equally_known_places_far_apart_are_ambiguous`), `ai-service/tests/test_travel.py:152` (`test_place_without_a_station_gets_trains_to_the_best_railhead_and_a_road_leg`), `ai-service/tests/test_travel.py:267` (`test_ambiguous_place_is_never_guessed`) | Nothing now. The timetable, place finder and router sit behind ports filled with `ai-service/tests/fakes.py:74` (`FakeTimetable`), `ai-service/tests/fakes.py:87` (`FakePlaces`) and `ai-service/tests/fakes.py:102` (`FakeRouter`). The place-picking thresholds are tested on real Nominatim answers for Badrinath, Kedarnath, Udaipur and Haridwar. If train search read the live feed or OSRM directly, every test would need the network. |
 
-**How many of the six rules are tested:** 6 of 6, each one directly at the domain level and end-to-end through the Planning Engine or backend HTTP API. Rule 3's total-cost guard is the one partial case: it is unit-tested only.
+All eight rules have automated coverage.
 
 **One test we would call weak, and why:** `ai-service/tests/adapters/test_groq_llm.py:34` (`test_request_uses_bearer_key_structured_output_and_schema_in_system_prompt`). It has poor resistance to refactoring: it asserts on the exact wire JSON body, where the schema text sits in `messages[0]`, and message ordering. Those are implementation details of the HTTP adapter rather than observable behaviour a Traveler sees, so a harmless refactor (for example moving schema guidance out of the system prompt once Groq no longer needs it) triggers a false positive while the product still works. It stays only because it is the single check pinning our side of Groq's wire contract.
 
@@ -25,13 +25,13 @@ Regional floors, route allocation, outbound and return flights, and per-stop cos
 
 - **Arrange–Act–Assert (AAA):** Tests follow AAA with minimal, boring inputs and one Act per test (exceptions are listed under "Smells found in our own suite" below).
 - **Coverage vs. verification:** Coverage is useful only as a negative signal — low coverage flags untested logic, while high coverage proves nothing about assertion strength. Line-and-branch coverage of the ai-service core (`domain/`, `agents/`, `graph/`) is 95% (measured once with `pytest-cov`) and is intentionally **not** a CI gate.
-- **What coverage honestly exposed:** `ai-service/agents/budget_check.py:56` (`if not budget_guessed and not is_within_budget(cost, request.budget):`) executes on every engine run, but its failing branch (lines 48–53) is never taken through the Planning Engine because 50% (Hotel) + 40.25% (Flight with grace) < 100%. The guard is covered directly by `ai-service/tests/domain/test_feasibility.py:18` (`test_plan_is_feasible_only_when_total_fits_budget`) and exists to protect against a future change to those share constants.
+- The trip-wide cost guard is exercised with expensive transfers at `ai-service/tests/test_multi_stop.py:178` (`test_expensive_intercity_legs_trigger_trip_wide_cost_guard`).
 
 ## How test cases were derived
 
 Depth follows risk: money math, required-field gating, and User ownership are tested thoroughly; static display code is kept light.
 
-- **Specification tests:** Derived from the six rules and HTTP contracts, independent of internal steps — e.g. `ai-service/tests/domain/test_requirements.py:15` (`test_only_the_destination_is_required`), `ai-service/tests/test_planning_engine.py:139` (`test_complete_request_is_planned_with_recommendations_inside_the_caps`), and `backend/tests/api/trips.test.js:384` (`forbids another account`).
+- **Specification tests:** Derived from the eight rules and HTTP contracts, independent of internal steps — e.g. `ai-service/tests/domain/test_requirements.py:15` (`test_only_the_destination_is_required`), `ai-service/tests/test_planning_engine.py:139` (`test_complete_request_is_planned_with_recommendations_inside_the_caps`), and `backend/tests/api/trips.test.js:384` (`forbids another account`).
 - **Boundary tests (partitions, on-points and off-points):**
   - Hotel cap `1000` (on-point) vs `1000.5` (off-point) at `ai-service/tests/domain/test_budget.py:11` (`test_hotel_cap_on_and_off_points`).
   - Flight cap with 15% grace `4025` (on-point) vs `4025.01` (off-point) at `ai-service/tests/domain/test_budget.py:30` (`test_flight_cap_on_and_off_points_include_grace`).
@@ -122,9 +122,9 @@ Account-scoped rejection tests at `backend/tests/api/trips.test.js:171` (`blocks
 ## Running the tests
 
 ```bash
-cd ai-service && uv run pytest     # 149 tests
-cd backend && npm test             # 96 tests
-cd frontend && npm test            # 43 tests
+cd ai-service && uv run pytest
+cd backend && npm test
+cd frontend && npm test
 python scripts/check_doc_refs.py   # checks every file:line citation in DESIGN.md, TESTING.md, UBIQUITOUS_LANGUAGE.md
 ```
 

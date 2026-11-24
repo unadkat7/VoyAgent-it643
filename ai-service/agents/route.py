@@ -3,13 +3,16 @@ import re
 from adapters.no_geocoder import NoGeocoder
 from agents.check_places import ask_about
 from domain.place_rules import PlaceProblem
-from domain.route_rules import feasibility_problem, fit_stops
+from domain.route_rules import destination_bases, feasibility_problem, fit_stops
 from graph.state import PlanningState
 from ports.geocoder import GeocodeError, GeocoderPort
 from ports.llm import LLMPort
 from schemas.route import RoutePlan, RouteStop
 
 ROUTE_SYSTEM = """Pick an ordered route of base cities realistic for travellers from India.
+Use only overnight bases inside the requested destination. Never include the origin, an invented
+Indian departure city, transit airports or the final journey home as stops. Give each country.
+Prefer three or four cities for ten days.
 Minimize border crossings. Choose cities linked by inexpensive trains or flights. Allow at least
 two days per city, and use the given total days. Include each city's main airport IATA code.
 For each consecutive pair give the usual mode and rough INR cost per person, using the same
@@ -27,7 +30,7 @@ def make_route_node(llm: LLMPort, geocoder: GeocoderPort):
                 "legs": [],
             }
         proposed = llm.generate(RoutePlan, system=ROUTE_SYSTEM, prompt=request.model_dump_json())
-        stops, notes = fit_stops(proposed.stops, request.duration_days)
+        stops, notes = fit_stops(destination_bases(proposed.stops, request), request.duration_days)
         known = []
         for stop in stops:
             try:
