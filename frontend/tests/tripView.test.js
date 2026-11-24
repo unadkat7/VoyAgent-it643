@@ -4,9 +4,10 @@ import {
   chosenTravel,
   composeBriefPrompt,
   fareRange,
-  formatInr,
+  formatMoney,
   mapDays,
   mapPoints,
+  planCurrency,
   statusInfo,
   tripLink,
   tripRouteLabel,
@@ -48,18 +49,26 @@ describe("mapDays", () => {
   });
 });
 
-describe("formatInr", () => {
+describe("formatMoney", () => {
   it.each([
-    [17500, "₹17,500"],
-    [1234567, "₹12,34,567"],
-    [0, "₹0"],
-    [2499.6, "₹2,500"],
-  ])("formats %s as %s", (amount, expected) => {
-    expect(formatInr(amount)).toBe(expected);
+    [1500, "USD", "$1,500"],
+    [17500, "INR", "₹17,500"],
+    [1234567, "INR", "₹12,34,567"],
+    [0, "INR", "₹0"],
+    [2499.6, "INR", "₹2,500"],
+  ])("formats %s %s as %s", (amount, currency, expected) => {
+    expect(formatMoney(amount, currency)).toBe(expected);
   });
 
   it.each([null, undefined, Number.NaN])("shows a dash for a missing amount (%s)", (amount) => {
-    expect(formatInr(amount)).toBe("—");
+    expect(formatMoney(amount, "USD")).toBe("—");
+  });
+});
+
+describe("planCurrency", () => {
+  it("reads the plan's currency and defaults to INR", () => {
+    expect(planCurrency({ estimated_cost: { currency: "EUR" } })).toBe("EUR");
+    expect(planCurrency({})).toBe("INR");
   });
 });
 
