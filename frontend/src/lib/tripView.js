@@ -55,15 +55,11 @@ export function tripLink(trip) {
 const hasPoint = (coordinates) =>
   Number.isFinite(coordinates?.lat) && Number.isFinite(coordinates?.lng);
 
-// Day views frame activities only. The whole-trip view includes base cities and stays.
+// Day views frame activities only. The whole-trip view also includes each city's stays.
 export function mapPoints(plan, day) {
   const points = [];
   const stops = day === "all" ? planStops(plan) : [];
   stops.forEach((stop, index) => {
-    if (hasPoint(stop.coordinates)) {
-      points.push({ key: `destination-${index}`, kind: "destination",
-        title: stop.city ?? "Destination", ...stop.coordinates });
-    }
     for (const [hotelIndex, hotel] of (stop.hotels ?? []).entries()) {
       if (!hasPoint(hotel.coordinates)) continue;
       points.push({ key: `hotel-${index}-${hotelIndex}`, kind: "hotel", title: hotel.name,

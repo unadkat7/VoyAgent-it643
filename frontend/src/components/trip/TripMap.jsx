@@ -54,7 +54,6 @@ const BED_SVG =
 const PIN_STYLE = {
   activity: "background:#ce532d;color:#fff;border-radius:9999px;border:2px solid #fff",
   hotel: "background:#181411;color:#fff;border-radius:9px;border:2px solid #fff",
-  destination: "background:#fff;color:#ce532d;border:2.5px solid #ce532d;border-radius:9999px",
 };
 
 const FLOATING_BUTTON =
@@ -62,7 +61,7 @@ const FLOATING_BUTTON =
 
 // Leaflet's default marker images break under bundlers, so pins are plain HTML.
 function pinIcon(point, focused) {
-  const label = point.kind === "activity" ? point.order : point.kind === "hotel" ? BED_SVG : "★";
+  const label = point.kind === "activity" ? point.order : BED_SVG;
   const size = focused ? 36 : 30;
   const pulseClass = focused ? "voyagent-pin-pulse" : "";
   const shadow = focused
@@ -271,7 +270,6 @@ export default function TripMap({
   const tileStyle = MAP_STYLES[mapStyle] ?? MAP_STYLES.atlas;
   const activityCount = points.filter((p) => p.kind === "activity").length;
   const stayCount = points.filter((p) => p.kind === "hotel").length;
-  const quickStops = points.filter((p) => p.kind !== "destination");
   const pinSummary = `${activityCount} ${activityCount === 1 ? "activity" : "activities"}${
     stayCount > 0 ? ` · ${stayCount} ${stayCount === 1 ? "stay" : "stays"}` : ""
   }`;
@@ -449,16 +447,12 @@ export default function TripMap({
                       className={`inline-block rounded-full px-2 py-0.5 font-mono text-label font-semibold uppercase tracking-wider ${
                         point.kind === "hotel"
                           ? "bg-ink text-bg"
-                          : point.kind === "activity"
-                          ? "bg-primary-light text-primary-hover"
-                          : "bg-bg-subtle text-ink-soft"
+                          : "bg-primary-light text-primary-hover"
                       }`}
                     >
                       {point.kind === "hotel"
                         ? "Stay"
-                        : point.kind === "activity"
-                        ? `Stop #${point.order}`
-                        : "Destination"}
+                        : `Stop #${point.order}`}
                     </span>
                     <p className="text-sm font-semibold leading-snug text-ink">{point.title}</p>
                     {point.detail && <p className="text-sm text-muted">{point.detail}</p>}
@@ -526,18 +520,14 @@ export default function TripMap({
       </div>
 
       {/* Wide screens: places strip and layer legend under the map */}
-      {!phone && (showQuickStrip || expanded) && quickStops.length > 0 && (
+      {!phone && (showQuickStrip || expanded) && points.length > 0 && (
         <div className="flex items-center gap-2 overflow-x-auto pb-1" aria-label="Jump to pinned place">
-          {quickStops.map(placeButton)}
+          {points.map(placeButton)}
         </div>
       )}
       {!phone && (
         <div className="flex flex-wrap items-center gap-1 rounded-xl border border-border bg-surface px-2">
           {layerToggles}
-          <span className="flex min-h-tap items-center gap-2 px-3 text-sm text-muted">
-            <span className="size-3 rounded-full border-2 border-primary bg-surface" aria-hidden />
-            Destination
-          </span>
         </div>
       )}
 
@@ -552,10 +542,10 @@ export default function TripMap({
               <p className="mb-1 text-sm font-semibold text-ink-soft">Show</p>
               <div className="-mx-3 flex flex-wrap">{layerToggles}</div>
             </div>
-            {quickStops.length > 0 && (
+            {points.length > 0 && (
               <div>
                 <p className="mb-2 text-sm font-semibold text-ink-soft">Places</p>
-                <div className="flex flex-col gap-2">{quickStops.map(placeButton)}</div>
+                <div className="flex flex-col gap-2">{points.map(placeButton)}</div>
               </div>
             )}
           </div>
