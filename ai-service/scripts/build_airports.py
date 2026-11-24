@@ -14,7 +14,6 @@ from pathlib import Path
 SOURCE = "https://ourairports.com/data/"
 DEFAULT_OUT = Path(__file__).resolve().parent.parent / "data" / "airports.json"
 SIZE_RANK = {"large_airport": 0, "medium_airport": 1}
-HOME_COUNTRY = "IN"
 
 
 def _city_names(municipality: str) -> set[str]:
@@ -45,11 +44,12 @@ def build(csv_path: Path, out: Path) -> dict:
 
     airports, ambiguous = {}, 0
     for city, by_country in sorted(found.items()):
-        # A name shared across countries is only trusted for India; otherwise it would be a guess.
+        # Keep a shared city name only when one large airport beats smaller rivals.
+        large = [c for c in by_country.values() if c[0] == 0]
         if len(by_country) == 1:
             airports[city] = next(iter(by_country.values()))[2]
-        elif HOME_COUNTRY in by_country:
-            airports[city] = by_country[HOME_COUNTRY][2]
+        elif len(large) == 1:
+            airports[city] = large[0][2]
         else:
             ambiguous += 1
     data = {"source": SOURCE, "airports": airports}

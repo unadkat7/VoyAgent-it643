@@ -38,7 +38,7 @@ class NominatimGeocoder:
         self._settlements: dict[str, list[PlaceMatch]] = {}
 
     def find_settlements(self, name: str) -> list[PlaceMatch]:
-        """Settlements (towns, cities, regions) in India only, so a temple or shop can't match."""
+        """Settlements (towns, cities, regions) worldwide, so a temple or shop can't match."""
         with self._lock:
             if name not in self._settlements:
                 self._wait_for_turn()
@@ -53,7 +53,6 @@ class NominatimGeocoder:
                     "q": name,
                     "format": "jsonv2",
                     "limit": MAX_SETTLEMENTS,
-                    "countrycodes": "in",
                     "featureType": "settlement",
                 },
                 headers={"User-Agent": USER_AGENT},

@@ -10,11 +10,12 @@ class SerpApiWebSearch:
     def __init__(self, client: SerpApiClient):
         self._client = client
 
-    def search(self, query: str) -> list[WebResult]:
+    def search(self, query: str, *, gl: str | None = None) -> list[WebResult]:
+        params = {"engine": "google", "q": query, "hl": "en"}
+        if gl:
+            params["gl"] = gl
         try:
-            payload = self._client.get(
-                {"engine": "google", "q": query, "gl": "in", "hl": "en"}, feature="web"
-            )
+            payload = self._client.get(params, feature="web")
         except SerpApiError as error:
             raise WebSearchError(str(error)) from error
         results = [
