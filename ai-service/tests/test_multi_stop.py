@@ -6,11 +6,12 @@ from domain.route_rules import fit_stops
 from graph.engine import PlanningEngine
 from schemas.api import ConversationTurn, EditPlanRequest
 from schemas.edit import PlanEdit
+from schemas.geo import GeoPoint
 from schemas.itinerary import Itinerary, ItineraryDay
 from schemas.plan import TripSummary
 from schemas.route import RoutePlan, RouteStop, StopLeg
 from schemas.trip_request import TripRequest
-from tests.fakes import FakeLLM, SequenceSearch
+from tests.fakes import FakeGeocoder, FakeLLM, SequenceSearch
 from tests.test_planning_engine import SUMMARY, TODAY, ask, flight, hotel
 
 CITIES = [("Paris", "CDG"), ("Brussels", "BRU"), ("Amsterdam", "AMS"), ("Berlin", "BER")]
@@ -56,7 +57,7 @@ def europe(days=None, budget=None):
     )
 
 
-def engine_for(request, edit=None, route=None):
+def engine_for(request, edit=None, route=None, geocoder=None):
     def itinerary(_):
         return Itinerary(
             days=[
@@ -77,7 +78,11 @@ def engine_for(request, edit=None, route=None):
     stays = RecordingSearch(*[[hotel(s.city, 2000, 4)] for s in STOPS] * 2)
     air = RecordingSearch(*[[flight("Air", 20000)]] * 4)
     engine = PlanningEngine(
-        llm=llm, hotel_search=stays, flight_search=air, geocoder=NoGeocoder(), today=lambda: TODAY
+        llm=llm,
+        hotel_search=stays,
+        flight_search=air,
+        geocoder=geocoder or NoGeocoder(),
+        today=lambda: TODAY,
     )
     return engine, stays, air
 
@@ -173,6 +178,31 @@ def test_overseas_route_uses_only_destination_bases(origin, transit):
     assert [s.city for s in plan.stops] == [s.city for s in STOPS]
     assert [q.destination for q in stays.queries] == [s.city for s in STOPS]
     assert sum(s.days for s in plan.stops) == 10
+
+
+def test_city_missing_from_the_map_is_dropped_without_refusing_the_route():
+    known = {name: GeoPoint(lat=50, lng=5) for name in ["Mumbai", "Paris", "Amsterdam", "Berlin"]}
+    engine, _, _ = engine_for(europe(10, 500000), geocoder=FakeGeocoder(known))
+
+    plan = ask(engine, "Europe").plan
+
+    assert [s.city for s in plan.stops] == ["Paris", "Amsterdam", "Berlin"]
+    assert [(leg.from_city, leg.to_city) for leg in plan.legs] == [("Amsterdam", "Berlin")]
+    assert any("Brussels" in note for note in plan.notes)
+    assert any("Paris to Amsterdam" in note for note in plan.notes)
+
+
+def test_leg_names_match_stops_despite_extra_detail():
+    renamed = [
+        leg.model_copy(update={"from_city": f"{leg.from_city} (city centre)"}) for leg in LEGS
+    ]
+    engine, _, _ = engine_for(europe(10, 500000), route=RoutePlan(stops=STOPS, legs=renamed))
+
+    plan = ask(engine, "Europe").plan
+
+    assert [(leg.from_city, leg.to_city) for leg in plan.legs] == [
+        (leg.from_city, leg.to_city) for leg in LEGS
+    ]
 
 
 def test_expensive_intercity_legs_trigger_trip_wide_cost_guard():
