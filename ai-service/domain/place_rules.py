@@ -27,6 +27,7 @@ class PlaceProblem:
     field: str
     question: str
     reason: RejectionReason | None = None
+    suggestion: int | None = None
 
 
 def kind_problem(field, name, kind, area) -> PlaceProblem | None:

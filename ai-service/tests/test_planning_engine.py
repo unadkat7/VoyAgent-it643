@@ -299,6 +299,21 @@ def test_when_no_hotel_fits_the_nightly_cap_traveler_is_asked_to_raise_budget():
     assert "7,500" in response.clarification.question
 
 
+def test_when_stay_and_travel_exceed_budget_clarification_suggests_the_needed_budget():
+    engine = make_engine(
+        llm_for(GOA_REQUEST),
+        hotels=[[hotel("Sea View", 6_000, 4.5)]],
+        flights=[[flight("Air India", 20_000)]],
+    )
+
+    response = ask(engine, "plan it")
+
+    assert response.status == "needs_clarification"
+    assert response.clarification.missing_fields == ["budget"]
+    assert "58,000" in response.clarification.question
+    assert response.clarification.suggestions["budget"] >= 58_000
+
+
 def test_flights_over_the_flight_share_are_shown_flagged_not_dropped():
     engine = make_engine(
         llm_for(GOA_REQUEST),  # flight cap 8,050 per Traveler

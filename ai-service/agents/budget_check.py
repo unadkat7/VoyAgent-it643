@@ -1,3 +1,5 @@
+from math import ceil
+
 from langgraph.graph import END
 
 from domain.feasibility import estimate_trip_cost, is_within_budget
@@ -61,7 +63,13 @@ def budget_check(state: PlanningState) -> PlanningState:
             f"which is over your ₹{request.budget:,} Budget. Could you raise the Budget or "
             "shorten the Trip?"
         )
-        return {"clarification": Clarification(missing_fields=["budget"], question=question)}
+        return {
+            "clarification": Clarification(
+                missing_fields=["budget"],
+                question=question,
+                suggestions={"budget": ceil(cost.stay_and_travel)},
+            )
+        }
     return {
         "legs_total": legs_total,
         "cost": cost,

@@ -88,14 +88,21 @@ def engine_for(request, edit=None, route=None, geocoder=None):
 
 
 @pytest.mark.parametrize(
-    ("request_days", "budget", "field"), [(3, 36000, "budget"), (2, None, "duration_days")]
+    ("request_days", "budget", "field", "expected"),
+    [
+        (3, 36000, "budget", minimum_trip_cost("europe", 3, 2)),
+        (2, None, "duration_days", 5),
+    ],
 )
-def test_infeasible_europe_requires_clarification_before_search(request_days, budget, field):
+def test_infeasible_europe_requires_clarification_before_search(
+    request_days, budget, field, expected
+):
     engine, stays, air = engine_for(europe(request_days, budget))
 
     clarification = ask(engine, "Europe").clarification
 
     assert clarification.missing_fields == [field]
+    assert clarification.suggestions == {field: expected}
     assert clarification.reason is None
     assert not stays.queries and not air.queries
     if budget:

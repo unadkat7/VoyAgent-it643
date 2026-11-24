@@ -29,6 +29,7 @@ class Clarification(BaseModel):
     missing_fields: list[str]
     question: str
     reason: RejectionReason | None = None
+    suggestions: dict[str, int] = Field(default_factory=dict)
 
 
 class PlanTripResponse(BaseModel):

@@ -92,12 +92,14 @@ def feasibility_problem(request: TripRequest, assumed_fields=()) -> PlaceProblem
             f"₹{request.budget:,} for {party} people for {days} days in "
             f"{request.destination} won't work.{airfare} You'd need about ₹{floor:,} "
             f"for those dates.{duration} Want to raise the budget or pick another place?",
+            suggestion=floor,
         )
     if days < needed:
         return PlaceProblem(
             "duration_days",
             f"{request.destination} needs at least {needed} days "
             "including flights. How many days can you do?",
+            suggestion=needed,
         )
     return None
 
