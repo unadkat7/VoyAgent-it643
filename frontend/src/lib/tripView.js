@@ -67,7 +67,17 @@ export function mapPoints(plan, day) {
     }
   });
   for (const itineraryDay of plan?.itinerary ?? []) {
-    if (day !== "all" && itineraryDay.day !== day) continue;
+    if (day === "all") {
+      const first = itineraryDay.activities.find((activity) => hasPoint(activity.coordinates));
+      if (first) {
+        points.push({
+          key: `day-${itineraryDay.day}`, kind: "day", day: itineraryDay.day,
+          title: `Day ${itineraryDay.day}`, detail: itineraryDay.title, ...first.coordinates,
+        });
+      }
+      continue;
+    }
+    if (itineraryDay.day !== day) continue;
     itineraryDay.activities.forEach((activity, index) => {
       if (!hasPoint(activity.coordinates)) return;
       points.push({
