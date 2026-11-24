@@ -89,12 +89,20 @@ def test_web_fares_ground_the_flight_estimate():
         prompts.append(prompt)
         return FlightRecommendations(flights=[])
 
-    web = FakeWeb([WebResult(title="Fares", url="https://f.example", content="From ₹7,200")])
+    web = FakeWeb([WebResult(title="Fares", url="https://f.example", content="From $300")])
+    usd_flight = FlightQuery(
+        origin_airport="LAX",
+        destination_airport="JFK",
+        outbound_date=date(2026, 12, 10),
+        return_date=date(2026, 12, 12),
+        max_price_per_traveler=400,
+        currency="USD",
+    )
 
-    EstimateSearch(FakeLLM({FlightRecommendations: answer}), web).search_flights(FLIGHT_QUERY)
+    EstimateSearch(FakeLLM({FlightRecommendations: answer}), web).search_flights(usd_flight)
 
-    assert web.queries == ["DEL to KUU round trip flight price December 2026 INR"]
-    assert "From ₹7,200" in prompts[0]
+    assert web.queries == ["LAX to JFK round trip flight price December 2026 USD"]
+    assert "From $300" in prompts[0]
 
 
 def test_failed_web_search_still_estimates_flights():

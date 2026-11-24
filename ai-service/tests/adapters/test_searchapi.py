@@ -77,15 +77,26 @@ def make_search() -> SearchApiSearch:
 @respx.mock
 def test_hotels_are_mapped_to_live_recommendations_and_unpriced_ones_skipped():
     respx.get(URL).respond(200, json=HOTELS_PAYLOAD)
+    query = HotelQuery(
+        destination="New York",
+        check_in=date(2026, 12, 10),
+        check_out=date(2026, 12, 13),
+        adults=1,
+        max_price_per_night=250,
+        travel_style="business",
+        accommodation_type=None,
+        currency="USD",
+        country="us",
+    )
 
-    hotels = make_search().search_hotels(HOTEL_QUERY)
+    hotels = make_search().search_hotels(query)
 
     assert len(hotels) == 1
     hotel = hotels[0]
     assert hotel.name == "Sea Breeze Resort"
     assert hotel.location == "Calangute Beach"
     assert hotel.price_per_night == 3200
-    assert hotel.currency == "INR"
+    assert hotel.currency == "USD"
     assert hotel.rating == 4.3
     assert hotel.booking_url == "https://hotels.example/sea-breeze"
     assert hotel.image_url == "https://img.example/1.jpg"
@@ -102,10 +113,21 @@ def test_hotel_without_gps_has_no_coordinates():
 
 
 @respx.mock
-def test_hotel_request_asks_for_inr_prices_without_a_price_cap():
+def test_hotel_request_asks_for_trip_currency_and_region_without_a_price_cap():
     route = respx.get(URL).respond(200, json={"properties": []})
+    query = HotelQuery(
+        destination="Goa",
+        check_in=date(2026, 12, 10),
+        check_out=date(2026, 12, 13),
+        adults=2,
+        max_price_per_night=4000,
+        travel_style="relaxed",
+        accommodation_type=None,
+        currency="USD",
+        country="us",
+    )
 
-    make_search().search_hotels(HOTEL_QUERY)
+    make_search().search_hotels(query)
 
     params = route.calls.last.request.url.params
     assert route.calls.last.request.headers["authorization"] == "Bearer search-key"
@@ -113,7 +135,8 @@ def test_hotel_request_asks_for_inr_prices_without_a_price_cap():
     assert "Goa" in params["q"]
     assert params["check_in_date"] == "2026-12-10"
     assert params["check_out_date"] == "2026-12-13"
-    assert params["currency"] == "INR"
+    assert params["currency"] == "USD"
+    assert params["gl"] == "us"
     # No cap at the Provider: the planner must see over-budget results to say "raise the Budget".
     assert "price_max" not in params
 
@@ -137,9 +160,18 @@ def test_flights_from_both_lists_are_mapped_with_stops_and_duration():
 
 @respx.mock
 def test_flight_request_prices_one_traveler_round_trip():
-    route = respx.get(URL).respond(200, json={})
+    route = respx.get(URL).respond(200, json=FLIGHTS_PAYLOAD)
+    query = FlightQuery(
+        origin_airport="AMD",
+        destination_airport="GOI",
+        outbound_date=date(2026, 12, 10),
+        return_date=date(2026, 12, 13),
+        max_price_per_traveler=6000,
+        currency="USD",
+        country="us",
+    )
 
-    make_search().search_flights(FLIGHT_QUERY)
+    flights = make_search().search_flights(query)
 
     params = route.calls.last.request.url.params
     assert params["engine"] == "google_flights"
@@ -149,7 +181,10 @@ def test_flight_request_prices_one_traveler_round_trip():
     assert params["return_date"] == "2026-12-13"
     assert params["flight_type"] == "round_trip"
     assert params["adults"] == "1"
+    assert params["currency"] == "USD"
+    assert params["gl"] == "us"
     assert "max_price" not in params
+    assert all(f.currency == "USD" for f in flights)
 
 
 @pytest.mark.parametrize("status", [401, 429, 500, 503])
