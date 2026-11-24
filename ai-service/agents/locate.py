@@ -2,12 +2,15 @@ from collections.abc import Callable
 
 from graph.state import PlanningState
 from ports.geocoder import GeocodeError, GeocoderPort
+from ports.place_details import PlaceDetailsError, PlaceDetailsPort
 from schemas.geo import GeoPoint, Region
 from schemas.itinerary import ItineraryDay
 from schemas.recommendations import HotelRecommendation
 
 # Nominatim allows one request a second, so this bounds the extra planning time.
 MAX_LOOKUPS = 20
+# Place details use the small SerpAPI plan (250 a month), so only a few Activities per Trip.
+MAX_PLACE_DETAILS = 5
 # Pins farther than this from a city's centre are namesakes elsewhere; bigger areas use their size.
 MIN_REGION_KM = 120.0
 OUTAGE_NOTE = "Places could not be found on the map right now, so the Trip Map may be empty."
@@ -50,6 +53,17 @@ class _Lookups:
             point = self._ask(self._with_destination(name))
         return point
 
+    @property
+    def region(self) -> Region | None:
+        return self._region
+
+    def query_for(self, place: str) -> str:
+        return self._with_destination(place.strip())
+
+    def within(self, point: GeoPoint | None) -> bool:
+        # A hit far outside the Destination is a namesake in another place.
+        return point is None or self._region is None or self._region.contains(point)
+
     def _with_destination(self, place: str) -> str:
         if self._destination.lower() in place.lower():
             return place
@@ -58,10 +72,7 @@ class _Lookups:
     def _ask(self, query: str) -> GeoPoint | None:
         def lookup() -> GeoPoint | None:
             point = self._geocoder.locate(query, near=self._region)
-            # A hit far outside the Destination is a namesake in another place.
-            if point is None or self._region is None or self._region.contains(point):
-                return point
-            return None
+            return point if self.within(point) else None
 
         return self._remember(query, lookup)
 
@@ -79,7 +90,11 @@ class _Lookups:
         return point
 
 
-def make_locate_node(geocoder: GeocoderPort):
+def make_locate_node(
+    geocoder: GeocoderPort,
+    place_details: PlaceDetailsPort | None = None,
+    max_details: int = MAX_PLACE_DETAILS,
+):
     def locate(state: PlanningState) -> PlanningState:
         cities = [s.city for s in state.get("route", [])] or [state["request"].destination]
         lookups = [_Lookups(geocoder, city, max(4, MAX_LOOKUPS // len(cities))) for city in cities]
@@ -89,12 +104,13 @@ def make_locate_node(geocoder: GeocoderPort):
             [_locate_hotel(h, lookup) for h in group]
             for lookup, group in zip(lookups, groups, strict=True)
         ]
-        itinerary = [
-            _locate_day(
-                day, lookups[day.stop if day.stop is not None and day.stop < len(cities) else 0]
-            )
-            for day in state.get("itinerary", [])
-        ]
+
+        def lookups_for(day: ItineraryDay) -> _Lookups:
+            return lookups[day.stop if day.stop is not None and day.stop < len(cities) else 0]
+
+        itinerary = [_locate_day(day, lookups_for(day)) for day in state.get("itinerary", [])]
+        if place_details is not None and max_details > 0:
+            itinerary = _add_place_details(itinerary, lookups_for, place_details, max_details)
         update: PlanningState = {
             "destination_point": points[0],
             "stop_points": points,
@@ -125,3 +141,46 @@ def _locate_day(day: ItineraryDay, lookups: _Lookups) -> ItineraryDay:
         for activity in day.activities
     ]
     return day.model_copy(update={"activities": activities})
+
+
+def _add_place_details(
+    itinerary: list[ItineraryDay],
+    lookups_for: Callable[[ItineraryDay], _Lookups],
+    place_details: PlaceDetailsPort,
+    limit: int,
+) -> list[ItineraryDay]:
+    """Real ratings, photos and pins for a few Activities; the paid quota is small."""
+    days = [day.model_copy(update={"activities": list(day.activities)}) for day in itinerary]
+    candidates = [
+        (d, a)
+        for d, day in enumerate(days)
+        for a, activity in enumerate(day.activities)
+        if activity.maps_url is None
+        and activity.location.strip()
+        and not lookups_for(day).is_destination(activity.location)
+    ]
+    # Unpinned Activities first: the free geocoders already placed the others.
+    candidates.sort(key=lambda c: days[c[0]].activities[c[1]].coordinates is not None)
+    asked: set[str] = set()
+    for d, a in candidates:
+        lookups = lookups_for(days[d])
+        query = lookups.query_for(days[d].activities[a].location)
+        if query not in asked and len(asked) >= limit:
+            continue
+        asked.add(query)
+        try:
+            details = place_details.lookup(query, near=lookups.region)
+        except PlaceDetailsError:
+            break  # A paused quota stays paused for the rest of this Trip.
+        if details is None or not lookups.within(details.point):
+            continue
+        activity = days[d].activities[a]
+        days[d].activities[a] = activity.model_copy(
+            update={
+                "coordinates": activity.coordinates or details.point,
+                "rating": details.rating,
+                "image_url": details.image_url,
+                "maps_url": details.maps_url,
+            }
+        )
+    return days

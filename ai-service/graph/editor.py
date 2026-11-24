@@ -134,7 +134,7 @@ class PlanEditor:
         route = [RouteStop.model_validate(s.model_dump()) for s in plan.stops] or [
             RouteStop(city=plan.request.destination, days=plan.request.duration_days)
         ]
-        no_pins = {"activities": {"__all__": {"coordinates"}}}
+        no_pins = {"activities": {"__all__": {"coordinates", "rating", "image_url", "maps_url"}}}
         current = [day.model_dump(exclude=no_pins) for day in plan.itinerary]
         edited = self._llm.generate(
             Itinerary,
