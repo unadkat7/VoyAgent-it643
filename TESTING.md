@@ -98,6 +98,8 @@ Doubles are chosen by interaction direction: **incoming interactions** (queries 
 - **Admin stats:** `backend/tests/api/stats.test.js:22` (`cannot be created through public sign-up`) and `backend/tests/api/stats.test.js:87` (`lists outside users with masked emails`). Every stats route (`/api/stats`, `/users`, `/activity`, `/trips`, `/feedback`, `/retention`) is checked for 401 and 403, plus legacy-document compatibility and TripMap/Travel Intelligence aggregations.
 - **Share links:** `backend/tests/api/share.test.js:64` (`shows the plan to anyone`) checks that the conversation and owner are hidden and that views are counted. `backend/tests/api/share.test.js:47` (`refuses a Trip that is not planned yet`) covers the 409.
 
+The day map hides stays and restores all pins when the traveler returns to All days. See `frontend/tests/TripMap.test.jsx:39` (`restores stays and all pins`).
+
 ## Honest gaps (what automated tests do not cover)
 
 - **Location of Visitors:** country and city come from Vercel's `x-vercel-ip-country` / `x-vercel-ip-city` headers. Tests set them by hand. Locally they are missing, so only the live site shows real locations.
@@ -108,7 +110,7 @@ Doubles are chosen by interaction direction: **incoming interactions** (queries 
 - **`AgentProgressCard`** animates on client-side timers rather than live backend progress and is untested.
 - **LLM output quality** (whether an Itinerary is realistic and well-paced) is not testable with stubs; only manual smoke runs hit real LLM Providers.
 - **Live LLM fallback:** Stubbed HTTP tests did not catch that Cloudflare Workers AI defaults to a 256-token cap, which truncated a 3-day Itinerary mid-JSON during a manual fallback test with an invalid Groq key. The limit was raised and pinned by `ai-service/tests/adapters/test_cloudflare_llm.py:50` (`test_request_allows_a_full_itinerary_length_answer`).
-- **Trip Map visuals:** `frontend/tests/TripMap.test.jsx:28` (`filters to one day`) verifies pin selection and filtering with Leaflet stubbed; actual tile loading, zooming, and popups were checked by hand in the browser.
+- **Trip Map visuals:** `frontend/tests/TripMap.test.jsx:29` (`filters to one day`) verifies pin selection and filtering with Leaflet stubbed; actual tile loading, zooming, and popups were checked by hand in the browser.
 - **Real geocoder accuracy:** `FakeGeocoder` verifies capping and region filtering (`ai-service/tests/test_locate.py:134` (`test_out_of_region_pin_far_from_destination_is_discarded`), `ai-service/tests/test_locate.py:152` (`test_large_destination_keeps_pins_across_its_whole_area`)), not whether a real Provider resolves an Indian landmark accurately.
   - A live Goa run missed 3 of 9 Activities (names like `"Palolem Beach, South Goa"`), leading to retry-by-name, and revealed that CARTO tiles now require a key, leading to OpenStreetMap tiles.
   - Later live runs showed Nominatim placing landmarks in the wrong city, leading to the Wikipedia-first geocoder and region check, verified live on Rajasthan, Goa, and Ujjain.

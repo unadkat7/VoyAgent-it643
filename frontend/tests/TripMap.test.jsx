@@ -12,7 +12,8 @@ vi.mock("react-leaflet", () => ({
   Marker: ({ children }) => <div data-testid="pin">{children}</div>,
   Popup: ({ children }) => <div>{children}</div>,
   Polyline: () => <div data-testid="route" />,
-  useMap: () => ({ fitBounds: vi.fn(), setView: vi.fn() }),
+  useMap: () => ({ fitBounds: vi.fn(), setView: vi.fn(), whenReady: fn => fn(), off: vi.fn(),
+    invalidateSize: vi.fn(), getContainer: () => document.body }),
   useMapEvents: () => null,
 }));
 
