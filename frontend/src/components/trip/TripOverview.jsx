@@ -57,6 +57,11 @@ export default function TripOverview({ plan, travelMode = null }) {
           {daysAndNights(plan)} · check-in {formatShortDate(plan.check_in)}, check-out{" "}
           {formatShortDate(plan.check_out)}
         </p>
+        {plan.stops?.length > 1 && plan.stops.map((s, index) => (
+          <p key={index} className="mt-1 text-sm text-muted">
+            {s.city} · check-in {formatShortDate(s.check_in)}, check-out {formatShortDate(s.check_out)}
+          </p>
+        ))}
         {requestTags.length > 0 && (
           <p className="mt-1 text-sm capitalize text-muted">{requestTags.join(" · ")}</p>
         )}
@@ -113,7 +118,7 @@ export default function TripOverview({ plan, travelMode = null }) {
             color="bg-primary"
             label={`Stay · ${stayLabel(plan.nights, breakdown.rooms)}`}
             detail={
-              firstStay
+              plan.stops?.length > 1 ? plan.stops.map(s => s.city).join(" → ") : firstStay
                 ? `${firstStay.name} · ${formatInr(firstStay.price_per_night)} a night`
                 : "No stay found"
             }
@@ -123,7 +128,9 @@ export default function TripOverview({ plan, travelMode = null }) {
             color="bg-ink"
             label={travel ? `Getting there · ${travel.label}` : "Getting there"}
             detail={
-              travel
+              plan.estimated_cost?.legs_total > 0
+                ? `Includes ${formatInr(plan.estimated_cost.legs_total)} between cities`
+                : travel
                 ? `${fareRange(travel)} per person, round trip · change it in the Travel tab`
                 : breakdown.travelTotal > 0
                   ? `Round trip${travellers ? ` for ${travellers}` : ""}`

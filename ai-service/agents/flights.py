@@ -13,10 +13,18 @@ def make_flight_node(search: FlightSearchPort):
             return {"flights": [], "notes": [NO_ORIGIN]}
         budget_guessed = "budget" in state.get("assumed_fields", [])
         origin_code = airport_code(request.origin)
-        destination_code = airport_code(request.destination)
+        first, last = state["route"][0], state["route"][-1]
+        destination_code = airport_code(first.city) or first.airport_code
+        return_code = airport_code(last.city) or last.airport_code
         # Rule 4: an unknown place is never swapped for another city's airport.
-        if not origin_code or not destination_code:
-            place = request.origin if not origin_code else request.destination
+        if not origin_code or not destination_code or not return_code:
+            place = (
+                request.origin
+                if not origin_code
+                else first.city
+                if not destination_code
+                else last.city
+            )
             return {
                 "flights": [],
                 "notes": [
@@ -25,6 +33,31 @@ def make_flight_node(search: FlightSearchPort):
                 ],
             }
 
+        if len(state["route"]) > 1:
+            selected, notes = [], []
+            for direction, start, end, day in [
+                ("outbound", origin_code, destination_code, dates.check_in),
+                ("return", return_code, origin_code, dates.check_out),
+            ]:
+                try:
+                    found = search.search_flights(
+                        FlightQuery(start, end, day, None, caps.flight_search_limit)
+                    )
+                except SearchError:
+                    found = []
+                if found:
+                    cheapest = min(found, key=lambda f: f.price_per_traveler)
+                    selected.append(cheapest.model_copy(update={"direction": direction}))
+                else:
+                    notes.append(f"No {direction} fare found for {start} to {end}.")
+            if (
+                len(selected) == 2
+                and not budget_guessed
+                and not caps.allows_flight(sum(f.price_per_traveler for f in selected))
+            ):
+                selected = [f.model_copy(update={"over_budget": True}) for f in selected]
+                notes.append("The combined outbound and return fares exceed your flight budget.")
+            return {"flights": selected, "notes": notes}
         query = FlightQuery(
             origin_airport=origin_code,
             destination_airport=destination_code,

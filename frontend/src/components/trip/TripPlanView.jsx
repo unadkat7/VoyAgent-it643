@@ -11,6 +11,7 @@ import {
   formatDateRange,
   formatInr,
   mapPoints,
+  planStops,
   tripRouteLabel,
   tripTitle,
 } from "@/lib/tripView";
@@ -295,6 +296,7 @@ export default function TripPlanView({ trip, onTripChange = null }) {
             <div className={hasMapPins ? "lg:col-span-7" : ""}>
               <ItineraryList
                 days={plan.itinerary}
+                stops={plan.stops}
                 selectedDay={selectedDay}
                 onSelectDay={handleSelectDay}
                 focusedPointKey={focusedPointKey}
@@ -346,13 +348,15 @@ export default function TripPlanView({ trip, onTripChange = null }) {
         )}
 
         {activeTab === "hotels" && (
-          <HotelList
-            hotels={plan.hotels}
-            nights={plan.nights}
-            rooms={breakdown.rooms}
-            notes={plan.notes}
-            onTrack={handleTrack}
-          />
+          <div className="space-y-6">
+            {planStops(plan).map((stop, index) => (
+              <section key={index}>
+                {plan.stops?.length > 1 && <h2 className="mb-3 text-xl font-semibold">{stop.city}</h2>}
+                <HotelList hotels={stop.hotels} nights={stop.nights} rooms={breakdown.rooms}
+                  notes={plan.notes} onTrack={handleTrack} />
+              </section>
+            ))}
+          </div>
         )}
 
         {activeTab === "flights" && (

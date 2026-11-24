@@ -14,21 +14,14 @@ def budget_check(state: PlanningState) -> PlanningState:
     """
     request, dates, caps = state["request"], state["dates"], state["caps"]
     budget_guessed = "budget" in state.get("assumed_fields", [])
-    update: PlanningState = {}
-
-    hotels = state.get("hotels", [])
-    if state.get("hotels_over_budget"):
-        if not budget_guessed:
-            question = (
-                f"The cheapest stay I found in {request.destination} costs "
-                f"₹{state['cheapest_hotel_price']:,.0f} per night, but your ₹{request.budget:,} "
-                f"Budget allows about ₹{caps.hotel_search_limit:,} per night for {dates.nights} "
-                "nights. Could you raise the Budget, shorten the Trip, or pick another Destination?"
-            )
-            return {"clarification": Clarification(missing_fields=["budget"], question=question)}
-        hotels = state.get("hotels_over_cap", [])
-        update["hotels"] = hotels
-
+    if state.get("hotels_over_budget") and not budget_guessed:
+        question = (
+            f"The cheapest stay I found in {state['over_budget_city']} costs "
+            f"₹{state['cheapest_hotel_price']:,.0f} per night, but your ₹{request.budget:,} "
+            f"Budget allows about ₹{caps.hotel_search_limit:,} per night for {dates.nights} "
+            "nights. Could you raise the Budget, shorten the Trip, or pick another Destination?"
+        )
+        return {"clarification": Clarification(missing_fields=["budget"], question=question)}
     options = state.get("travel_options")
     if options is None:
         road = state.get("road_route")
@@ -43,11 +36,17 @@ def budget_check(state: PlanningState) -> PlanningState:
         activity.estimated_cost for day in state.get("itinerary", []) for activity in day.activities
     )
     # The first listed stay and the chosen (else cheapest) way to travel are what the plan counts.
+    legs_total = sum(leg.est_inr_per_person for leg in state.get("legs", [])) * request.party_size
+    stays = [
+        (group[0].price_per_night, dates.nights)
+        for group, dates in zip(state["stop_hotels"], state["stop_dates"], strict=True)
+        if group
+    ]
     cost = estimate_trip_cost(
-        hotel_price_per_night=hotels[0].price_per_night if hotels else None,
+        stays=stays,
         nights=dates.nights,
         rooms=rooms_for(request.party_size),
-        travel_total=travel.total if travel else None,
+        travel_total=(travel.total if travel else 0) + legs_total,
         party_size=request.party_size,
         activities_per_traveler=activities,
         daily_spend_per_traveler=daily_spend_per_traveler(request.travel_style),
@@ -62,7 +61,7 @@ def budget_check(state: PlanningState) -> PlanningState:
         )
         return {"clarification": Clarification(missing_fields=["budget"], question=question)}
     return {
-        **update,
+        "legs_total": legs_total,
         "cost": cost,
         "travel_options": options,
         "travel_mode": travel.mode if travel else None,

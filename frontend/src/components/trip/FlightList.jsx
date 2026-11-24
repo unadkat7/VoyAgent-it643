@@ -38,7 +38,7 @@ export default function FlightList({ flights, partySize, notes = [] }) {
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-primary uppercase tracking-wider truncate">
-                    {flight.airline}
+                    {flight.direction && `${flight.direction} · `}{flight.airline}
                   </p>
                   {flight.flight_number && (
                     <p className="font-mono text-sm font-semibold text-ink mt-0.5">

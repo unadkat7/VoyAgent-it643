@@ -26,7 +26,25 @@ def travel_options(
 ) -> list[TravelOption]:
     """Every priced way there and back for the whole Travel Party, cheapest first."""
     options: list[TravelOption] = []
-    if flights:
+    one_way = [f for f in flights if f.direction]
+    if one_way:
+        if {f.direction for f in one_way} == {"outbound", "return"}:
+            fare = round(sum(f.price_per_traveler for f in one_way))
+            options.append(
+                TravelOption(
+                    mode="flight",
+                    label="Flights",
+                    detail="Outbound and return fares",
+                    per_person_low=fare,
+                    per_person_high=fare,
+                    total=fare * party_size,
+                    source="estimated"
+                    if any(f.price_source == "estimated" for f in one_way)
+                    else "live",
+                    over_budget=any(f.over_budget for f in one_way),
+                )
+            )
+    elif flights:
         flight = min(flights, key=lambda f: f.price_per_traveler)
         fare = round(flight.price_per_traveler)
         options.append(

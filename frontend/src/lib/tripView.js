@@ -19,8 +19,20 @@ export function tripTitle(trip) {
   return first.length > TITLE_LENGTH ? `${first.slice(0, TITLE_LENGTH).trimEnd()}…` : first;
 }
 
+export function planStops(plan) {
+  if (plan?.stops?.length) return plan.stops;
+  if (!plan) return [];
+  return [{
+    city: plan.request?.destination, days: plan.request?.duration_days,
+    check_in: plan.check_in, check_out: plan.check_out, nights: plan.nights,
+    hotels: plan.hotels ?? [], coordinates: plan.destination_coordinates,
+  }];
+}
+
 export function tripRouteLabel(trip) {
   const origin = trip?.plan?.request?.origin?.trim();
+  const stops = trip?.plan?.stops;
+  if (stops?.length > 1) return [origin, ...stops.map((s) => s.city)].filter(Boolean).join(" → ");
   const destination = (trip?.plan?.request?.destination || trip?.destination)?.trim();
   if (origin && destination) return `${origin} → ${destination}`;
   return null;
@@ -46,24 +58,17 @@ const hasPoint = (coordinates) =>
 // Pins for the Trip map. `day` is "all" or a day number; Destination and Hotels always show.
 export function mapPoints(plan, day) {
   const points = [];
-  if (hasPoint(plan?.destination_coordinates)) {
-    points.push({
-      key: "destination",
-      kind: "destination",
-      title: plan.request?.destination ?? "Destination",
-      ...plan.destination_coordinates,
-    });
-  }
-  for (const hotel of plan?.hotels ?? []) {
-    if (!hasPoint(hotel.coordinates)) continue;
-    points.push({
-      key: `hotel-${hotel.name}`,
-      kind: "hotel",
-      title: hotel.name,
-      detail: `${formatInr(hotel.price_per_night)} / night`,
-      ...hotel.coordinates,
-    });
-  }
+  planStops(plan).forEach((stop, index) => {
+    if (hasPoint(stop.coordinates)) {
+      points.push({ key: `destination-${index}`, kind: "destination",
+        title: stop.city ?? "Destination", ...stop.coordinates });
+    }
+    for (const [hotelIndex, hotel] of (stop.hotels ?? []).entries()) {
+      if (!hasPoint(hotel.coordinates)) continue;
+      points.push({ key: `hotel-${index}-${hotelIndex}`, kind: "hotel", title: hotel.name,
+        detail: `${formatInr(hotel.price_per_night)} / night`, ...hotel.coordinates });
+    }
+  });
   for (const itineraryDay of plan?.itinerary ?? []) {
     if (day !== "all" && itineraryDay.day !== day) continue;
     itineraryDay.activities.forEach((activity, index) => {
@@ -113,7 +118,7 @@ export function budgetBreakdown(plan, travelMode = null) {
   const hotelTotal = Number(cost.hotel_total) || 0;
   const travel = chosenTravel(plan, travelMode);
   const travelTotal = travel
-    ? travel.total
+    ? travel.total + (cost.legs_total ?? 0)
     : Number(cost.travel_total ?? cost.flight_total) || 0;
   const activitiesTotal = Number(cost.activities_total) || 0;
   const dailySpendTotal = Number(cost.daily_spend_total) || 0;

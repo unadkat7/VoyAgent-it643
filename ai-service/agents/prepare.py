@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from datetime import date
+from datetime import date, timedelta
 
 from domain.budget import BudgetCaps
 from domain.closures import closure_note
@@ -32,8 +32,14 @@ def make_prepare_node(today: Callable[[], date]):
                 f"{dates.nights} nights (check-in {dates.check_in.isoformat()}, check-out "
                 f"{dates.check_out.isoformat()}). Tell me if you want it changed."
             )
-        if closed := closure_note(request.destination, dates.check_in, dates.check_out):
-            notes.append(closed)
-        return {"dates": dates, "caps": caps, "notes": notes}
+        stop_dates = []
+        start = dates.check_in
+        for stop in state["route"]:
+            end = min(start + timedelta(days=stop.days), dates.check_out)
+            stop_dates.append(TripDates(start, end))
+            if closed := closure_note(stop.city, start, end):
+                notes.append(closed)
+            start = end
+        return {"dates": dates, "stop_dates": stop_dates, "caps": caps, "notes": notes}
 
     return prepare

@@ -263,7 +263,9 @@ def test_recommendations_reach_the_plan_unchanged():
 
     assert plan.hotels == [estimated]
     assert plan.summary == SUMMARY.summary
-    assert plan.itinerary == ITINERARY.days
+    assert plan.itinerary == [day.model_copy(update={"stop": 0}) for day in ITINERARY.days]
+    assert len(plan.stops) == 1
+    assert plan.stops[0].hotels == plan.hotels
 
 
 def test_plan_carries_coordinates_for_the_trip_map():

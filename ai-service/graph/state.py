@@ -9,6 +9,7 @@ from schemas.geo import GeoPoint
 from schemas.itinerary import ItineraryDay
 from schemas.plan import TripPlan
 from schemas.recommendations import FlightRecommendation, HotelRecommendation
+from schemas.route import RouteStop, StopLeg
 from schemas.travel import RoadRoute, TrainOption, TravelFares, TravelOption
 from schemas.trip_request import TripRequest
 
@@ -21,6 +22,13 @@ class PlanningState(TypedDict, total=False):
     missing_fields: list[str]
     # Fields the Traveler left out that the plan guessed (or, for Origin, left empty).
     assumed_fields: list[str]
+    route: list[RouteStop]
+    legs: list[StopLeg]
+    legs_total: float
+    stop_dates: list[TripDates]
+    stop_hotels: list[list[HotelRecommendation]]
+    stop_points: list[GeoPoint | None]
+    over_budget_city: str
     dates: TripDates
     caps: BudgetCaps
     hotels: list[HotelRecommendation]

@@ -1,6 +1,6 @@
 from collections.abc import Mapping
 
-from domain.spend import assumed_budget
+from domain.spend import MIN_DAYS, assumed_budget
 
 # Rule 1: only the Destination is needed to plan; everything else gets a stated default.
 REQUIRED_FIELDS: tuple[str, ...] = ("destination",)
@@ -36,7 +36,11 @@ def fill_defaults(trip_request: Mapping[str, object]) -> tuple[dict[str, object]
         filled["duration_days"] = nights + 1
         assumed.remove("duration_days")
     elif "duration_days" in assumed:
-        filled["duration_days"] = DEFAULT_DURATION_DAYS
+        filled["duration_days"] = max(
+            DEFAULT_DURATION_DAYS,
+            MIN_DAYS.get(filled.get("destination_area"), 1),
+            4 if filled.get("destination_kind") == "multi_country" else 1,
+        )
     if "party_size" in assumed:
         filled["party_size"] = DEFAULT_PARTY_SIZE
     if "travel_style" in assumed:
@@ -44,6 +48,7 @@ def fill_defaults(trip_request: Mapping[str, object]) -> tuple[dict[str, object]
     if "budget" in assumed:
         filled["budget"] = assumed_budget(
             travel_style=filled["travel_style"],
+            area=filled.get("destination_area"),
             days=filled["duration_days"],
             party_size=filled["party_size"],
         )

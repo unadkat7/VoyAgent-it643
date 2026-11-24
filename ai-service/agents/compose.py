@@ -1,7 +1,8 @@
+from domain.route_rules import route_label
 from domain.spend import rooms_for
 from graph.state import PlanningState
 from ports.llm import LLMPort
-from schemas.plan import EstimatedCost, TripPlan, TripSummary
+from schemas.plan import EstimatedCost, Stop, TripPlan, TripSummary
 from schemas.trip_request import TripRequest
 
 SYSTEM = """You are the writer of VoyAgent. Write a short, friendly summary of the Trip plan
@@ -51,6 +52,7 @@ def make_compose_node(llm: LLMPort):
         assumptions = assumption_lines(request, assumed)
         prompt = (
             f"Trip Request: {request.model_dump_json()}\n"
+            f"Stops: {route_label(state['route'])}\n"
             f"Assumed, not stated by the Traveler: {assumptions}\n"
             f"Stays: {[h.name for h in hotels]}\n"
             f"Flights: {[f.airline for f in flights]}\n"
@@ -71,11 +73,30 @@ def make_compose_node(llm: LLMPort):
             check_in=dates.check_in.isoformat(),
             check_out=dates.check_out.isoformat(),
             nights=dates.nights,
+            stops=[
+                Stop(
+                    **stop.model_dump(),
+                    check_in=period.check_in.isoformat(),
+                    check_out=period.check_out.isoformat(),
+                    nights=period.nights,
+                    hotels=group,
+                    coordinates=point,
+                )
+                for stop, period, group, point in zip(
+                    state["route"],
+                    state["stop_dates"],
+                    state["stop_hotels"],
+                    state["stop_points"],
+                    strict=True,
+                )
+            ],
+            legs=state.get("legs", []),
             hotels=hotels,
             flights=flights,
             itinerary=itinerary,
             estimated_cost=EstimatedCost(
                 hotel_total=float(cost.hotel_total),
+                legs_total=state.get("legs_total", 0),
                 travel_total=float(cost.travel_total),
                 travel_mode=state.get("travel_mode"),
                 activities_total=float(cost.activities_total),

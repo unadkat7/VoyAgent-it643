@@ -33,17 +33,18 @@ class EstimateSearch:
         prompt = (
             f"Suggest up to 3 {query.accommodation_type or 'hotels'} in {query.destination} for "
             f"{query.adults} adults per room from {query.check_in} to {query.check_out}, style "
-            f"'{query.travel_style or 'any'}', each at most "
-            f"{query.max_price_per_night} INR per room per night."
+            f"'{query.travel_style or 'any'}'. Give realistic INR prices per room per night."
         )
         result = self._ask(HotelRecommendations, prompt)
         return [hotel.model_copy(update={"price_source": "estimated"}) for hotel in result.hotels]
 
     def search_flights(self, query: FlightQuery) -> list[FlightRecommendation]:
+        direction = "round-trip" if query.return_date else "one-way"
+        returning = f" and returning {query.return_date}" if query.return_date else ""
         prompt = (
-            f"Suggest up to 3 round-trip economy flights from {query.origin_airport} to "
-            f"{query.destination_airport}, leaving {query.outbound_date} and returning "
-            f"{query.return_date}. Give the realistic round-trip fare per traveller in INR, "
+            f"Suggest up to 3 {direction} economy flights from {query.origin_airport} to "
+            f"{query.destination_airport}, leaving {query.outbound_date}{returning}. "
+            f"Give the realistic {direction} fare per traveller in INR, "
             "even if it is high."
         )
         if found := self._web_fares(query):
@@ -59,10 +60,11 @@ class EstimateSearch:
     def _web_fares(self, query: FlightQuery) -> str:
         if self._web is None:
             return ""
+        direction = "round trip" if query.return_date else "one way"
         month = query.outbound_date.strftime("%B %Y")
         try:
             results = self._web.search(
-                f"{query.origin_airport} to {query.destination_airport} round trip flight "
+                f"{query.origin_airport} to {query.destination_airport} {direction} flight "
                 f"price {month} INR"
             )
         except WebSearchError as error:

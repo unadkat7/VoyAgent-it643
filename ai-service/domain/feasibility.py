@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from fractions import Fraction
 
+from domain.spend import minimum_trip_cost as minimum_trip_cost
+
 
 @dataclass(frozen=True)
 class TripCost:
@@ -20,7 +22,8 @@ class TripCost:
 
 def estimate_trip_cost(
     *,
-    hotel_price_per_night: float | None,
+    hotel_price_per_night: float | None = None,
+    stays: list[tuple[float, int]] | None = None,
     nights: int,
     travel_total: float | None,
     party_size: int,
@@ -31,7 +34,9 @@ def estimate_trip_cost(
 ) -> TripCost:
     """A missing Hotel or travel option adds nothing; the plan notes say why it is missing."""
     return TripCost(
-        hotel_total=Fraction(hotel_price_per_night or 0) * nights * rooms,
+        hotel_total=sum((Fraction(price) * count * rooms for price, count in stays), Fraction(0))
+        if stays is not None
+        else Fraction(hotel_price_per_night or 0) * nights * rooms,
         travel_total=Fraction(travel_total or 0),
         activities_total=Fraction(activities_per_traveler) * party_size,
         daily_spend_total=Fraction(daily_spend_per_traveler) * days * party_size,

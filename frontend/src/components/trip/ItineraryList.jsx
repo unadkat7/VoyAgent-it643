@@ -10,6 +10,7 @@ const hasCoordinates = (coords) =>
 
 export default function ItineraryList({
   days,
+  stops = [],
   selectedDay = "all",
   onSelectDay = null,
   focusedPointKey = null,
@@ -42,8 +43,13 @@ export default function ItineraryList({
         />
       )}
 
-      {visibleDays.map((day) => (
+      {visibleDays.map((day, index) => (
         <section key={day.day} className="overflow-hidden rounded-2xl border border-border bg-surface">
+          {stops.length > 1 && stops[day.stop] && visibleDays[index - 1]?.stop !== day.stop && (
+            <h2 className="border-b border-border px-4 py-2 font-semibold sm:px-5">
+              {stops[day.stop].city} · Days {1 + stops.slice(0, day.stop).reduce((n, s) => n + s.days, 0)}–{stops.slice(0, day.stop + 1).reduce((n, s) => n + s.days, 0)}
+            </h2>
+          )}
           <header className="flex items-end justify-between gap-3 px-4 pb-2 pt-4 sm:px-5">
             <div className="min-w-0">
               <p className="text-label font-semibold uppercase tracking-wider text-primary">Day {day.day}</p>

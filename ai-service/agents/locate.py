@@ -16,7 +16,8 @@ OUTAGE_NOTE = "Places could not be found on the map right now, so the Trip Map m
 class _Lookups:
     """Asks the geocoder at most MAX_LOOKUPS distinct questions and stops after an outage."""
 
-    def __init__(self, geocoder: GeocoderPort, destination: str):
+    def __init__(self, geocoder: GeocoderPort, destination: str, limit: int):
+        self._limit = limit
         self._geocoder = geocoder
         self._destination = destination
         self._region: Region | None = None
@@ -67,7 +68,7 @@ class _Lookups:
     def _remember(self, query: str, lookup: Callable[[], GeoPoint | None]) -> GeoPoint | None:
         if query in self._answers:
             return self._answers[query]
-        if self.failed or len(self._answers) >= MAX_LOOKUPS:
+        if self.failed or len(self._answers) >= self._limit:
             return None
         try:
             point = lookup()
@@ -80,16 +81,28 @@ class _Lookups:
 
 def make_locate_node(geocoder: GeocoderPort):
     def locate(state: PlanningState) -> PlanningState:
-        lookups = _Lookups(geocoder, state["request"].destination)
-        destination_point = lookups.locate_destination()
-        hotels = [_locate_hotel(hotel, lookups) for hotel in state.get("hotels", [])]
-        itinerary = [_locate_day(day, lookups) for day in state.get("itinerary", [])]
+        cities = [s.city for s in state.get("route", [])] or [state["request"].destination]
+        lookups = [_Lookups(geocoder, city, max(4, MAX_LOOKUPS // len(cities))) for city in cities]
+        points = [lookup.locate_destination() for lookup in lookups]
+        groups = state.get("stop_hotels", [state.get("hotels", [])])
+        hotels = [
+            [_locate_hotel(h, lookup) for h in group]
+            for lookup, group in zip(lookups, groups, strict=True)
+        ]
+        itinerary = [
+            _locate_day(
+                day, lookups[day.stop if day.stop is not None and day.stop < len(cities) else 0]
+            )
+            for day in state.get("itinerary", [])
+        ]
         update: PlanningState = {
-            "destination_point": destination_point,
-            "hotels": hotels,
+            "destination_point": points[0],
+            "stop_points": points,
+            "hotels": hotels[0],
+            "stop_hotels": hotels,
             "itinerary": itinerary,
         }
-        if lookups.failed:
+        if any(lookup.failed for lookup in lookups):
             update["notes"] = [OUTAGE_NOTE]
         return update
 
