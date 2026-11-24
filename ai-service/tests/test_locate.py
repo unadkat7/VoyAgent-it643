@@ -2,6 +2,7 @@ import json
 
 from agents.locate import MAX_LOOKUPS, make_locate_node
 from ports.geocoder import GeocodeError
+from ports.place_details import PlaceDetails, PlaceDetailsError
 from schemas.geo import GeoPoint, Region
 from schemas.itinerary import Activity, Itinerary, ItineraryDay
 from schemas.recommendations import HotelRecommendation, HotelRecommendations
@@ -164,3 +165,101 @@ def test_large_destination_keeps_pins_across_its_whole_area():
 
     assert result["destination_point"] == rajasthan.center
     assert result["itinerary"][0].activities[0].coordinates == amber_fort
+
+
+class FakePlaceDetails:
+    def __init__(self, places: dict | None = None, error: bool = False):
+        self._places = places or {}
+        self._error = error
+        self.queries: list[str] = []
+
+    def lookup(self, query, near=None):
+        self.queries.append(query)
+        if self._error:
+            raise PlaceDetailsError("SerpAPI places paused")
+        return self._places.get(query)
+
+
+def details(point=None, rating=4.5):
+    return PlaceDetails(
+        point=point, rating=rating, image_url="https://img/x.jpg", maps_url="https://maps/x"
+    )
+
+
+def run_with_details(geocoder, place_details, itinerary, limit=5):
+    node = make_locate_node(geocoder, place_details, limit)
+    return node({"request": REQUEST, "itinerary": list(itinerary)})
+
+
+def test_place_details_fill_missing_pins_and_add_ratings_photos_and_links():
+    geocoder = FakeGeocoder({"Goa": GOA, "Baga Beach, Goa": BAGA})
+    places = FakePlaceDetails(
+        {"Fort Aguada, Goa": details(FORT), "Baga Beach, Goa": details(SEA_VIEW, rating=4.1)}
+    )
+
+    result = run_with_details(
+        geocoder, places, [day(1, activity("Baga Beach"), activity("Fort Aguada"))]
+    )
+
+    baga, fort = result["itinerary"][0].activities
+    assert fort.coordinates == FORT
+    assert (fort.rating, fort.image_url, fort.maps_url) == (
+        4.5,
+        "https://img/x.jpg",
+        "https://maps/x",
+    )
+    # The free geocoder's pin is kept; only the rating and photo are added.
+    assert baga.coordinates == BAGA
+    assert baga.rating == 4.1
+
+
+def test_place_details_are_capped_per_trip_and_unpinned_activities_go_first():
+    geocoder = FakeGeocoder({"Goa": GOA, "Place 0, Goa": BAGA})
+    places = FakePlaceDetails()
+    activities = [activity(f"Place {n}") for n in range(4)]
+
+    run_with_details(geocoder, places, [day(1, *activities)], limit=2)
+
+    assert places.queries == ["Place 1, Goa", "Place 2, Goa"]
+
+
+def test_destination_itself_and_already_detailed_activities_are_skipped():
+    geocoder = FakeGeocoder({"Goa": GOA})
+    places = FakePlaceDetails()
+    done = activity("Fort Aguada").model_copy(update={"maps_url": "https://maps/fort"})
+
+    run_with_details(geocoder, places, [day(1, activity("Goa"), done)])
+
+    assert places.queries == []
+
+
+def test_far_away_namesake_details_are_dropped():
+    geocoder = FakeGeocoder({"Goa": GOA})
+    delhi = GeoPoint(lat=28.61, lng=77.21)
+    places = FakePlaceDetails({"Fort Aguada, Goa": details(delhi)})
+
+    result = run_with_details(geocoder, places, [day(1, activity("Fort Aguada"))])
+
+    fort = result["itinerary"][0].activities[0]
+    assert fort.coordinates is None
+    assert fort.rating is None
+
+
+def test_paused_place_details_stop_quietly_and_keep_free_pins():
+    geocoder = FakeGeocoder({"Goa": GOA, "Baga Beach, Goa": BAGA})
+    places = FakePlaceDetails(error=True)
+
+    result = run_with_details(
+        geocoder, places, [day(1, activity("Fort Aguada"), activity("Baga Beach"))]
+    )
+
+    assert len(places.queries) == 1
+    fort, baga = result["itinerary"][0].activities
+    assert baga.coordinates == BAGA
+    assert fort.rating is None
+    assert "notes" not in result
+
+
+def test_llm_is_never_asked_for_ratings_photos_or_links():
+    schema = json.dumps(Itinerary.model_json_schema())
+    assert all(field not in schema for field in ("rating", "image_url", "maps_url"))
