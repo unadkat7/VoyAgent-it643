@@ -8,7 +8,12 @@ from schemas.api import Clarification
 def ask_about(problem: PlaceProblem) -> PlanningState:
     return {
         "clarification": Clarification(
-            missing_fields=[problem.field], question=problem.question, reason=problem.reason
+            missing_fields=[problem.field],
+            question=problem.question,
+            reason=problem.reason,
+            suggestions={problem.field: problem.suggestion}
+            if problem.suggestion is not None
+            else {},
         )
     }
 
