@@ -22,9 +22,13 @@ class PlanTripRequest(BaseModel):
         return turns
 
 
+RejectionReason = Literal["not_a_place", "not_on_earth", "unreachable", "off_topic"]
+
+
 class Clarification(BaseModel):
     missing_fields: list[str]
     question: str
+    reason: RejectionReason | None = None
 
 
 class PlanTripResponse(BaseModel):
@@ -57,3 +61,4 @@ class EditPlanResponse(BaseModel):
     trip_id: str
     reply: str
     plan: TripPlan | None = None
+    reason: RejectionReason | None = None
