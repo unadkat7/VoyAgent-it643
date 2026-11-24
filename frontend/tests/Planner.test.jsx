@@ -48,4 +48,44 @@ describe("Trip planner", () => {
     expect(origin.className).toMatch(/text-base/);
   });
 
+  it("fills the suggested budget when its quick-fill chip is tapped", async () => {
+    planTrip.mockResolvedValue({
+      trip: {
+        _id: "t1",
+        status: "draft",
+        clarification: { question: "Too low", missingFields: ["budget"], suggestions: { budget: 110000 } },
+      },
+    });
+    const user = userEvent.setup();
+    render(<TripPlanner />);
+    const prompt = await screen.findByRole("textbox", { name: /describe your trip/i });
+    await user.type(prompt, "Europe trip");
+    await user.click(screen.getByRole("button", { name: "Send message" }));
+
+    await user.click(await screen.findByRole("button", { name: "Use ₹1,10,000" }));
+
+    expect(screen.getByRole("textbox", { name: "Budget (INR)" })).toHaveValue("110000");
+    expect(prompt).toHaveValue("");
+  });
+
+  it("fills the default budget example when there is no suggestion", async () => {
+    planTrip.mockResolvedValue({
+      trip: {
+        _id: "t1",
+        status: "draft",
+        clarification: { question: "What is your budget?", missingFields: ["budget"] },
+      },
+    });
+    const user = userEvent.setup();
+    render(<TripPlanner />);
+    const prompt = await screen.findByRole("textbox", { name: /describe your trip/i });
+    await user.type(prompt, "Goa trip");
+    await user.click(screen.getByRole("button", { name: "Send message" }));
+
+    await user.click(await screen.findByRole("button", { name: "Budget (INR)" }));
+
+    expect(screen.getByRole("textbox", { name: "Budget (INR)" })).toHaveValue("30000");
+    expect(prompt).toHaveValue("");
+  });
+
 });
