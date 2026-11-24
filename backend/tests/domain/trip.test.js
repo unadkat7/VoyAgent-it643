@@ -3,6 +3,7 @@ import {
   TripRuleError,
   TripStatus,
   canContinue,
+  canEditPlan,
   canShare,
   isOwnedBy,
   nextStatus,
@@ -20,7 +21,7 @@ describe("nextStatus", () => {
   });
 
   it.each(["needs_clarification", "planned", "failed"])(
-    "a planned Trip never changes again (outcome %s)",
+    "a planned Trip never goes back to planning (outcome %s)",
     (outcome) => {
       expect(() => nextStatus(TripStatus.PLANNED, outcome)).toThrow(TripRuleError);
     }
@@ -38,6 +39,17 @@ describe("canContinue", () => {
     [TripStatus.PLANNED, false],
   ])("%s -> %s", (status, expected) => {
     expect(canContinue(status)).toBe(expected);
+  });
+});
+
+describe("canEditPlan", () => {
+  it.each([
+    [TripStatus.PLANNED, false, true],
+    [TripStatus.PLANNED, true, false],
+    [TripStatus.DRAFT, false, false],
+    [TripStatus.PLANNING_FAILED, false, false],
+  ])("a %s Trip (finalized: %s) can be edited in the chat: %s", (status, finalized, expected) => {
+    expect(canEditPlan({ status, finalized })).toBe(expected);
   });
 });
 

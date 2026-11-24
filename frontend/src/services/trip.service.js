@@ -24,6 +24,18 @@ export const deleteTrip = async (id) => {
   return response.data;
 };
 
+// One chat message about a planned Trip: an answer, or an edited plan
+export const chatAboutTrip = async (id, message) => {
+  const response = await api.post(`/trips/${id}/chat`, { message });
+  return response.data;
+};
+
+// Draft/Final switch and the way to travel counted in the total
+export const updateTrip = async (id, changes) => {
+  const response = await api.patch(`/trips/${id}`, changes);
+  return response.data;
+};
+
 // Create (or reuse) the public link for a planned Trip
 export const shareTrip = async (id) => {
   const response = await api.post(`/trips/${id}/share`, {});

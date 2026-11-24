@@ -88,7 +88,7 @@ describe("POST /api/trips/plan", () => {
     ]);
   });
 
-  it("refuses to re-plan a planned Trip", async () => {
+  it("refuses to re-plan a planned Trip: the chat edits it instead", async () => {
     const agent = await signedInAgent();
     aiAnswers(PLANNED);
     const planned = await agent.post("/api/trips/plan").send({ prompt: "full details" });
@@ -98,6 +98,18 @@ describe("POST /api/trips/plan", () => {
       .send({ prompt: "change it", tripId: planned.body.trip._id });
 
     expect(response.status).toBe(409);
+  });
+
+  it("ends the conversation with the plan's follow-up question", async () => {
+    const agent = await signedInAgent();
+    aiAnswers({ ...PLANNED, plan: { ...PLAN, follow_up: "Tell me your budget." } });
+
+    const response = await agent.post("/api/trips/plan").send({ prompt: "Mumbai to Ooty" });
+
+    expect(response.body.trip.conversation.at(-1)).toEqual({
+      role: "assistant",
+      content: "Tell me your budget.",
+    });
   });
 
   it.each([
@@ -149,6 +161,143 @@ describe("POST /api/trips/plan", () => {
   });
 });
 
+describe("Chat about a planned Trip", () => {
+  const EDIT_PATH = "/planner/edit-plan";
+  const PLAN_WITH_OPTIONS = {
+    ...PLAN,
+    travel_options: [
+      { mode: "train", label: "Train · 3AC", per_person_low: 3000, per_person_high: 4000, total: 7000 },
+      { mode: "flight", label: "Flight · IndiGo", per_person_low: 5000, per_person_high: 5000, total: 10000 },
+    ],
+  };
+
+  async function plannedTrip() {
+    const agent = await signedInAgent();
+    aiAnswers({ ...PLANNED, plan: PLAN_WITH_OPTIONS });
+    const created = await agent.post("/api/trips/plan").send({ prompt: "Goa" });
+    return { agent, tripId: created.body.trip._id };
+  }
+
+  function editAnswers(body, status = 200) {
+    let sent;
+    nock(AI, { reqheaders: { "x-internal-key": "test-internal-key" } })
+      .post(EDIT_PATH, (request) => {
+        sent = request;
+        return true;
+      })
+      .reply(status, body);
+    return () => sent;
+  }
+
+  it("answers a question without changing the plan", async () => {
+    const { agent, tripId } = await plannedTrip();
+    const sent = editAnswers({ outcome: "answered", change: "question", reply: "Try Panjim." });
+
+    const response = await agent.post(`/api/trips/${tripId}/chat`).send({ message: "Where to eat?" });
+
+    expect(response.status).toBe(200);
+    expect(response.body.outcome).toBe("answered");
+    expect(response.body.trip.plan.summary).toBe("Three beach days.");
+    expect(response.body.trip.conversation.slice(-2)).toEqual([
+      { role: "traveler", content: "Where to eat?" },
+      { role: "assistant", content: "Try Panjim." },
+    ]);
+    expect(sent().plan.summary).toBe("Three beach days.");
+    expect(sent().conversation.at(-1)).toEqual({ role: "traveler", content: "Where to eat?" });
+    const edited = await Event.findOne({ type: "trip_plan_edited" }).lean();
+    expect(edited.meta).toMatchObject({ outcome: "answered", change: "question" });
+    expect(await Event.countDocuments({ type: "trip_planned" })).toBe(1);
+  });
+
+  it("saves an edited plan and sends the picked travel mode", async () => {
+    const { agent, tripId } = await plannedTrip();
+    await agent.patch(`/api/trips/${tripId}`).send({ travelMode: "flight" });
+    const sent = editAnswers({
+      outcome: "updated",
+      change: "request",
+      reply: "Updated the plan for 4 days.",
+      plan: { ...PLAN_WITH_OPTIONS, summary: "Four beach days." },
+    });
+
+    const response = await agent.post(`/api/trips/${tripId}/chat`).send({ message: "4 days" });
+
+    expect(response.body.trip.plan.summary).toBe("Four beach days.");
+    expect(response.body.trip.travelMode).toBe("flight");
+    expect(sent().travel_mode).toBe("flight");
+  });
+
+  it("forgets a picked travel mode the new plan no longer has", async () => {
+    const { agent, tripId } = await plannedTrip();
+    await agent.patch(`/api/trips/${tripId}`).send({ travelMode: "flight" });
+    editAnswers({
+      outcome: "updated",
+      change: "request",
+      reply: "Updated.",
+      plan: { ...PLAN, travel_options: [PLAN_WITH_OPTIONS.travel_options[0]] },
+    });
+
+    const response = await agent.post(`/api/trips/${tripId}/chat`).send({ message: "no flights" });
+
+    expect(response.body.trip.travelMode).toBeUndefined();
+  });
+
+  it("keeps everything as it was when the planner is down", async () => {
+    const { agent, tripId } = await plannedTrip();
+    editAnswers({ detail: "planning_unavailable" }, 503);
+    editAnswers({ detail: "planning_unavailable" }, 503);
+
+    const response = await agent.post(`/api/trips/${tripId}/chat`).send({ message: "4 days" });
+
+    expect(response.status).toBe(503);
+    const saved = await Trip.findById(tripId);
+    expect(saved.conversation.map((turn) => turn.content)).toEqual(["Goa", expect.any(String)]);
+    expect(await Event.countDocuments({ type: "trip_plan_edit_failed" })).toBe(1);
+  });
+
+  it("refuses chat edits while the plan is Final, and allows them again in Draft", async () => {
+    const { agent, tripId } = await plannedTrip();
+    await agent.patch(`/api/trips/${tripId}`).send({ finalized: true });
+
+    expect((await agent.post(`/api/trips/${tripId}/chat`).send({ message: "4 days" })).status).toBe(
+      409
+    );
+
+    await agent.patch(`/api/trips/${tripId}`).send({ finalized: false });
+    editAnswers({ outcome: "answered", change: "question", reply: "Sure." });
+    expect((await agent.post(`/api/trips/${tripId}/chat`).send({ message: "hi" })).status).toBe(200);
+  });
+
+  it("refuses chat on a Trip that has no plan yet", async () => {
+    const agent = await signedInAgent();
+    aiAnswers(CLARIFICATION);
+    const draft = await agent.post("/api/trips/plan").send({ prompt: "Goa" });
+
+    const response = await agent.post(`/api/trips/${draft.body.trip._id}/chat`).send({ message: "hi" });
+
+    expect(response.status).toBe(409);
+  });
+
+  it.each([
+    ["an unknown travel mode", { travelMode: "boat" }],
+    ["a mode this plan does not have", { travelMode: "car" }],
+    ["an unknown field", { status: "draft" }],
+    ["nothing", {}],
+  ])("rejects a PATCH with %s", async (_label, body) => {
+    const { agent, tripId } = await plannedTrip();
+
+    expect((await agent.patch(`/api/trips/${tripId}`).send(body)).status).toBe(400);
+  });
+
+  it("rejects an empty or very long chat message", async () => {
+    const { agent, tripId } = await plannedTrip();
+
+    expect((await agent.post(`/api/trips/${tripId}/chat`).send({ message: " " })).status).toBe(400);
+    expect(
+      (await agent.post(`/api/trips/${tripId}/chat`).send({ message: "x".repeat(1001) })).status
+    ).toBe(400);
+  });
+});
+
 describe("Rule 5: only the owner can use a Trip", () => {
   async function tripOwnedByAsha() {
     const asha = await signedInAgent("asha@example.com");
@@ -168,6 +317,8 @@ describe("Rule 5: only the owner can use a Trip", () => {
     ["read", (agent, id) => agent.get(`/api/trips/${id}`)],
     ["delete", (agent, id) => agent.delete(`/api/trips/${id}`)],
     ["continue", (agent, id) => agent.post("/api/trips/plan").send({ prompt: "hi", tripId: id })],
+    ["chat about", (agent, id) => agent.post(`/api/trips/${id}/chat`).send({ message: "hi" })],
+    ["finalize", (agent, id) => agent.patch(`/api/trips/${id}`).send({ finalized: true })],
   ])("forbids another account to %s it", async (_action, act) => {
     const { ravi, tripId } = await tripOwnedByAsha();
 

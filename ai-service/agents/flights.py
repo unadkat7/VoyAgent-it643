@@ -3,11 +3,15 @@ from graph.state import PlanningState
 from ports.search import FlightQuery, FlightSearchPort, SearchError
 
 MAX_FLIGHTS = 3
+NO_ORIGIN = "Tell me where you're starting from to see flights, trains and the drive."
 
 
 def make_flight_node(search: FlightSearchPort):
     def flights(state: PlanningState) -> PlanningState:
         request, dates, caps = state["request"], state["dates"], state["caps"]
+        if not request.origin:
+            return {"flights": [], "notes": [NO_ORIGIN]}
+        budget_guessed = "budget" in state.get("assumed_fields", [])
         origin_code = airport_code(request.origin)
         destination_code = airport_code(request.destination)
         # Rule 4: an unknown place is never swapped for another city's airport.
@@ -33,22 +37,23 @@ def make_flight_node(search: FlightSearchPort):
         except SearchError:
             return {"flights": [], "notes": ["Flight search is unavailable right now."]}
 
-        # Rule 2: only fares within the per-Traveler cap (with grace) are recommended.
-        fitting = sorted(
-            (f for f in found if caps.allows_flight(f.price_per_traveler)),
-            key=lambda f: f.price_per_traveler,
-        )
-        if found and not fitting:
-            cheapest = min(f.price_per_traveler for f in found)
-            return {
-                "flights": [],
-                "notes": [
-                    f"No round-trip flight fits about ₹{caps.flight_search_limit:,} per Traveler "
-                    f"(cheapest found ₹{cheapest:,.0f}). Consider train or bus."
-                ],
-            }
         if not found:
             return {"flights": [], "notes": ["No flights were found for these dates."]}
-        return {"flights": fitting[:MAX_FLIGHTS]}
+        # Rule 2: fares within the per-Traveler cap (with grace) come first.
+        by_price = sorted(found, key=lambda f: f.price_per_traveler)
+        fitting = [f for f in by_price if caps.allows_flight(f.price_per_traveler)]
+        if fitting or budget_guessed:
+            # A guessed Budget never hides or flags real fares; the Traveler can set a Budget.
+            return {"flights": (fitting or by_price)[:MAX_FLIGHTS]}
+        # Over-cap fares are still shown, flagged, so the Traveler can compare them with trains.
+        flagged = [f.model_copy(update={"over_budget": True}) for f in by_price[:MAX_FLIGHTS]]
+        return {
+            "flights": flagged,
+            "notes": [
+                f"Flights cost more than the flight share of your Budget (about "
+                f"₹{caps.flight_search_limit:,} per Traveler; cheapest found "
+                f"₹{by_price[0].price_per_traveler:,.0f}). Compare them with train, bus and car."
+            ],
+        }
 
     return flights

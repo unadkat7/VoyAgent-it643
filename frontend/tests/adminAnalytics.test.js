@@ -60,5 +60,23 @@ describe("adminAnalytics helpers", () => {
     expect(normalized.activity.featureEngagement.tripMap.totalInteractions).toBe(0);
     expect(normalized.trips.destinationPins).toEqual([]);
     expect(normalized.retention.cohorts).toEqual([]);
+    expect(normalized.activity.featureEngagement.tripChat).toBeNull();
+  });
+
+  it("keeps trip chat stats from the activity payload", () => {
+    const tripChat = {
+      opens: 1,
+      chipUses: 0,
+      finalized: 1,
+      backToDraft: 0,
+      travelModePicks: { flight: 1 },
+      edits: { answered: 1, updated: 2 },
+    };
+
+    const normalized = normalizeAdminOverview({
+      activity: { featureEngagement: { tripChat } },
+    });
+
+    expect(normalized.activity.featureEngagement.tripChat).toEqual(tripChat);
   });
 });

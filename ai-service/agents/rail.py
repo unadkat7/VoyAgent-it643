@@ -34,6 +34,8 @@ def make_rail_node(timetable: TimetablePort, places: PlaceFinderPort, router: Ro
 
     def rail(state: PlanningState) -> PlanningState:
         request, dates = state["request"], state["dates"]
+        if not request.origin:
+            return {}  # the flight step asks for the Origin once
         try:
             table = timetable.load()
         except TimetableError:

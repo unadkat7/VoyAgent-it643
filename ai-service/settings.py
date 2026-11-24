@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     cloudflare_model: str = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
 
     searchapi_key: str = ""
+    tavily_api_key: str = ""
     search_cache_ttl_seconds: int = 6 * 60 * 60
 
     geocoder_enabled: bool = True

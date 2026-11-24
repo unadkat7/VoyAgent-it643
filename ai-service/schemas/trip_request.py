@@ -7,6 +7,9 @@ class TripRequest(BaseModel):
     origin: str | None = Field(None, description="City the Travel Party starts from")
     destination: str | None = Field(None, description="Main city or region to visit")
     duration_days: int | None = Field(None, description="Number of days of the Trip")
+    nights: int | None = Field(
+        None, description="Hotel nights, only if stated (e.g. 3D/2N or '2 nights' = 2)"
+    )
     budget: int | None = Field(None, description="Total Budget in INR for the whole Travel Party")
     party_size: int | None = Field(None, description="Number of Travelers in the Travel Party")
     travel_style: str | None = Field(None, description="e.g. budget, luxury, adventure, family")

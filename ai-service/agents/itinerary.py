@@ -5,17 +5,24 @@ from schemas.itinerary import Itinerary
 SYSTEM = """You are the Itinerary planner of VoyAgent.
 Create a practical day-by-day Itinerary with Morning, Afternoon and Evening Activities.
 Match the Destination, number of days, travel style and interests.
-Give each Activity an estimated_cost in INR per Traveler (0 if free).
-Do not suggest hotels or flights."""
+Give each Activity an estimated_cost in INR per Traveler for tickets, entry fees, tours and
+rides only (0 if free). Meals, food, drinks and local taxis are counted separately, so their
+estimated_cost is always 0.
+Do not suggest hotels or flights.
+Do not assume how the Travelers arrive or leave (flight, train, bus or car). Never name an
+airport, railway station or bus stand. Day 1 starts with checking in at the stay; on the last
+day, plan around checking out."""
 
 
 def make_itinerary_node(llm: LLMPort):
     def itinerary(state: PlanningState) -> PlanningState:
+        if state.get("itinerary") is not None:
+            return {}  # a plan edit kept the days (only party size or Budget changed)
         request, dates = state["request"], state["dates"]
         prompt = (
             f"Trip Request: {request.model_dump_json()}\n"
             f"Travel Dates: {dates.check_in.isoformat()} to {dates.check_out.isoformat()} "
-            f"({request.duration_days} days)."
+            f"({request.duration_days} days, {dates.nights} nights)."
         )
         result = llm.generate(Itinerary, system=SYSTEM, prompt=prompt)
         return {"itinerary": result.days}

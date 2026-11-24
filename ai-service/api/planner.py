@@ -4,7 +4,7 @@ import secrets
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 
 from ports.llm import LLMError
-from schemas.api import PlanTripRequest, PlanTripResponse
+from schemas.api import EditPlanRequest, EditPlanResponse, PlanTripRequest, PlanTripResponse
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -27,4 +27,17 @@ def plan_trip(body: PlanTripRequest, request: Request) -> PlanTripResponse:
         return request.app.state.engine.plan(body)
     except LLMError:
         logger.exception("Planning failed for trip %s", body.trip_id)
+        raise HTTPException(status_code=503, detail="planning_unavailable") from None
+
+
+@router.post(
+    "/edit-plan",
+    response_model=EditPlanResponse,
+    dependencies=[Depends(require_internal_key)],
+)
+def edit_plan(body: EditPlanRequest, request: Request) -> EditPlanResponse:
+    try:
+        return request.app.state.engine.edit(body)
+    except LLMError:
+        logger.exception("Editing failed for trip %s", body.trip_id)
         raise HTTPException(status_code=503, detail="planning_unavailable") from None

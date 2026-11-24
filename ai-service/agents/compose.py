@@ -1,10 +1,41 @@
+from domain.spend import rooms_for
 from graph.state import PlanningState
 from ports.llm import LLMPort
 from schemas.plan import EstimatedCost, TripPlan, TripSummary
+from schemas.trip_request import TripRequest
 
 SYSTEM = """You are the writer of VoyAgent. Write a short, friendly summary of the Trip plan
 and 3 to 5 practical tips for the Destination. Do not invent prices, hotels, flights, trains,
-train times or road distances."""
+train times or road distances. If some details were assumed, do not present them as the
+Traveler's own choices."""
+
+# What each field is called when asking the Traveler for it.
+FOLLOW_UP_LABELS = {
+    "origin": "starting city",
+    "duration_days": "number of days",
+    "party_size": "group size",
+    "travel_style": "travel style",
+    "budget": "budget",
+}
+
+
+def assumption_lines(request: TripRequest, assumed: list[str]) -> list[str]:
+    lines = {
+        "origin": "No starting city, so flights, trains and the drive are left out.",
+        "duration_days": f"{request.duration_days} days, since you didn't say how long.",
+        "party_size": f"{request.party_size} travellers, since you didn't say how many.",
+        "travel_style": f"A {request.travel_style} pace, since you didn't pick a style.",
+        "budget": f"A budget of about ₹{request.budget:,} for everyone, since you didn't give one.",
+    }
+    return [lines[field] for field in assumed if field in lines]
+
+
+def follow_up_question(assumed: list[str]) -> str | None:
+    labels = [FOLLOW_UP_LABELS[field] for field in assumed if field in FOLLOW_UP_LABELS]
+    if not labels:
+        return None
+    asked = labels[0] if len(labels) == 1 else f"{', '.join(labels[:-1])} and {labels[-1]}"
+    return f"Tell me your {asked} (and dates, if you know them) and I'll fine-tune this plan."
 
 
 def make_compose_node(llm: LLMPort):
@@ -16,10 +47,14 @@ def make_compose_node(llm: LLMPort):
         notes = list(dict.fromkeys(state.get("notes", [])))
         trains_out = state.get("trains_out", [])
         road_route, road_leg = state.get("road_route"), state.get("road_leg")
+        assumed = state.get("assumed_fields", [])
+        assumptions = assumption_lines(request, assumed)
         prompt = (
             f"Trip Request: {request.model_dump_json()}\n"
+            f"Assumed, not stated by the Traveler: {assumptions}\n"
             f"Stays: {[h.name for h in hotels]}\n"
             f"Flights: {[f.airline for f in flights]}\n"
+            f"Ways to travel: {[o.label for o in state.get('travel_options', [])]}\n"
             f"Trains: {[[leg.train_name for leg in t.legs] for t in trains_out]}\n"
             f"Last leg by road: {road_leg.model_dump_json() if road_leg else None}\n"
             f"Whole way by road: {road_route.model_dump_json() if road_route else None}\n"
@@ -41,8 +76,13 @@ def make_compose_node(llm: LLMPort):
             itinerary=itinerary,
             estimated_cost=EstimatedCost(
                 hotel_total=float(cost.hotel_total),
-                flight_total=float(cost.flight_total),
+                travel_total=float(cost.travel_total),
+                travel_mode=state.get("travel_mode"),
+                activities_total=float(cost.activities_total),
+                daily_spend_total=float(cost.daily_spend_total),
                 total=float(cost.total),
+                rooms=rooms_for(request.party_size),
+                per_person=round(float(cost.total) / request.party_size),
             ),
             notes=notes,
             destination_coordinates=state.get("destination_point"),
@@ -51,6 +91,10 @@ def make_compose_node(llm: LLMPort):
             road_route=road_route,
             road_leg=road_leg,
             timetable_as_of=state.get("timetable_as_of"),
+            travel_options=state.get("travel_options", []),
+            assumed_fields=assumed,
+            assumptions=assumptions,
+            follow_up=follow_up_question(assumed),
         )
         return {"plan": plan}
 

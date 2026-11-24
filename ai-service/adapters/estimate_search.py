@@ -1,5 +1,8 @@
+import logging
+
 from ports.llm import LLMError, LLMPort
 from ports.search import FlightQuery, HotelQuery, SearchError
+from ports.web_search import WebSearchError, WebSearchPort
 from schemas.recommendations import (
     FlightRecommendation,
     FlightRecommendations,
@@ -7,24 +10,31 @@ from schemas.recommendations import (
     HotelRecommendations,
 )
 
+logger = logging.getLogger(__name__)
+
 SYSTEM = (
     "You are a travel pricing assistant for Indian travellers. Suggest realistic options that "
     "exist today, with typical prices in INR. Never claim availability or a confirmed price."
 )
+MAX_SNIPPET_CHARS = 600
 
 
 class EstimateSearch:
-    """Stand-in when no live Provider answers: LLM-suggested options, always Estimated Cost."""
+    """Stand-in when no live Provider answers: LLM-suggested options, always Estimated Cost.
 
-    def __init__(self, llm: LLMPort):
+    With a web search Provider, flight fares are grounded in prices found on the web.
+    """
+
+    def __init__(self, llm: LLMPort, web: WebSearchPort | None = None):
         self._llm = llm
+        self._web = web
 
     def search_hotels(self, query: HotelQuery) -> list[HotelRecommendation]:
         prompt = (
             f"Suggest up to 3 {query.accommodation_type or 'hotels'} in {query.destination} for "
-            f"{query.adults} adults from {query.check_in} to {query.check_out}, style "
+            f"{query.adults} adults per room from {query.check_in} to {query.check_out}, style "
             f"'{query.travel_style or 'any'}', each at most "
-            f"{query.max_price_per_night} INR per night."
+            f"{query.max_price_per_night} INR per room per night."
         )
         result = self._ask(HotelRecommendations, prompt)
         return [hotel.model_copy(update={"price_source": "estimated"}) for hotel in result.hotels]
@@ -33,12 +43,32 @@ class EstimateSearch:
         prompt = (
             f"Suggest up to 3 round-trip economy flights from {query.origin_airport} to "
             f"{query.destination_airport}, leaving {query.outbound_date} and returning "
-            f"{query.return_date}, each at most {query.max_price_per_traveler} INR per traveller."
+            f"{query.return_date}. Give the realistic round-trip fare per traveller in INR, "
+            "even if it is high."
         )
+        if found := self._web_fares(query):
+            prompt += (
+                "\nBase the airlines and fares on these web search results for this route and "
+                f"month; use only airlines that fly it:\n{found}"
+            )
         result = self._ask(FlightRecommendations, prompt)
         return [
             flight.model_copy(update={"price_source": "estimated"}) for flight in result.flights
         ]
+
+    def _web_fares(self, query: FlightQuery) -> str:
+        if self._web is None:
+            return ""
+        month = query.outbound_date.strftime("%B %Y")
+        try:
+            results = self._web.search(
+                f"{query.origin_airport} to {query.destination_airport} round trip flight "
+                f"price {month} INR"
+            )
+        except WebSearchError as error:
+            logger.warning("Web fare search failed, estimating without it: %s", error)
+            return ""
+        return "\n".join(f"- {r.title} ({r.url}): {r.content[:MAX_SNIPPET_CHARS]}" for r in results)
 
     def _ask(self, output_type, prompt: str):
         try:

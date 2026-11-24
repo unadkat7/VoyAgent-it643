@@ -1,5 +1,5 @@
 import { env } from "../config/env.js";
-import { TripStatus } from "../domain/trip.js";
+import { TRAVEL_MODES, TripStatus } from "../domain/trip.js";
 import Event from "../models/event.model.js";
 import Feedback from "../models/feedback.model.js";
 import Trip from "../models/trip.model.js";
@@ -355,7 +355,16 @@ export async function getUsersAnalytics() {
   });
 }
 
-function buildFeatureEngagement(interactionRows, funnelTotals) {
+function buildFeatureEngagement(interactionRows, funnelTotals, planEditRows = []) {
+  const tripChat = {
+    opens: 0,
+    chipUses: 0,
+    finalized: 0,
+    backToDraft: 0,
+    travelModePicks: Object.fromEntries(TRAVEL_MODES.map((mode) => [mode, 0])),
+    // Server-side outcomes of chat messages: answered, updated or needs_clarification.
+    edits: Object.fromEntries(planEditRows.map((row) => [row._id ?? "unknown", row.count])),
+  };
   const mapStyleCounts = Object.fromEntries(MAP_STYLE_KEYS.map((key) => [key, 0]));
   const pinFocusCounts = {
     activity: 0,
@@ -445,6 +454,19 @@ function buildFeatureEngagement(interactionRows, funnelTotals) {
       case "clarification_inline_submitted":
         creationFlow.clarificationInlineSubmitted += count;
         break;
+      case "trip_chat_opened":
+        tripChat.opens += count;
+        break;
+      case "chat_chip_used":
+        tripChat.chipUses += count;
+        break;
+      case "travel_mode_selected":
+        if (value in tripChat.travelModePicks) tripChat.travelModePicks[value] += count;
+        break;
+      case "plan_stage_changed":
+        if (value === "final") tripChat.finalized += count;
+        else tripChat.backToDraft += count;
+        break;
       default:
         break;
     }
@@ -484,6 +506,7 @@ function buildFeatureEngagement(interactionRows, funnelTotals) {
       staysTabCtrPct: pct(totalHotelClicks, staysTabViews),
     },
     creationFlow,
+    tripChat,
   };
 }
 
@@ -509,6 +532,7 @@ export async function getActivityAnalytics(days = 30) {
                 tripsPlanned: countIf("trip_planned"),
                 planRequests: countIf("trip_plan_requested"),
                 planFailures: countIf("trip_plan_failed"),
+                planEdits: countIf("trip_plan_edited"),
                 clarifications: countIf("trip_clarification_requested"),
                 shares: countIf("trip_shared"),
                 sharedViews: countIf("shared_trip_viewed"),
@@ -522,6 +546,7 @@ export async function getActivityAnalytics(days = 30) {
                 tripsPlanned: 1,
                 planRequests: 1,
                 planFailures: 1,
+                planEdits: 1,
                 clarifications: 1,
                 shares: 1,
                 sharedViews: 1,
@@ -529,6 +554,10 @@ export async function getActivityAnalytics(days = 30) {
                 visitors: distinctVisitors,
               },
             },
+          ],
+          planEditOutcomes: [
+            { $match: { type: "trip_plan_edited" } },
+            { $group: { _id: "$meta.outcome", count: { $sum: 1 } } },
           ],
           countries: [
             { $match: { country: { $ne: null } } },
@@ -720,6 +749,7 @@ export async function getActivityAnalytics(days = 30) {
       visitors: row?.visitors ?? 0,
       planRequests: row?.planRequests ?? 0,
       planFailures: row?.planFailures ?? 0,
+      planEdits: row?.planEdits ?? 0,
       clarifications: row?.clarifications ?? 0,
       shares: row?.shares ?? 0,
       sharedViews: row?.sharedViews ?? 0,
@@ -753,7 +783,11 @@ export async function getActivityAnalytics(days = 30) {
     };
   });
 
-  const featureEngagement = buildFeatureEngagement(events.interactions, funnelTotals);
+  const featureEngagement = buildFeatureEngagement(
+    events.interactions,
+    funnelTotals,
+    events.planEditOutcomes
+  );
 
   return {
     days,
@@ -884,7 +918,10 @@ export async function getTripIntelligence(days = 30) {
     const budget = Number(req?.budget);
     const costTotal = Number(plan?.estimated_cost?.total);
     const hotelTotal = Number(plan?.estimated_cost?.hotel_total);
-    const flightTotal = Number(plan?.estimated_cost?.flight_total);
+    // Newer plans count the chosen way to travel; older ones only had flights.
+    const flightTotal = Number(
+      plan?.estimated_cost?.travel_total ?? plan?.estimated_cost?.flight_total
+    );
     const durationDays = Number(req?.duration_days ?? (plan?.nights ? plan.nights + 1 : NaN));
     const partySize = Number(req?.party_size);
 

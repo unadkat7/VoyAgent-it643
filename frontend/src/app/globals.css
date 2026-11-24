@@ -192,9 +192,12 @@ body {
   }
 }
 
-:where(button, a, summary, select, input, textarea):focus-visible {
-  outline: 3px solid #99502c;
-  outline-offset: 3px;
+/* In the base layer so a component's own focus style (e.g. a rounded ring) can replace it. */
+@layer base {
+  :where(button, a, summary, select, input, textarea):focus-visible {
+    outline: 3px solid #99502c;
+    outline-offset: 3px;
+  }
 }
 
 @media (max-width: 47.99rem) {

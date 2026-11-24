@@ -20,7 +20,8 @@ def settings(environment="test") -> Settings:
 
 def client(llm=None, environment="test") -> TestClient:
     engine = PlanningEngine(
-        llm=llm or FakeLLM({TripRequest: TripRequest(destination="Goa")}),
+        # No Destination: the one thing the Planning Engine must ask for before planning.
+        llm=llm or FakeLLM({TripRequest: TripRequest(origin="Ahmedabad")}),
         hotel_search=SequenceSearch(),
         flight_search=SequenceSearch(),
         geocoder=FakeGeocoder(),
@@ -50,7 +51,13 @@ def test_planning_with_the_key_returns_the_engine_answer():
     body = response.json()
     assert body["status"] == "needs_clarification"
     assert body["trip_id"] == "trip-1"
-    assert "origin" in body["clarification"]["missing_fields"]
+    assert body["clarification"]["missing_fields"] == ["destination"]
+
+
+def test_editing_a_plan_requires_the_internal_key():
+    response = client().post("/planner/edit-plan", json={"trip_id": "t1"})
+
+    assert response.status_code == 401
 
 
 def test_conversation_must_end_with_the_traveler():

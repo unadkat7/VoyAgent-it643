@@ -31,6 +31,7 @@ export const planTrip = async (req, res) => {
       meta: {
         outcome: "planned",
         ...(trip.destination ? { destination: trip.destination } : {}),
+        assumedFields: trip.plan?.assumed_fields ?? [],
       },
     });
   } else if (trip.status === TripStatus.DRAFT) {
@@ -43,6 +44,44 @@ export const planTrip = async (req, res) => {
       },
     });
   }
+  res.status(200).json({ success: true, trip });
+};
+
+export const chatAboutTrip = async (req, res) => {
+  const startedAt = Date.now();
+  let result;
+  try {
+    result = await tripService.editTrip({
+      userId: req.user._id,
+      tripId: req.params.id,
+      message: req.body.message,
+    });
+  } catch (error) {
+    if (error.status === PLANNER_UNAVAILABLE) {
+      await recordEvent(req, "trip_plan_edit_failed", {
+        tripId: req.params.id,
+        durationMs: Date.now() - startedAt,
+        meta: { outcome: "failed", statusCode: PLANNER_UNAVAILABLE },
+      });
+    }
+    throw error;
+  }
+  const { trip, outcome, change, durationMs } = result;
+  await recordEvent(req, "trip_plan_edited", {
+    tripId: trip._id,
+    durationMs,
+    meta: { outcome, change },
+  });
+  res.status(200).json({ success: true, outcome, trip });
+};
+
+export const updateTrip = async (req, res) => {
+  const trip = await tripService.updateTrip({
+    userId: req.user._id,
+    tripId: req.params.id,
+    finalized: req.body.finalized,
+    travelMode: req.body.travelMode,
+  });
   res.status(200).json({ success: true, trip });
 };
 

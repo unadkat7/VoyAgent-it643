@@ -36,6 +36,8 @@ class FlightRecommendation(BaseModel):
     currency: Literal["INR"] = "INR"
     stops: int = Field(0, ge=0)
     price_source: PriceSource = "estimated"
+    # Set by the planner when the fare is over the flight share of the Budget; hidden from the LLM.
+    over_budget: SkipJsonSchema[bool] = False
 
 
 class HotelRecommendations(BaseModel):

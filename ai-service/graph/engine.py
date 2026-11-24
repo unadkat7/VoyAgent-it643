@@ -2,13 +2,15 @@ from collections.abc import Callable
 from datetime import date
 
 from graph.builder import build_planning_graph
+from graph.editor import PlanEditor
+from ports.fares import FarePort
 from ports.geocoder import GeocoderPort
 from ports.llm import LLMPort
 from ports.places import PlaceFinderPort
 from ports.roads import RouterPort
 from ports.search import FlightSearchPort, HotelSearchPort
 from ports.timetable import TimetablePort
-from schemas.api import PlanTripRequest, PlanTripResponse
+from schemas.api import EditPlanRequest, EditPlanResponse, PlanTripRequest, PlanTripResponse
 
 
 class PlanningEngine:
@@ -25,6 +27,7 @@ class PlanningEngine:
         timetable: TimetablePort | None = None,
         places: PlaceFinderPort | None = None,
         router: RouterPort | None = None,
+        fares: FarePort | None = None,
     ):
         self._graph = build_planning_graph(
             llm=llm,
@@ -35,7 +38,9 @@ class PlanningEngine:
             timetable=timetable,
             places=places,
             router=router,
+            fares=fares,
         )
+        self._editor = PlanEditor(llm=llm, graph=self._graph, today=today)
 
     def plan(self, request: PlanTripRequest) -> PlanTripResponse:
         state = self._graph.invoke({"conversation": request.conversation, "notes": []})
@@ -44,3 +49,7 @@ class PlanningEngine:
                 status="needs_clarification", trip_id=request.trip_id, clarification=clarification
             )
         return PlanTripResponse(status="planned", trip_id=request.trip_id, plan=state["plan"])
+
+    def edit(self, request: EditPlanRequest) -> EditPlanResponse:
+        """One chat message about a finished plan: an answer, edited days, or a re-plan."""
+        return self._editor.edit(request)

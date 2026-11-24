@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   budgetBreakdown,
+  chosenTravel,
   composeBriefPrompt,
+  fareRange,
   formatInr,
   mapDays,
   mapPoints,
@@ -110,17 +112,66 @@ describe("tripRouteLabel", () => {
 });
 
 describe("budgetBreakdown", () => {
-  it("computes INR shares and remaining buffer against the Budget", () => {
+  it("computes INR shares and remaining buffer against the Budget (an older flights-only plan)", () => {
     expect(budgetBreakdown(PLAN)).toMatchObject({
       budget: 40000,
       hotelTotal: 7500,
-      flightTotal: 10000,
+      travelTotal: 10000,
+      travel: null,
+      activitiesTotal: 0,
+      dailySpendTotal: 0,
       total: 17500,
+      perPerson: 8750,
       remaining: 22500,
+      overBy: 0,
       usedPercent: 44,
-      hotelPercent: 19,
-      flightPercent: 25,
+      segments: [
+        { key: "hotel", percent: 19 },
+        { key: "travel", percent: 25 },
+        { key: "activities", percent: 0 },
+        { key: "daily", percent: 0 },
+      ],
     });
+  });
+
+  it("counts activities and daily spend, and says how far over the Budget it goes", () => {
+    const plan = {
+      ...PLAN,
+      assumed_fields: ["budget"],
+      estimated_cost: {
+        hotel_total: 20000,
+        flight_total: 14000,
+        activities_total: 2000,
+        daily_spend_total: 9000,
+        total: 45000,
+        per_person: 22500,
+        rooms: 1,
+      },
+    };
+
+    const breakdown = budgetBreakdown(plan);
+
+    expect(breakdown).toMatchObject({ total: 45000, perPerson: 22500, overBy: 5000, remaining: 0 });
+    expect(breakdown.budgetGuessed).toBe(true);
+    expect(breakdown.segments.reduce((sum, s) => sum + s.percent, 0)).toBe(100);
+  });
+
+  it("counts the picked way to travel, else the plan's default, in the total", () => {
+    const plan = {
+      ...PLAN,
+      travel_options: [
+        { mode: "train", label: "Train · 3AC", per_person_low: 3000, per_person_high: 4000, total: 7000 },
+        { mode: "flight", label: "Flight · IndiGo", per_person_low: 5000, per_person_high: 5000, total: 10000 },
+      ],
+      estimated_cost: { hotel_total: 7500, travel_total: 7000, travel_mode: "train", total: 14500 },
+    };
+
+    expect(budgetBreakdown(plan)).toMatchObject({ travelTotal: 7000, total: 14500 });
+    expect(budgetBreakdown(plan, "flight")).toMatchObject({ travelTotal: 10000, total: 17500 });
+    expect(budgetBreakdown(plan, "car").travel.mode).toBe("train"); // no car option
+    expect(chosenTravel(plan, "flight").label).toBe("Flight · IndiGo");
+    expect(fareRange(plan.travel_options[0])).toBe("₹3,000–₹4,000");
+    expect(fareRange(plan.travel_options[1])).toBe("₹5,000");
   });
 
   it("handles plans without a Budget cleanly", () => {

@@ -6,13 +6,15 @@ export const TripStatus = Object.freeze({
   PLANNING_FAILED: "planning_failed",
 });
 
+export const TRAVEL_MODES = Object.freeze(["flight", "train", "bus", "car"]);
+
 const STATUS_FOR_OUTCOME = Object.freeze({
   needs_clarification: TripStatus.DRAFT,
   planned: TripStatus.PLANNED,
   failed: TripStatus.PLANNING_FAILED,
 });
 
-// A planned Trip is final; changing it means starting a new Trip.
+// A planned Trip never goes back to planning; it changes only through plan edits (canEditPlan).
 const ALLOWED_NEXT = Object.freeze({
   [TripStatus.DRAFT]: [TripStatus.DRAFT, TripStatus.PLANNED, TripStatus.PLANNING_FAILED],
   [TripStatus.PLANNING_FAILED]: [TripStatus.DRAFT, TripStatus.PLANNED, TripStatus.PLANNING_FAILED],
@@ -34,6 +36,11 @@ export function nextStatus(current, outcome) {
 
 export function canContinue(status) {
   return (ALLOWED_NEXT[status] ?? []).length > 0;
+}
+
+// The chat may change a plan only while it is a Draft; a Final plan is locked until switched back.
+export function canEditPlan(trip) {
+  return trip.status === TripStatus.PLANNED && !trip.finalized;
 }
 
 // Only a finished plan is worth showing to someone else.

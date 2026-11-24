@@ -12,6 +12,8 @@ from adapters.no_geocoder import NoGeocoder
 from adapters.nominatim import NominatimGeocoder
 from adapters.osrm import OsrmRouter
 from adapters.searchapi import SearchApiSearch
+from adapters.tavily import TavilyWebSearch
+from adapters.web_fares import WebFares
 from adapters.wikipedia_geocoder import WikipediaGeocoder
 from graph.engine import PlanningEngine
 from ports.llm import LLMPort
@@ -38,13 +40,19 @@ def build_llm(settings: Settings) -> LLMPort:
 def build_engine(settings: Settings) -> PlanningEngine:
     """Composition root: the only place that knows which Providers are plugged in."""
     llm = build_llm(settings)
-    search = EstimateSearch(llm)
+    web = TavilyWebSearch(api_key=settings.tavily_api_key) if settings.tavily_api_key else None
+    search = EstimateSearch(llm, web)
     if settings.searchapi_key:
         search = FallbackSearch(SearchApiSearch(api_key=settings.searchapi_key), search)
     cached = CachedSearch(search, ttl_seconds=settings.search_cache_ttl_seconds)
+    fares = WebFares(web, llm) if web else None
     if not settings.geocoder_enabled:
         return PlanningEngine(
-            llm=llm, hotel_search=cached, flight_search=cached, geocoder=NoGeocoder()
+            llm=llm,
+            hotel_search=cached,
+            flight_search=cached,
+            geocoder=NoGeocoder(),
+            fares=fares,
         )
 
     # One Nominatim client, so the map pins and the place finder share its rate limit.
@@ -60,4 +68,5 @@ def build_engine(settings: Settings) -> PlanningEngine:
         timetable=GtfsTimetable(timetable_path),
         places=nominatim,
         router=OsrmRouter(base_url=settings.osrm_url),
+        fares=fares,
     )

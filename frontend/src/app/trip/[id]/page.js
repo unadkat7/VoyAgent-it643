@@ -202,7 +202,7 @@ export default function TripDetailPage() {
           }
         />
 
-        <TripPlanView trip={trip} />
+        <TripPlanView trip={trip} onTripChange={setTrip} />
 
         <Sheet open={showActions} onClose={() => setShowActions(false)} title="Trip actions">
           <div className="-mx-2 flex flex-col">

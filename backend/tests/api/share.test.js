@@ -77,6 +77,28 @@ describe("GET /api/public/trips/:shareId", () => {
     expect(await Event.countDocuments({ type: "shared_trip_viewed" })).toBe(2);
   });
 
+  it("never lets someone with the link edit a shared plan, even while it is a Draft", async () => {
+    const asha = await signedInAgent();
+    const trip = await plannedTrip(asha);
+    const { shareId } = (await asha.post(`/api/trips/${trip._id}/share`).send({})).body;
+    const ravi = await signedInAgent("ravi@example.com", "Ravi");
+
+    const view = (await ravi.get(`/api/public/trips/${shareId}`)).body.trip;
+    // The read-only view has nothing to edit with: no Trip id and no Draft/Final state.
+    expect(view._id).toBeUndefined();
+    expect(view.finalized).toBeUndefined();
+    // Even knowing the Trip id, every way to change it belongs to the owner.
+    const chat = await ravi.post(`/api/trips/${trip._id}/chat`).send({ message: "make it 5 days" });
+    const lock = await ravi.patch(`/api/trips/${trip._id}`).send({ finalized: true });
+    const travel = await ravi.patch(`/api/trips/${trip._id}`).send({ travelMode: "flight" });
+    expect([chat.status, lock.status, travel.status]).toEqual([403, 403, 403]);
+
+    const saved = (await asha.get(`/api/trips/${trip._id}`)).body.trip;
+    expect(saved.finalized).toBe(false);
+    expect(saved.plan.summary).toBe("Three beach days.");
+    expect(saved.conversation.map((turn) => turn.content)).not.toContain("make it 5 days");
+  });
+
   it("stops working once the owner removes the link", async () => {
     const asha = await signedInAgent();
     const trip = await plannedTrip(asha);

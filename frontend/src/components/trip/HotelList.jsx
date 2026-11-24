@@ -2,20 +2,20 @@
 
 import { useState } from "react";
 import { Building2, ExternalLink, MapPin, Star } from "lucide-react";
-import { formatInr } from "@/lib/tripView";
+import { formatInr, stayLabel } from "@/lib/tripView";
 import EmptyState from "./EmptyState";
 import PriceSourceBadge from "./PriceSourceBadge";
 
 const MAX_AMENITIES = 3;
 
-function HotelCard({ hotel, nights, onTrack }) {
+function HotelCard({ hotel, nights, rooms, onTrack }) {
   const [imgFailed, setImgFailed] = useState(false);
   const showImage = Boolean(hotel.image_url) && !imgFailed;
   const visibleAmenities = hotel.amenities?.slice(0, MAX_AMENITIES) ?? [];
   const extraAmenities = Math.max(0, (hotel.amenities?.length ?? 0) - MAX_AMENITIES);
   const totalForStay =
     Number.isFinite(nights) && nights > 0 && Number.isFinite(hotel.price_per_night)
-      ? hotel.price_per_night * nights
+      ? hotel.price_per_night * nights * rooms
       : null;
 
   return (
@@ -56,13 +56,15 @@ function HotelCard({ hotel, nights, onTrack }) {
 
         <div className="mt-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
           <p className="font-mono text-lg font-semibold text-success">
-            {`${formatInr(hotel.price_per_night)} / night`}
+            {totalForStay != null
+              ? `${formatInr(totalForStay)} for ${stayLabel(nights, rooms)}`
+              : `${formatInr(hotel.price_per_night)} / night`}
           </p>
           <PriceSourceBadge source={hotel.price_source} />
         </div>
         {totalForStay != null && (
           <p className="text-sm text-muted">
-            Est. {formatInr(totalForStay)} for {nights} {nights === 1 ? "night" : "nights"}
+            {formatInr(hotel.price_per_night)} a night{rooms > 1 ? " per room" : ""}
           </p>
         )}
 
@@ -91,7 +93,7 @@ function HotelCard({ hotel, nights, onTrack }) {
   );
 }
 
-export default function HotelList({ hotels, nights, notes = [], onTrack = null }) {
+export default function HotelList({ hotels, nights, rooms = 1, notes = [], onTrack = null }) {
   if (!hotels?.length) {
     return (
       <EmptyState icon={Building2} notes={notes}>
@@ -103,7 +105,7 @@ export default function HotelList({ hotels, nights, notes = [], onTrack = null }
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
       {hotels.map((hotel) => (
-        <HotelCard key={hotel.name} hotel={hotel} nights={nights} onTrack={onTrack} />
+        <HotelCard key={hotel.name} hotel={hotel} nights={nights} rooms={rooms} onTrack={onTrack} />
       ))}
     </div>
   );

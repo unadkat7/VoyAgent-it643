@@ -22,6 +22,9 @@ describe("Shared Trip page", () => {
     expect(await screen.findByRole("heading", { name: "Goa" })).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /plan your own trip/i }).length).toBeGreaterThan(0);
     expect(screen.queryByRole("button", { name: /delete/i })).toBeNull();
+    // Only the owner can chat about or lock the plan.
+    expect(screen.queryByRole("button", { name: "Ask or change" })).toBeNull();
+    expect(screen.queryByRole("group", { name: "Plan stage" })).toBeNull();
     expect(getSharedTrip).toHaveBeenCalledWith("abcdefghijklmnop");
   });
 

@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -24,6 +26,37 @@ class TrainOption(BaseModel):
     change_at: str | None = None
     wait_minutes: int | None = None
     runs_on: list[str] = Field(default_factory=list)
+
+
+class FareRange(BaseModel):
+    """A one-way fare for one Traveler in INR, as a range because fares vary by date and seat."""
+
+    low: int = Field(ge=0)
+    high: int = Field(ge=0)
+
+
+class TravelFares(BaseModel):
+    """Approximate fares read from web search results. Never a confirmed price."""
+
+    train_sleeper: FareRange | None = None
+    train_ac3: FareRange | None = None
+    bus: FareRange | None = None
+
+
+TravelMode = Literal["flight", "train", "bus", "car"]
+
+
+class TravelOption(BaseModel):
+    """One way to get there and back, priced for the whole Travel Party, round trip."""
+
+    mode: TravelMode
+    label: str
+    detail: str | None = None
+    per_person_low: int = Field(ge=0)
+    per_person_high: int = Field(ge=0)
+    total: int = Field(ge=0)
+    source: Literal["live", "estimated"] = "estimated"
+    over_budget: bool = False
 
 
 class RoadRoute(BaseModel):
