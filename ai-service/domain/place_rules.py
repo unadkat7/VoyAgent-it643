@@ -7,6 +7,20 @@ MAX_DURATION_DAYS = 30
 MAX_PARTY_SIZE = 20
 MAX_NIGHTS = 30
 
+# Bare astronomical names also match settlements. A qualified town name can still be geocoded.
+CELESTIAL_NAMES = {
+    "sun",
+    "moon",
+    "mercury",
+    "venus",
+    "mars",
+    "jupiter",
+    "saturn",
+    "uranus",
+    "neptune",
+    "pluto",
+}
+
 
 @dataclass(frozen=True)
 class PlaceProblem:
@@ -16,12 +30,12 @@ class PlaceProblem:
 
 
 def kind_problem(field, name, kind, area) -> PlaceProblem | None:
-    if kind == "not_on_earth":
+    if kind == "not_on_earth" or name.strip().casefold().removeprefix("the ") in CELESTIAL_NAMES:
         return PlaceProblem(
             field,
             f"I can only plan trips to real places on Earth. '{name}' isn't one. "
             "Which city, region or country would you like?",
-            kind,
+            "not_on_earth",
         )
     if kind == "not_a_place":
         return PlaceProblem(
