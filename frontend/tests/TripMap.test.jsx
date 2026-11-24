@@ -4,6 +4,15 @@ import { describe, expect, it, vi } from "vitest";
 import TripMap from "@/components/trip/TripMap";
 import { LOCATED_PLAN, PLAN } from "./fixtures";
 
+const map = vi.hoisted(() => ({
+  fitBounds: vi.fn(),
+  setView: vi.fn(),
+  whenReady: (fn) => fn(),
+  off: vi.fn(),
+  invalidateSize: vi.fn(),
+  getContainer: () => document.body,
+}));
+
 // jsdom cannot draw tiles, so Leaflet is replaced by plain elements that keep the pin text.
 vi.mock("leaflet", () => ({ default: { divIcon: () => ({}), latLngBounds: () => ({}) } }));
 vi.mock("react-leaflet", () => ({
@@ -17,8 +26,7 @@ vi.mock("react-leaflet", () => ({
   ),
   Popup: ({ children }) => <div>{children}</div>,
   Polyline: () => <div data-testid="route" />,
-  useMap: () => ({ fitBounds: vi.fn(), setView: vi.fn(), whenReady: fn => fn(), off: vi.fn(),
-    invalidateSize: vi.fn(), getContainer: () => document.body }),
+  useMap: () => map,
   useMapEvents: () => null,
 }));
 
@@ -55,6 +63,26 @@ describe("TripMap", () => {
     rerender(<TripMap plan={LOCATED_PLAN} selectedDay="all" />);
     expect(screen.getAllByTestId("pin")).toHaveLength(3);
     expect(screen.getByRole("button", { name: "Stays" })).toBeInTheDocument();
+    vi.unstubAllGlobals();
+  });
+
+  it("keeps the traveller's own zoom when the map is resized", () => {
+    let resize;
+    vi.stubGlobal("ResizeObserver", class {
+      constructor(callback) { resize = callback; }
+      observe() {}
+      disconnect() {}
+    });
+    render(<TripMap plan={LOCATED_PLAN} />);
+
+    map.fitBounds.mockClear();
+    resize();
+    expect(map.fitBounds).toHaveBeenCalledTimes(1);
+
+    document.body.dispatchEvent(new Event("pointerdown"));
+    map.fitBounds.mockClear();
+    resize();
+    expect(map.fitBounds).not.toHaveBeenCalled();
     vi.unstubAllGlobals();
   });
 
