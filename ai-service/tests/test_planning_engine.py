@@ -402,3 +402,73 @@ def test_map_outage_allows_planning_with_a_note():
     plan = ask(engine, "Goa").plan
 
     assert any("double-check 'Goa'" in note for note in plan.notes)
+
+
+# Global currency and origin -------------------------------------------------
+
+
+LA_TO_NY_REQUEST = TripRequest(
+    origin="Los Angeles",
+    origin_kind="city",
+    origin_area="americas",
+    origin_country="US",
+    destination="New York",
+    destination_kind="city",
+    destination_area="americas",
+    duration_days=2,
+    budget=1000,
+    budget_currency="USD",
+    party_size=1,
+    origin_airport="LAX",
+    destination_airport="JFK",
+)
+
+
+def test_us_domestic_trip_plans_in_usd_with_india_only_rail_note():
+    engine = make_engine(
+        llm_for(LA_TO_NY_REQUEST),
+        hotels=[[hotel("Midtown Inn", 150, 4.4)]],
+        flights=[[flight("Delta", 300)]],
+    )
+
+    response = ask(engine, "LA to NY $1000 budget solo business trip for 2 days")
+
+    assert response.status == "planned"
+    plan = response.plan
+    assert plan.estimated_cost.currency == "USD"
+    assert any("Train and bus" in note and "India" in note for note in plan.notes)
+    assert all("₹" not in note for note in plan.notes)
+    other_notes = [note for note in plan.notes if "Train and bus" not in note]
+    assert all("India" not in note for note in other_notes)
+
+
+def test_us_domestic_trip_with_tiny_budget_asks_in_usd():
+    tiny_budget = LA_TO_NY_REQUEST.model_copy(update={"budget": 100})
+    engine = make_engine(llm_for(tiny_budget), hotels=[[]], flights=[[]])
+
+    response = ask(engine, "LA to NY $100 solo 2 days")
+
+    assert response.status == "needs_clarification"
+    assert response.clarification.missing_fields == ["budget"]
+    assert "$" in response.clarification.question
+    assert "India" not in response.clarification.question
+    assert "₹" not in response.clarification.question
+    assert response.clarification.currency == "USD"
+    assert 0 < response.clarification.suggestions["budget"] < 10_000
+
+
+def test_goa_trip_without_currency_or_origin_area_stays_unchanged_in_inr():
+    engine = make_engine(
+        llm_for(GOA_REQUEST),
+        hotels=[[hotel("Sea View", 6_000, 4.5)]],
+        flights=[[flight("IndiGo", 5_000)]],
+    )
+
+    plan = ask(engine, "Ahmedabad to Goa, 3 days, 40k, 2 people, relaxed, from 10 Dec").plan
+    cost = plan.estimated_cost
+
+    assert cost.currency == "INR"
+    assert cost.hotel_total == 18_000
+    assert cost.travel_total == 10_000
+    assert cost.daily_spend_total == 9_000
+    assert cost.total == 37_000
