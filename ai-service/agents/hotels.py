@@ -19,6 +19,8 @@ def make_hotel_node(search: HotelSearchPort):
                 max_price_per_night=caps.hotel_search_limit,
                 travel_style=request.travel_style,
                 accommodation_type=request.accommodation_type,
+                currency=request.currency,
+                country=(request.origin_country or "").lower() or None,
             )
             try:
                 found = search.search_hotels(query)
