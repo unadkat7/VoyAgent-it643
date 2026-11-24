@@ -68,9 +68,10 @@ def test_each_train_is_searched_by_number_and_stations_and_read_in_one_go():
 
     found = WebFares(web, FakeLLM({TrainFares: answer})).train_fares(SEGMENTS, "December 2026")
 
+    # Short queries by number and city find fare pages; long ones drift to travel articles.
     assert web.queries == [
-        "12911 Bl Haridwar Exp Surat to Haridwar Jn train fare sleeper 3AC December 2026",
-        "12912 Hw Bl Exp Haridwar Jn to Surat train fare sleeper 3AC December 2026",
+        "12911 train fare Surat to Haridwar",
+        "12912 train fare Haridwar to Surat",
     ]
     assert len(prompts) == 1
     assert [fare.train_number for fare in found] == ["12911"]
