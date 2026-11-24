@@ -71,7 +71,7 @@ export async function planTrip({ userId, prompt, tripId }) {
     });
   }
   await trip.save();
-  return trip;
+  return { trip, rejectedReason: result.clarification?.reason ?? null };
 }
 
 const PLAN_READY = "Your Trip plan is ready. Ask me anything, or tell me what to change.";
@@ -116,7 +116,7 @@ export async function editTrip({ userId, tripId, message }) {
     if (!travelModes(trip.plan).includes(trip.travelMode)) trip.travelMode = undefined;
   }
   await trip.save();
-  return { trip, outcome: result.outcome, change: result.change, durationMs: Date.now() - startedAt };
+  return { trip, outcome: result.outcome, change: result.change, reason: result.reason ?? null, durationMs: Date.now() - startedAt };
 }
 
 const travelModes = (plan) => (plan?.travel_options ?? []).map((option) => option.mode);

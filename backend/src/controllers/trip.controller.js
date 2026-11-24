@@ -4,12 +4,16 @@ import { recordEvent } from "../services/telemetry.service.js";
 
 const PLANNER_UNAVAILABLE = 503;
 
+async function recordRejection(req, tripId, reason) {
+  if (reason) await recordEvent(req, "trip_input_rejected", { tripId, meta: { category: reason } });
+}
+
 export const planTrip = async (req, res) => {
   await recordEvent(req, "trip_plan_requested", { tripId: req.body.tripId });
   const startedAt = Date.now();
-  let trip;
+  let result;
   try {
-    trip = await tripService.planTrip({
+    result = await tripService.planTrip({
       userId: req.user._id,
       prompt: req.body.prompt,
       tripId: req.body.tripId,
@@ -24,6 +28,7 @@ export const planTrip = async (req, res) => {
     }
     throw error;
   }
+  const { trip, rejectedReason } = result;
   if (trip.status === TripStatus.PLANNED) {
     await recordEvent(req, "trip_planned", {
       tripId: trip._id,
@@ -44,6 +49,7 @@ export const planTrip = async (req, res) => {
       },
     });
   }
+  await recordRejection(req, trip._id, rejectedReason);
   res.status(200).json({ success: true, trip });
 };
 
@@ -72,6 +78,7 @@ export const chatAboutTrip = async (req, res) => {
     durationMs,
     meta: { outcome, change },
   });
+  await recordRejection(req, trip._id, result.reason);
   res.status(200).json({ success: true, outcome, trip });
 };
 

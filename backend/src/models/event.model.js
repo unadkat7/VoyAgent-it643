@@ -6,6 +6,7 @@ export const EVENT_TYPES = Object.freeze([
   "login",
   "trip_plan_requested",
   "trip_clarification_requested",
+  "trip_input_rejected",
   "trip_planned",
   "trip_plan_failed",
   "trip_plan_edited",

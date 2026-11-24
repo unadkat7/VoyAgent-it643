@@ -16,6 +16,7 @@ const plannerResponseSchema = z.discriminatedUnion("status", [
     clarification: z.object({
       missing_fields: z.array(z.string()),
       question: z.string().min(1),
+      reason: z.string().nullish(),
     }),
   }),
   z.object({
@@ -79,6 +80,7 @@ export async function requestPlan({ tripId, conversation }) {
       clarification: {
         missingFields: result.clarification.missing_fields,
         question: result.clarification.question,
+        reason: result.clarification.reason ?? null,
       },
     };
   }
@@ -89,6 +91,7 @@ const editResponseSchema = z.object({
   outcome: z.enum(["updated", "answered", "needs_clarification"]),
   change: z.enum(["request", "itinerary", "question"]),
   reply: z.string().min(1),
+  reason: z.string().nullish(),
   plan: z.looseObject({ request: z.looseObject({ destination: z.string().nullish() }) }).nullish(),
 });
 
@@ -104,6 +107,6 @@ export async function requestEdit({ tripId, conversation, plan, travelMode }) {
   if (!parsed.success || (parsed.data.outcome === "updated" && !parsed.data.plan)) {
     throw new PlannerUnavailableError("Planning Engine sent an unexpected edit response");
   }
-  const { outcome, change, reply, plan: newPlan } = parsed.data;
-  return { outcome, change, reply, plan: newPlan ?? null };
+  const { outcome, change, reply, reason, plan: newPlan } = parsed.data;
+  return { outcome, change, reply, reason: reason ?? null, plan: newPlan ?? null };
 }
