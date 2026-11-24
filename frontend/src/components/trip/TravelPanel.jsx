@@ -1,5 +1,5 @@
 import { ExternalLink } from "lucide-react";
-import { formatShortDate } from "@/lib/tripView";
+import { formatInr, formatShortDate } from "@/lib/tripView";
 import FlightList from "./FlightList";
 import RoadRouteCard from "./RoadRouteCard";
 import TrainList from "./TrainList";
@@ -35,6 +35,15 @@ export default function TravelPanel({ plan, travelMode = null, onSelectMode = nu
           <FlightList flights={flights} partySize={plan.request?.party_size} notes={plan.notes} />
         )}
       </section>
+
+      {plan.legs?.length > 0 && (
+        <section className="space-y-2">
+          <h2 className="font-display text-xl font-semibold text-ink">Between cities</h2>
+          {plan.legs.map((leg, index) => (
+            <p key={index}>{leg.from_city} → {leg.to_city} · {leg.mode} · ≈ {formatInr(leg.est_inr_per_person)} per person (estimate)</p>
+          ))}
+        </section>
+      )}
 
       {hasTrains && (
         <div className="space-y-8">

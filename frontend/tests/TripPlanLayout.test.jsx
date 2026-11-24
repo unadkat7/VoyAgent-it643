@@ -37,6 +37,21 @@ describe("Trip plan layout", () => {
   });
 });
 
+
+it("groups stays under their base cities", async () => {
+  const stops = [
+    { city: "Paris", nights: 2, hotels: [PLAN.hotels[0]] },
+    { city: "Berlin", nights: 3, hotels: [PLAN.hotels[1]] },
+  ];
+  render(<TripPlanView trip={{ plan: { ...PLAN, stops } }} />);
+  await userEvent.click(screen.getByRole("button", { name: /Stays/ }));
+
+  stops.forEach(({ city, hotels }) => {
+    const section = screen.getByRole("heading", { name: city }).closest("section");
+    expect(section).toContainElement(screen.getByTestId(`hotel-${hotels[0].name}`));
+  });
+});
+
 describe("Empty recommendations", () => {
   it("explain why there are no flights right where the list would be", () => {
     render(<FlightList flights={[]} notes={["Flight search is unavailable right now."]} />);
