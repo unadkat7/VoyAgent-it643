@@ -1,12 +1,29 @@
 "use client";
 
-import { Calendar, MapPin } from "lucide-react";
+import { useState } from "react";
+import { Calendar, ExternalLink, MapPin, Star } from "lucide-react";
 import { formatInr } from "@/lib/tripView";
 import SegmentedControl from "@/components/ui/SegmentedControl";
 import EmptyState from "./EmptyState";
 
 const hasCoordinates = (coords) =>
   Number.isFinite(coords?.lat) && Number.isFinite(coords?.lng);
+
+function ActivityPhoto({ src, alt }) {
+  const [failed, setFailed] = useState(false);
+  if (!src || failed) return null;
+  return (
+    // Provider thumbnails come from varying hosts, so a plain img with an error fallback.
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt={alt}
+      loading="lazy"
+      onError={() => setFailed(true)}
+      className="size-16 shrink-0 self-center rounded-xl bg-bg-subtle object-cover"
+    />
+  );
+}
 
 export default function ItineraryList({
   days,
@@ -99,7 +116,30 @@ export default function ItineraryList({
                         {activity.location}
                       </p>
                     )}
+                    {(activity.rating != null || activity.maps_url) && (
+                      <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                        {activity.rating != null && (
+                          <span className="inline-flex items-center gap-1 font-mono font-semibold text-warning">
+                            <Star className="h-3.5 w-3.5 fill-star text-star" aria-hidden />
+                            {activity.rating}
+                          </span>
+                        )}
+                        {activity.maps_url && (
+                          <a
+                            href={activity.maps_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
+                          >
+                            Google Maps
+                            <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+                          </a>
+                        )}
+                      </p>
+                    )}
                   </div>
+
+                  <ActivityPhoto src={activity.image_url} alt={activity.title} />
 
                   {canLocate && (
                     <button
