@@ -1,11 +1,13 @@
 from collections.abc import Callable
 from datetime import date
 
+from agents.locate import MAX_PLACE_DETAILS
 from graph.builder import build_planning_graph
 from graph.editor import PlanEditor
 from ports.fares import FarePort
 from ports.geocoder import GeocoderPort
 from ports.llm import LLMPort
+from ports.place_details import PlaceDetailsPort
 from ports.places import PlaceFinderPort
 from ports.roads import RouterPort
 from ports.search import FlightSearchPort, HotelSearchPort
@@ -28,6 +30,8 @@ class PlanningEngine:
         places: PlaceFinderPort | None = None,
         router: RouterPort | None = None,
         fares: FarePort | None = None,
+        place_details: PlaceDetailsPort | None = None,
+        place_details_per_trip: int = MAX_PLACE_DETAILS,
     ):
         self._graph = build_planning_graph(
             llm=llm,
@@ -39,6 +43,8 @@ class PlanningEngine:
             places=places,
             router=router,
             fares=fares,
+            place_details=place_details,
+            place_details_per_trip=place_details_per_trip,
         )
         self._editor = PlanEditor(llm=llm, graph=self._graph, today=today)
 

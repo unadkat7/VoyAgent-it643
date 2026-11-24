@@ -11,7 +11,7 @@ from agents.fares import make_fares_node
 from agents.flights import make_flight_node
 from agents.hotels import make_hotel_node
 from agents.itinerary import make_itinerary_node
-from agents.locate import make_locate_node
+from agents.locate import MAX_PLACE_DETAILS, make_locate_node
 from agents.prepare import make_prepare_node
 from agents.rail import make_rail_node
 from agents.road import make_road_node
@@ -21,6 +21,7 @@ from graph.state import PlanningState
 from ports.fares import FarePort
 from ports.geocoder import GeocoderPort
 from ports.llm import LLMPort
+from ports.place_details import PlaceDetailsPort
 from ports.places import PlaceFinderPort
 from ports.roads import RouterPort
 from ports.search import FlightSearchPort, HotelSearchPort
@@ -47,6 +48,8 @@ def build_planning_graph(
     places: PlaceFinderPort | None = None,
     router: RouterPort | None = None,
     fares: FarePort | None = None,
+    place_details: PlaceDetailsPort | None = None,
+    place_details_per_trip: int = MAX_PLACE_DETAILS,
 ):
     graph = StateGraph(PlanningState)
     graph.add_node("understand", make_understand_node(llm, today))
@@ -58,7 +61,7 @@ def build_planning_graph(
     graph.add_node("flights", make_flight_node(flight_search))
     graph.add_node("itinerary", make_itinerary_node(llm))
     graph.add_node("budget_check", budget_check)
-    graph.add_node("locate", make_locate_node(geocoder))
+    graph.add_node("locate", make_locate_node(geocoder, place_details, place_details_per_trip))
     graph.add_node("compose", make_compose_node(llm))
 
     searches = ["hotels", "flights", "itinerary"]
