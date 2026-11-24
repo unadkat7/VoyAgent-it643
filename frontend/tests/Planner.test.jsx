@@ -64,7 +64,7 @@ describe("Trip planner", () => {
 
     await user.click(await screen.findByRole("button", { name: "Use ₹1,10,000" }));
 
-    expect(screen.getByRole("textbox", { name: "Budget (INR)" })).toHaveValue("110000");
+    expect(screen.getByRole("textbox", { name: "Budget" })).toHaveValue("110000");
     expect(prompt).toHaveValue("");
   });
 
@@ -82,10 +82,37 @@ describe("Trip planner", () => {
     await user.type(prompt, "Goa trip");
     await user.click(screen.getByRole("button", { name: "Send message" }));
 
-    await user.click(await screen.findByRole("button", { name: "Budget (INR)" }));
+    await user.click(await screen.findByRole("button", { name: "Budget" }));
 
-    expect(screen.getByRole("textbox", { name: "Budget (INR)" })).toHaveValue("30000");
+    expect(screen.getByRole("textbox", { name: "Budget" })).toHaveValue("30000");
     expect(prompt).toHaveValue("");
+  });
+
+  it("formats and sends suggested USD budgets in dollars", async () => {
+    planTrip
+      .mockResolvedValueOnce({
+        trip: {
+          _id: "t1",
+          status: "draft",
+          clarification: {
+            question: "Too low",
+            missingFields: ["budget"],
+            suggestions: { budget: 1200 },
+            currency: "USD",
+          },
+        },
+      })
+      .mockResolvedValueOnce({ trip: { _id: "t1", status: "planned" } });
+    const user = userEvent.setup();
+    render(<TripPlanner />);
+    await user.type(await screen.findByRole("textbox", { name: /describe your trip/i }), "LA to NY $100");
+    await user.click(screen.getByRole("button", { name: "Send message" }));
+
+    await user.click(await screen.findByRole("button", { name: "Use $1,200" }));
+    expect(screen.getByRole("textbox", { name: "Budget" })).toHaveValue("1200");
+    await user.click(screen.getByRole("button", { name: /send details/i }));
+
+    expect(planTrip).toHaveBeenLastCalledWith({ prompt: "Budget: $1,200", tripId: "t1" });
   });
 
 });
