@@ -131,10 +131,21 @@ function MapViewportController({ points, focusedPoint, fitTrigger, expanded }) {
       }
     };
     map.whenReady(fit);
-    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(fit);
-    observer?.observe(map.getContainer());
+    // Refit while the layout settles, but never undo a zoom or drag the traveller made.
+    let touched = false;
+    const markTouched = () => {
+      touched = true;
+    };
+    const refit = () => (touched ? map.invalidateSize(false) : fit());
+    const container = map.getContainer();
+    container.addEventListener("pointerdown", markTouched);
+    container.addEventListener("wheel", markTouched, { passive: true });
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(refit);
+    observer?.observe(container);
     return () => {
       observer?.disconnect();
+      container.removeEventListener("pointerdown", markTouched);
+      container.removeEventListener("wheel", markTouched);
       map.off("load", fit);
     };
   }, [map, points, focusedPoint, fitTrigger, expanded]);
