@@ -10,6 +10,7 @@ class TripCost:
     travel_total: Fraction
     activities_total: Fraction = Fraction(0)
     daily_spend_total: Fraction = Fraction(0)
+    currency: str = "INR"
 
     @property
     def stay_and_travel(self) -> Fraction:
@@ -31,6 +32,7 @@ def estimate_trip_cost(
     activities_per_traveler: float = 0,
     daily_spend_per_traveler: float = 0,
     days: int = 0,
+    currency: str = "INR",
 ) -> TripCost:
     """A missing Hotel or travel option adds nothing; the plan notes say why it is missing."""
     return TripCost(
@@ -40,6 +42,7 @@ def estimate_trip_cost(
         travel_total=Fraction(travel_total or 0),
         activities_total=Fraction(activities_per_traveler) * party_size,
         daily_spend_total=Fraction(daily_spend_per_traveler) * days * party_size,
+        currency=currency,
     )
 
 

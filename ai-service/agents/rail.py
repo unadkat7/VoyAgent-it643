@@ -33,9 +33,14 @@ def make_rail_node(timetable: TimetablePort, places: PlaceFinderPort, router: Ro
     """Train Options there and back. Train times come only from the timetable, never the LLM."""
 
     def rail(state: PlanningState) -> PlanningState:
-        if state["request"].destination_area not in (None, "india"):
-            return {}
         request, dates = state["request"], state["dates"]
+        if request.destination_area not in (None, "india") or request.origin_area not in (
+            None,
+            "india",
+        ):
+            if request.origin:
+                return {"notes": ["Train and bus options are only available within India for now."]}
+            return {}
         if not request.origin:
             return {}  # the flight step asks for the Origin once
         try:

@@ -3,6 +3,7 @@ from math import ceil
 from langgraph.graph import END
 
 from domain.feasibility import estimate_trip_cost, is_within_budget
+from domain.money import format_money
 from domain.spend import daily_spend_per_traveler, rooms_for
 from domain.travel_costs import chosen_option, travel_options
 from graph.state import PlanningState
@@ -15,12 +16,14 @@ def budget_check(state: PlanningState) -> PlanningState:
     A Budget the Traveler never gave is only a guess, so it never blocks a plan.
     """
     request, dates, caps = state["request"], state["dates"], state["caps"]
+    cur = request.currency
     budget_guessed = "budget" in state.get("assumed_fields", [])
     if state.get("hotels_over_budget") and not budget_guessed:
         question = (
             f"The cheapest stay I found in {state['over_budget_city']} costs "
-            f"₹{state['cheapest_hotel_price']:,.0f} per night, but your ₹{request.budget:,} "
-            f"Budget allows about ₹{caps.hotel_search_limit:,} per night for {dates.nights} "
+            f"{format_money(state['cheapest_hotel_price'], cur)} per night, but your "
+            f"{format_money(request.budget, cur)} Budget allows about "
+            f"{format_money(caps.hotel_search_limit, cur)} per night for {dates.nights} "
             "nights. Could you raise the Budget, shorten the Trip, or pick another Destination?"
         )
         return {"clarification": Clarification(missing_fields=["budget"], question=question)}
@@ -34,13 +37,14 @@ def budget_check(state: PlanningState) -> PlanningState:
             party_size=request.party_size,
             trains_out=state.get("trains_out"),
             trains_back=state.get("trains_back"),
+            currency=cur,
         )
     travel = chosen_option(options, state.get("travel_mode"))
     activities = sum(
         activity.estimated_cost for day in state.get("itinerary", []) for activity in day.activities
     )
     # The first listed stay and the chosen (else cheapest) way to travel are what the plan counts.
-    legs_total = sum(leg.est_inr_per_person for leg in state.get("legs", [])) * request.party_size
+    legs_total = sum(leg.est_per_person for leg in state.get("legs", [])) * request.party_size
     stays = [
         (group[0].price_per_night, dates.nights)
         for group, dates in zip(state["stop_hotels"], state["stop_dates"], strict=True)
@@ -53,14 +57,16 @@ def budget_check(state: PlanningState) -> PlanningState:
         travel_total=(travel.total if travel else 0) + legs_total,
         party_size=request.party_size,
         activities_per_traveler=activities,
-        daily_spend_per_traveler=daily_spend_per_traveler(request.travel_style),
+        daily_spend_per_traveler=daily_spend_per_traveler(request.travel_style, cur),
         days=request.duration_days,
+        currency=cur,
     )
     # Intercity legs and over-cap flights can push the combined travel and stays over budget.
     if not budget_guessed and not is_within_budget(cost, request.budget):
         question = (
-            f"The stay and travel I found come to about ₹{float(cost.stay_and_travel):,.0f}, "
-            f"which is over your ₹{request.budget:,} Budget. Could you raise the Budget or "
+            f"The stay and travel I found come to about "
+            f"{format_money(float(cost.stay_and_travel), cur)}, which is over your "
+            f"{format_money(request.budget, cur)} Budget. Could you raise the Budget or "
             "shorten the Trip?"
         )
         return {

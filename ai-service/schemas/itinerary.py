@@ -9,7 +9,9 @@ class Activity(BaseModel):
     title: str
     description: str
     location: str
-    estimated_cost: float = Field(0, ge=0, description="Estimated Cost in INR per Traveler")
+    estimated_cost: float = Field(
+        0, ge=0, description="Estimated Cost per Traveler in the Trip currency"
+    )
     # Filled by the locate step; hidden from the LLM's schema so it never invents pins or ratings.
     coordinates: SkipJsonSchema[GeoPoint | None] = None
     rating: SkipJsonSchema[float | None] = None

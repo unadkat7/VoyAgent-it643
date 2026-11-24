@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import AliasChoices, BaseModel, Field
 
 
 class RouteStop(BaseModel):
@@ -14,7 +14,9 @@ class StopLeg(BaseModel):
     from_city: str
     to_city: str
     mode: Literal["flight", "train", "bus", "ferry"]
-    est_inr_per_person: int = Field(ge=0)
+    est_per_person: int = Field(
+        ge=0, validation_alias=AliasChoices("est_per_person", "est_inr_per_person")
+    )
 
 
 class RoutePlan(BaseModel):

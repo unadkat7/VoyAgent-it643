@@ -1,5 +1,6 @@
 from math import ceil
 
+from domain.money import from_inr
 from schemas.trip_request import WorldArea
 
 # Rough planning floors in INR from India, not quoted prices.
@@ -37,11 +38,53 @@ MIN_DAYS = {
     "oceania": 6,
 }
 
+NEIGHBOURS: dict[str, frozenset[str]] = {
+    "india": frozenset({"south_asia", "southeast_asia", "middle_east"}),
+    "south_asia": frozenset({"india", "southeast_asia", "middle_east"}),
+    "southeast_asia": frozenset({"india", "south_asia", "east_asia", "oceania"}),
+    "east_asia": frozenset({"southeast_asia"}),
+    "middle_east": frozenset({"india", "south_asia", "europe", "africa"}),
+    "europe": frozenset({"middle_east", "africa"}),
+    "africa": frozenset({"middle_east", "europe"}),
+    "oceania": frozenset({"southeast_asia"}),
+}
 
-def minimum_trip_cost(area: WorldArea | None, days: int, party_size: int) -> int:
-    return (
-        MIN_PER_TRAVELER_PER_DAY.get(area, 0) * days + MIN_RETURN_FLIGHT_PER_TRAVELER.get(area, 0)
+
+def _flight_floor_inr(area: WorldArea | None, origin_area: WorldArea | None = None) -> int:
+    if area is None:
+        return 0
+    if origin_area in (None, "india"):
+        return MIN_RETURN_FLIGHT_PER_TRAVELER.get(area, 0)
+    if origin_area == area:
+        return 0
+    if area in NEIGHBOURS.get(origin_area, frozenset()):
+        return 15_000
+    return 60_000
+
+
+def min_days(area: WorldArea | None, origin_area: WorldArea | None = None) -> int:
+    if area is None:
+        return 1
+    if origin_area in (None, "india"):
+        return MIN_DAYS.get(area, 1)
+    if origin_area == area:
+        return 1
+    if area in NEIGHBOURS.get(origin_area, frozenset()):
+        return 3
+    return 5
+
+
+def minimum_trip_cost(
+    area: WorldArea | None,
+    days: int,
+    party_size: int,
+    origin_area: WorldArea | None = None,
+    currency: str = "INR",
+) -> int:
+    inr = (
+        MIN_PER_TRAVELER_PER_DAY.get(area, 0) * days + _flight_floor_inr(area, origin_area)
     ) * party_size
+    return from_inr(inr, currency)
 
 
 BUDGET, STANDARD, LUXURY = "budget", "standard", "luxury"
@@ -70,12 +113,24 @@ def rooms_for(party_size: int) -> int:
     return max(1, ceil(party_size / TRAVELERS_PER_ROOM))
 
 
-def daily_spend_per_traveler(travel_style: str | None) -> int:
-    return DAILY_SPEND_PER_TRAVELER[style_tier(travel_style)]
+def daily_spend_per_traveler(travel_style: str | None, currency: str = "INR") -> int:
+    return from_inr(DAILY_SPEND_PER_TRAVELER[style_tier(travel_style)], currency)
 
 
 def assumed_budget(
-    *, travel_style: str | None, days: int, party_size: int, area: WorldArea | None = None
+    *,
+    travel_style: str | None,
+    days: int,
+    party_size: int,
+    area: WorldArea | None = None,
+    origin_area: WorldArea | None = None,
+    currency: str = "INR",
 ) -> int:
-    style_budget = ASSUMED_BUDGET_PER_TRAVELER_PER_DAY[style_tier(travel_style)] * days * party_size
-    return max(style_budget, minimum_trip_cost(area, days, party_size))
+    style_budget = from_inr(
+        ASSUMED_BUDGET_PER_TRAVELER_PER_DAY[style_tier(travel_style)] * days * party_size,
+        currency,
+    )
+    return max(
+        style_budget,
+        minimum_trip_cost(area, days, party_size, origin_area=origin_area, currency=currency),
+    )

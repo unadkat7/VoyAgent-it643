@@ -9,14 +9,15 @@ from ports.geocoder import GeocodeError, GeocoderPort
 from ports.llm import LLMPort
 from schemas.route import RoutePlan, RouteStop
 
-ROUTE_SYSTEM = """Pick an ordered route of base cities realistic for travellers from India.
-Use only overnight bases inside the requested destination. Never include the origin, an invented
-Indian departure city, transit airports or the final journey home as stops. Give each country.
-Prefer three or four cities for ten days.
+ROUTE_SYSTEM = """Pick an ordered route of base cities realistic for travellers starting from the
+given origin. Use only overnight bases inside the requested destination. Never include the origin,
+transit airports or the final journey home as stops. Give each country. Prefer three or four cities
+for ten days.
 Minimize border crossings. Choose cities linked by inexpensive trains or flights. Allow at least
 two days per city, and use the given total days. Include each city's main airport IATA code.
-For each consecutive pair give the usual mode and rough INR cost per person, using the same
-city names as the stops. Never claim bookings or exact prices."""
+For each consecutive pair give the usual mode and rough cost per person in the currency given in
+the request's `currency` field, using the same city names as the stops. Never claim bookings or
+exact prices."""
 
 
 def make_route_node(llm: LLMPort, geocoder: GeocoderPort):

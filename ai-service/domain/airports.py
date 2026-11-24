@@ -40,6 +40,11 @@ CITY_AIRPORT_CODES: dict[str, str] = {
     "abu dhabi": "AUH",
     "london": "LHR",
     "new york": "JFK",
+    "nyc": "JFK",
+    "new york city": "JFK",
+    "la": "LAX",
+    "washington dc": "IAD",
+    "san francisco": "SFO",
     "tokyo": "HND",
     "paris": "CDG",
     "rome": "FCO",
@@ -63,6 +68,19 @@ def _bundled_codes() -> dict[str, str]:
     return json.loads(AIRPORTS_FILE.read_text(encoding="utf-8"))["airports"]
 
 
+@cache
+def _known_codes() -> frozenset[str]:
+    return frozenset(CITY_AIRPORT_CODES.values()) | frozenset(_bundled_codes().values())
+
+
+def known_code(code: str | None) -> str | None:
+    """Accept an IATA code only if it belongs to a known airport."""
+    if not code or not code.strip():
+        return None
+    cleaned = code.strip().upper()
+    return cleaned if cleaned in _known_codes() else None
+
+
 def airport_code(place: str | None) -> str | None:
     """Rule 4: an unknown place has no airport. Never fall back to another city."""
     if not place or not place.strip():
@@ -74,5 +92,5 @@ def airport_code(place: str | None) -> str | None:
         return known
     # Only an explicit uppercase code counts, so a city like "Una" is not read as an IATA code.
     if len(cleaned) == 3 and cleaned.isalpha() and cleaned.isupper():
-        return cleaned
+        return known_code(cleaned)
     return None

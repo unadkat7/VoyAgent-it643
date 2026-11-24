@@ -14,9 +14,12 @@ def make_fares_node(fares: FarePort):
     """Approximate train and bus fares from the web: for the route, and for each train found."""
 
     def fares_step(state: PlanningState) -> PlanningState:
-        if state["request"].destination_area not in (None, "india"):
-            return {}
         request, dates = state["request"], state["dates"]
+        if request.destination_area not in (None, "india") or request.origin_area not in (
+            None,
+            "india",
+        ):
+            return {}
         if not request.origin:
             return {}  # the flight step asks for the Origin once
         month = dates.check_in.strftime("%B %Y")

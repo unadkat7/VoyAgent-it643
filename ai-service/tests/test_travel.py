@@ -334,4 +334,4 @@ def test_place_outside_india_skips_trains_and_roads():
     plan = plan_for("Dubai")
 
     assert plan.trains_out == [] and plan.road_route is None
-    assert any("Dubai wasn't found in India" in note for note in plan.notes)
+    assert any("Dubai wasn't found, so road routes were skipped." in note for note in plan.notes)

@@ -17,7 +17,7 @@ class TrainLeg(BaseModel):
 
 
 class FareRange(BaseModel):
-    """A one-way fare for one Traveler in INR, as a range because fares vary by date and seat."""
+    """A one-way fare for one Traveler in the Trip currency, as a range."""
 
     low: int = Field(ge=0)
     high: int = Field(ge=0)
@@ -41,7 +41,7 @@ class TrainOption(BaseModel):
 
 
 class TrainFare(BaseModel):
-    """Web-found one-way fares for one train number, per Traveler in INR."""
+    """Web-found one-way fares for one train number, per Traveler in the Trip currency."""
 
     train_number: str
     sleeper: FareRange | None = None
