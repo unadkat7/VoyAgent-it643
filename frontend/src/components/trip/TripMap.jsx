@@ -52,9 +52,9 @@ const BED_SVG =
   '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M2 19v-9M22 19v-5H2M6 14v-3h6v3"/></svg>';
 
 const PIN_STYLE = {
+  day: "background:#ce532d;color:#fff;border-radius:9999px;border:2px solid #fff",
   activity: "background:#ce532d;color:#fff;border-radius:9999px;border:2px solid #fff",
   hotel: "background:#181411;color:#fff;border-radius:9px;border:2px solid #fff",
-  destination: "background:#fff;color:#ce532d;border:2.5px solid #ce532d;border-radius:9999px",
 };
 
 const FLOATING_BUTTON =
@@ -62,18 +62,20 @@ const FLOATING_BUTTON =
 
 // Leaflet's default marker images break under bundlers, so pins are plain HTML.
 function pinIcon(point, focused) {
-  const label = point.kind === "activity" ? point.order : point.kind === "hotel" ? BED_SVG : "★";
+  const isDay = point.kind === "day";
+  const label = isDay ? `Day ${Number(point.day)}` : point.kind === "activity" ? point.order : BED_SVG;
   const size = focused ? 36 : 30;
+  const width = isDay ? 56 : size;
   const pulseClass = focused ? "voyagent-pin-pulse" : "";
   const shadow = focused
     ? "box-shadow:0 0 0 4px rgba(206,83,45,0.28),0 4px 14px rgba(24,20,17,0.38)"
     : "box-shadow:0 3px 10px rgba(24,20,17,0.28)";
   return L.divIcon({
     className: "",
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2],
+    iconSize: [width, size],
+    iconAnchor: [width / 2, size / 2],
     popupAnchor: [0, -(size / 2) - 2],
-    html: `<div class="${pulseClass}" style="${PIN_STYLE[point.kind]};width:${size}px;height:${size}px;display:flex;align-items:center;justify-content:center;font:700 12px system-ui;${shadow};transition:transform .15s ease">${label}</div>`,
+    html: `<div class="${pulseClass}" style="${PIN_STYLE[point.kind]};width:${width}px;height:${size}px;display:flex;align-items:center;justify-content:center;font:700 12px system-ui;${shadow};transition:transform .15s ease">${label}</div>`,
   });
 }
 
@@ -205,6 +207,8 @@ export default function TripMap({
   const day = selectedDay ?? internalDay;
   const setDay = (nextDay) => {
     setLocalFocusKey(null);
+    setOptionsOpen(false);
+    onClearFocus?.();
     onTrack?.("map_day_filtered", nextDay === "all" ? "all" : "day");
     if (onDayChange) onDayChange(nextDay);
     else setInternalDay(nextDay);
@@ -219,7 +223,7 @@ export default function TripMap({
     () =>
       spreadOverlapping(
         dayPoints.filter((p) => {
-          if (p.kind === "activity" && !showActivities) return false;
+          if (p.kind !== "hotel" && !showActivities) return false;
           if (p.kind === "hotel" && !showStays) return false;
           return true;
         })
@@ -269,10 +273,12 @@ export default function TripMap({
   }
 
   const tileStyle = MAP_STYLES[mapStyle] ?? MAP_STYLES.atlas;
-  const activityCount = points.filter((p) => p.kind === "activity").length;
+  const itineraryCount = points.filter((p) => p.kind !== "hotel").length;
+  const countLabel = day === "all"
+    ? (itineraryCount === 1 ? "day" : "days")
+    : (itineraryCount === 1 ? "activity" : "activities");
   const stayCount = points.filter((p) => p.kind === "hotel").length;
-  const quickStops = points.filter((p) => p.kind !== "destination");
-  const pinSummary = `${activityCount} ${activityCount === 1 ? "activity" : "activities"}${
+  const pinSummary = `${itineraryCount} ${countLabel}${
     stayCount > 0 ? ` · ${stayCount} ${stayCount === 1 ? "stay" : "stays"}` : ""
   }`;
 
@@ -320,7 +326,7 @@ export default function TripMap({
   const layerToggles = (
     <>
       <LayerToggle pressed={showActivities} onClick={toggleActivities} swatch="rounded-full bg-primary">
-        Activities (numbered by day)
+        {day === "all" ? "Itinerary days" : "Activities"}
       </LayerToggle>
       {day === "all" && <LayerToggle pressed={showStays} onClick={toggleStays} swatch="rounded bg-ink">
         Stays
@@ -334,7 +340,8 @@ export default function TripMap({
       <button
         key={stop.key}
         type="button"
-        onClick={() => handleSelectQuickStop(stop.key, stop.kind)}
+        onClick={() => stop.kind === "day" ? setDay(stop.day) : handleSelectQuickStop(stop.key, stop.kind)}
+        aria-label={stop.kind === "day" ? (stop.detail ? `${stop.title} · ${stop.detail}` : stop.title) : undefined}
         aria-pressed={active}
         className={`inline-flex min-h-tap shrink-0 items-center gap-2 rounded-xl border px-3 text-left text-sm font-medium transition-all ${
           active
@@ -342,8 +349,8 @@ export default function TripMap({
             : "border-border bg-surface text-ink-soft hover:border-primary/50 hover:text-primary"
         }`}
       >
-        <StopBadge stop={stop} active={active} />
-        <span className="min-w-0">{stop.title}</span>
+        {stop.kind !== "day" && <StopBadge stop={stop} active={active} />}
+        <span className="min-w-0">{stop.title}{stop.kind === "day" && stop.detail && ` · ${stop.detail}`}</span>
         {stop.kind === "activity" && <span className={active ? "text-bg/70" : "text-muted"}>Day {stop.day}</span>}
       </button>
     );
@@ -425,6 +432,18 @@ export default function TripMap({
             />
           )}
           {points.map((point) => {
+            if (point.kind === "day") {
+              return (
+                <Marker
+                  key={point.key}
+                  title={`Show ${point.title} activities`}
+                  position={[point.displayLat, point.displayLng]}
+                  icon={pinIcon(point, false)}
+                  zIndexOffset={500}
+                  eventHandlers={{ click: () => setDay(point.day) }}
+                />
+              );
+            }
             const isFocused = activeFocusKey === point.key;
             const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
               `${point.lat},${point.lng}`
@@ -449,16 +468,12 @@ export default function TripMap({
                       className={`inline-block rounded-full px-2 py-0.5 font-mono text-label font-semibold uppercase tracking-wider ${
                         point.kind === "hotel"
                           ? "bg-ink text-bg"
-                          : point.kind === "activity"
-                          ? "bg-primary-light text-primary-hover"
-                          : "bg-bg-subtle text-ink-soft"
+                          : "bg-primary-light text-primary-hover"
                       }`}
                     >
                       {point.kind === "hotel"
                         ? "Stay"
-                        : point.kind === "activity"
-                        ? `Stop #${point.order}`
-                        : "Destination"}
+                        : `Stop #${point.order}`}
                     </span>
                     <p className="text-sm font-semibold leading-snug text-ink">{point.title}</p>
                     {point.detail && <p className="text-sm text-muted">{point.detail}</p>}
@@ -526,18 +541,14 @@ export default function TripMap({
       </div>
 
       {/* Wide screens: places strip and layer legend under the map */}
-      {!phone && (showQuickStrip || expanded) && quickStops.length > 0 && (
+      {!phone && (showQuickStrip || expanded) && points.length > 0 && (
         <div className="flex items-center gap-2 overflow-x-auto pb-1" aria-label="Jump to pinned place">
-          {quickStops.map(placeButton)}
+          {points.map(placeButton)}
         </div>
       )}
       {!phone && (
         <div className="flex flex-wrap items-center gap-1 rounded-xl border border-border bg-surface px-2">
           {layerToggles}
-          <span className="flex min-h-tap items-center gap-2 px-3 text-sm text-muted">
-            <span className="size-3 rounded-full border-2 border-primary bg-surface" aria-hidden />
-            Destination
-          </span>
         </div>
       )}
 
@@ -552,10 +563,10 @@ export default function TripMap({
               <p className="mb-1 text-sm font-semibold text-ink-soft">Show</p>
               <div className="-mx-3 flex flex-wrap">{layerToggles}</div>
             </div>
-            {quickStops.length > 0 && (
+            {points.length > 0 && (
               <div>
                 <p className="mb-2 text-sm font-semibold text-ink-soft">Places</p>
-                <div className="flex flex-col gap-2">{quickStops.map(placeButton)}</div>
+                <div className="flex flex-col gap-2">{points.map(placeButton)}</div>
               </div>
             )}
           </div>

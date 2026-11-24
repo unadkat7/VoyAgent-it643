@@ -62,7 +62,7 @@ export default function TripPlanView({ trip, onTripChange = null }) {
     const restoreStop = (event) => {
       if (event.state?.voyStop) {
         setOriginStop(event.state.voyStop);
-        setSelectedDay(event.state.voyStop.day);
+        setSelectedDay(event.state.voyStop.activityDay ?? event.state.voyStop.day);
         setFocusedPointKey(event.state.voyStop.key);
         setActiveTab("map");
       } else if (originStop) {
@@ -123,9 +123,10 @@ export default function TripPlanView({ trip, onTripChange = null }) {
 
   const handleFocusActivity = (pointKey, dayNumber) => {
     if (!wideLayout) {
-      const stop = { key: pointKey, day: selectedDay };
+      const stop = { key: pointKey, day: selectedDay, activityDay: dayNumber };
       setOriginStop(stop);
       window.history.pushState({ ...window.history.state, voyStop: stop }, "");
+      setSelectedDay(dayNumber);
       setFocusedPointKey(pointKey);
       setActiveTab("map");
       handleTrack("trip_tab_viewed", "map");
@@ -139,7 +140,7 @@ export default function TripPlanView({ trip, onTripChange = null }) {
     const willFocus = focusedPointKey !== pointKey;
     setFocusedPointKey((current) => (current === pointKey ? null : pointKey));
     if (willFocus) handleTrack("map_pin_focused", "locate_from_itinerary");
-    if (selectedDay !== "all" && selectedDay !== dayNumber) {
+    if (selectedDay !== dayNumber) {
       setSelectedDay(dayNumber);
     }
   };
