@@ -49,3 +49,20 @@ describe("requestPlan on a serverless platform", () => {
     expect(second.isDone()).toBe(false);
   });
 });
+
+describe("requestPlan clarification", () => {
+  it("passes through clarification suggestions", async () => {
+    planner().reply(200, {
+      status: "needs_clarification",
+      clarification: {
+        missing_fields: ["budget"],
+        question: "Q",
+        suggestions: { budget: 110000 },
+      },
+    });
+
+    const result = await requestPlan(CALL);
+
+    expect(result.clarification.suggestions).toEqual({ budget: 110000 });
+  });
+});
