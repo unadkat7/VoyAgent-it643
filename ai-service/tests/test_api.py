@@ -85,3 +85,13 @@ def test_api_docs_are_hidden_in_production(environment, status):
 def test_settings_reject_a_short_internal_key():
     with pytest.raises(ValueError):
         Settings(internal_api_key="short", _env_file=None)
+
+
+def test_invalid_destination_returns_clarification_reason():
+    request = TripRequest(destination="Sun", destination_kind="not_on_earth")
+
+    response = client(FakeLLM({TripRequest: request})).post(
+        PLAN_URL, json=BODY, headers={"X-Internal-Key": KEY}
+    )
+
+    assert response.json()["clarification"]["reason"] == "not_on_earth"

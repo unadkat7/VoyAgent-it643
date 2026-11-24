@@ -227,3 +227,20 @@ def test_llm_outage_is_raised_for_the_api_to_report():
 
     with pytest.raises(LLMError):
         say(engine, plan, "make it cheaper")
+
+
+@pytest.mark.parametrize(("edit", "reason"), [
+    (PlanEdit(changes=TripRequest(destination="Pluto", destination_kind="not_on_earth")), "not_on_earth"),
+    (PlanEdit(off_topic=True), "off_topic"),
+])
+def test_invalid_chat_returns_reason_and_preserves_plan(edit, reason):
+    llm = ScriptedLLM([days("Baga")])
+    engine = engine_for(llm, hotels=[[]], flights=[[]])
+    plan = first_plan(engine)
+    llm.edit = edit
+
+    response = say(engine, plan, "change destination to Pluto" if reason == "not_on_earth" else "write me a poem")
+
+    assert response.plan is None
+    assert response.reason == reason
+    assert response.outcome == ("answered" if reason == "off_topic" else "needs_clarification")
