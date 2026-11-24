@@ -10,6 +10,7 @@ import authRoutes from "./routes/auth.routes.js";
 import eventRoutes from "./routes/event.routes.js";
 import feedbackRoutes from "./routes/feedback.routes.js";
 import publicRoutes from "./routes/public.routes.js";
+import serviceStatusRoutes from "./routes/serviceStatus.routes.js";
 import statsRoutes from "./routes/stats.routes.js";
 import tripRoutes from "./routes/trip.routes.js";
 import { HttpError } from "./utils/httpError.js";
@@ -52,6 +53,7 @@ app.use("/api/feedback", feedbackRoutes);
 app.use("/api/stats", statsRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/public", publicRoutes);
+app.use("/api/status", serviceStatusRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

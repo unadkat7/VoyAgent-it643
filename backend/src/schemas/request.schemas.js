@@ -57,3 +57,14 @@ export const feedbackSchema = z.object({
   page: z.string().trim().max(200).optional(),
   category: z.enum(FEEDBACK_CATEGORIES).optional(),
 });
+
+const isoDateTime = z.iso.datetime({ offset: true }).nullable().optional();
+
+export const updateServiceStatusSchema = z
+  .object({
+    isDown: z.boolean(),
+    groqResetAt: isoDateTime,
+    cloudflareResetAt: isoDateTime,
+    message: z.string().trim().max(280).nullable().optional(),
+  })
+  .strict();
