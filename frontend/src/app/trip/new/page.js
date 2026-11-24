@@ -44,7 +44,7 @@ const HEADER_BUTTON =
 function errorReply(error) {
   const status = error.response?.status;
   if (status === 409) return "This Trip is already planned. Start a new Trip to plan something else.";
-  if (status === 429) return "You have reached the planning limit for now. Please try again in an hour.";
+  if (status === 429) return error.response?.data?.message || "You have reached the planning limit for now. Please try again in an hour.";
   if (status === 400) return "Please write a shorter message (up to 2,000 characters).";
   return "The planner is unavailable right now. Please send your message again in a minute.";
 }

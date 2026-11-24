@@ -25,6 +25,8 @@ frontend (Next.js) --cookie--> backend (Express + MongoDB) --X-Internal-Key--> a
 7. **Plan only real places on Earth.** Ask for a reachable destination and flag trips over 30 days or nights or 20 travelers before searching. When stated days or budget fall below the regional floor, explain what would work.
 8. **A Trip is an ordered list of stops.** Each city has its own dates, stays and itinerary days. Travel costs include the journey home and transfers between cities.
 
+Five rejected place or off-topic inputs in the past hour pause planning and trip chat for that account. Missing details and feasibility questions do not count as rejections. The existing hourly planner limit still applies.
+
 ## Three design decisions
 
 ### 1. The LLM sits behind a port the core owns (DIP and the boundary)
@@ -55,7 +57,7 @@ The Trip Map reused this boundary. Coordinates come from `GeocoderPort`; Wikiped
 
 **What it protects us from:** volatile external Providers. During development we paired Groq with a Cloudflare Workers AI fallback, adjusted Groq and Cloudflare wire handling, added `EstimateSearch` behind SearchApi.io for when the free quota runs out, and placed Wikipedia in front of Nominatim for landmark accuracy. None of these changes touched a domain rule or a test of a rule.
 
-**Cost:** one interface per Provider kind and one more level of indirection. A boundary is only worth its cost where the outside side is likely to change; here our Providers changed repeatedly, so it paid for itself. The backend uses the same idea for the Planning Engine: `backend/src/clients/aiPlanner.client.js:64` (`requestPlan`) is the only file that knows the ai-service wire format.
+**Cost:** one interface per Provider kind and one more level of indirection. A boundary is only worth its cost where the outside side is likely to change; here our Providers changed repeatedly, so it paid for itself. The backend uses the same idea for the Planning Engine: `backend/src/clients/aiPlanner.client.js:65` (`requestPlan`) is the only file that knows the ai-service wire format.
 
 ## Usage evidence (telemetry, admin page, Share links)
 

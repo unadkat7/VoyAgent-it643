@@ -13,9 +13,10 @@ const CHIPS = [
 ];
 const MAX_MESSAGE = 1000;
 
-function errorReply(status) {
+function errorReply(error) {
+  const status = error.response?.status;
   if (status === 409) return "This plan is Final. Switch it to Draft to change it.";
-  if (status === 429) return "You have reached the planning limit for now. Try again in an hour.";
+  if (status === 429) return error.response?.data?.message || "You have reached the planning limit for now. Try again in an hour.";
   return "The planner is unavailable right now. Please send it again in a minute.";
 }
 
@@ -44,7 +45,7 @@ export default function TripChat({ trip, open, onOpenChange, onTripChange, onTra
       onTripChange(updated);
     } catch (err) {
       setMessage(trimmed);
-      setError(errorReply(err.response?.status));
+      setError(errorReply(err));
     } finally {
       setSending(false);
     }
