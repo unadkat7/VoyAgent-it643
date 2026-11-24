@@ -51,6 +51,14 @@ export default function TripChat({ trip, open, onOpenChange, onTripChange, onTra
     }
   };
 
+  // Same as the new-trip composer: Enter sends, Shift+Enter (and Enter on touch keyboards) adds a line.
+  const handleKeyDown = (event) => {
+    if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing && !window.matchMedia?.("(pointer: coarse)").matches) {
+      event.preventDefault();
+      send(message);
+    }
+  };
+
   return (
     <>
       {!open && (
@@ -108,6 +116,7 @@ export default function TripChat({ trip, open, onOpenChange, onTripChange, onTra
                 maxLength={MAX_MESSAGE}
                 disabled={sending}
                 onChange={(event) => setMessage(event.target.value)}
+                onKeyDown={handleKeyDown}
                 placeholder="e.g. swap day 2 for a beach day"
                 className="min-h-tap max-h-32 min-w-0 flex-1 resize-none overflow-y-auto rounded-xl bg-transparent px-2.5 py-2.5 text-base leading-6 text-ink placeholder-faint focus:outline-none"
               />
