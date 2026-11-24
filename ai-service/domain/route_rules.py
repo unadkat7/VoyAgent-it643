@@ -1,10 +1,34 @@
+import re
+from itertools import pairwise
+
 from domain.place_rules import PlaceProblem
 from domain.spend import MIN_DAYS, MIN_RETURN_FLIGHT_PER_TRAVELER, minimum_trip_cost
 from schemas.itinerary import ItineraryDay
-from schemas.route import RouteStop
+from schemas.route import RouteStop, StopLeg
 from schemas.trip_request import TripRequest
 
 MIN_DAYS_PER_STOP = 2
+
+
+def _city_key(name: str) -> str:
+    # "Brussels (Bruxelles)" and "Brussels, Belgium" are both Brussels.
+    return re.sub(r"\(.*?\)", "", name).split(",")[0].strip().casefold()
+
+
+def connect_stops(stops: list[RouteStop], legs: list[StopLeg]) -> tuple[list[StopLeg], list[str]]:
+    """Legs between consecutive stops. An unpriced leg becomes a note, not a refusal."""
+    priced = {(_city_key(leg.from_city), _city_key(leg.to_city)): leg for leg in legs}
+    connected, notes = [], []
+    for a, b in pairwise(stops):
+        leg = priced.get((_city_key(a.city), _city_key(b.city)))
+        if leg is None:
+            notes.append(
+                f"I couldn't estimate travel from {a.city} to {b.city}, so it isn't in the "
+                "total. Check trains or flights between them."
+            )
+            continue
+        connected.append(leg.model_copy(update={"from_city": a.city, "to_city": b.city}))
+    return connected, notes
 
 
 def destination_bases(stops: list[RouteStop], request: TripRequest) -> list[RouteStop]:

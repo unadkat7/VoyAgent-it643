@@ -19,13 +19,13 @@ All eight rules have automated coverage.
 
 Trip input validation runs before searches on new plans and chat edits. See `ai-service/tests/domain/test_place_rules.py:30` (`test_numeric_limits_are_inclusive`), `ai-service/tests/test_planning_engine.py:366` (`test_invalid_request_asks_before_any_search`), and `ai-service/tests/test_plan_editor.py:243` (`test_invalid_chat_returns_reason_and_preserves_plan`).
 
-Regional floors, route allocation, outbound and return flights, and per-stop costs are exercised at `ai-service/tests/test_multi_stop.py:111` (`test_four_city_plan_prices_consecutive_stays_both_flights_and_transfers`). Legacy plans and city headings are covered at `frontend/tests/multiStop.test.jsx:7` (`uses the existing dates`).
+Regional floors, route allocation, outbound and return flights, and per-stop costs are exercised at `ai-service/tests/test_multi_stop.py:116` (`test_four_city_plan_prices_consecutive_stays_both_flights_and_transfers`). A city the map can't find is dropped and an unpriced leg becomes a note, never a refused route: `ai-service/tests/test_multi_stop.py:183` (`test_city_missing_from_the_map_is_dropped_without_refusing_the_route`). Legacy plans and city headings are covered at `frontend/tests/multiStop.test.jsx:7` (`uses the existing dates`).
 
 ## Structure and coverage
 
 - **Arrange–Act–Assert (AAA):** Tests follow AAA with minimal, boring inputs and one Act per test (exceptions are listed under "Smells found in our own suite" below).
 - **Coverage vs. verification:** Coverage is useful only as a negative signal — low coverage flags untested logic, while high coverage proves nothing about assertion strength. Line-and-branch coverage of the ai-service core (`domain/`, `agents/`, `graph/`) is 95% (measured once with `pytest-cov`) and is intentionally **not** a CI gate.
-- The trip-wide cost guard is exercised with expensive transfers at `ai-service/tests/test_multi_stop.py:178` (`test_expensive_intercity_legs_trigger_trip_wide_cost_guard`).
+- The trip-wide cost guard is exercised with expensive transfers at `ai-service/tests/test_multi_stop.py:208` (`test_expensive_intercity_legs_trigger_trip_wide_cost_guard`).
 
 ## How test cases were derived
 
