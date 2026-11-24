@@ -1,3 +1,5 @@
+import re
+
 from ports.fares import FareError, FareQuery, TrainSegment
 from ports.llm import LLMError, LLMPort
 from ports.web_search import WebResult, WebSearchError, WebSearchPort
@@ -13,6 +15,11 @@ stations as low-high ranges: sleeper (Sleeper class) and ac3 (3rd AC). Use only 
 results show for that train; leave a class null, or leave the train out, when they don't.
 Never invent a fare."""
 MAX_SNIPPET_CHARS = 500
+
+
+def _city(station: str) -> str:
+    # Fare pages are indexed by city: "Haridwar Jn" -> "Haridwar".
+    return re.sub(r"\s+(jn|junction)\.?$", "", station.strip(), flags=re.IGNORECASE)
 
 
 def _snippets(results: list[WebResult]) -> str:
@@ -47,8 +54,9 @@ class WebFares:
         sections = []
         for s in segments:
             train = f"{s.train_number} {s.train_name} {s.from_station} to {s.to_station}"
+            route = f"{_city(s.from_station)} to {_city(s.to_station)}"
             try:
-                results = self._web.search(f"{train} train fare sleeper 3AC {month}")
+                results = self._web.search(f"{s.train_number} train fare {route}")
             except WebSearchError as error:
                 raise FareError(f"Train fare search failed: {error}") from error
             if results:
