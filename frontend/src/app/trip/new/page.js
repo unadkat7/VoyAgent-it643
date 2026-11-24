@@ -25,7 +25,7 @@ const FIELD_META = {
   origin: { label: "Origin", placeholder: "e.g. Pune", example: "Mumbai" },
   destination: { label: "Destination", placeholder: "e.g. Goa", example: "Goa" },
   duration_days: { label: "Duration", placeholder: "e.g. 3 days", example: "3" },
-  budget: { label: "Budget (INR)", placeholder: "e.g. ₹35,000", example: "30000" },
+  budget: { label: "Budget", placeholder: "e.g. $1,500 or ₹35,000", example: "30000" },
   party_size: { label: "Party Size", placeholder: "e.g. 2 people", example: "2" },
   travel_style: { label: "Travel Style", placeholder: "e.g. relaxed", example: "Relaxed" },
 };
@@ -423,7 +423,7 @@ function TripPlanner() {
               id="trip-prompt"
               rows={1}
               enterKeyHint="send"
-              placeholder={hasStarted ? "e.g. 4 people, ₹60k, 2 nights" : "Where to? e.g. Pune to Goa"}
+              placeholder={hasStarted ? "e.g. 4 people, $2,000, 2 nights" : "Where to? e.g. Pune to Goa"}
               value={prompt}
               maxLength={MAX_PROMPT_LENGTH}
               onChange={(event) => setPrompt(event.target.value)}

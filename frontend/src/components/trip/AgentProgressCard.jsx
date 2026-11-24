@@ -7,10 +7,10 @@ import {
   Calendar,
   CheckCircle2,
   Compass,
-  IndianRupee,
   Loader2,
   MapPin,
   Route,
+  Wallet,
 } from "lucide-react";
 
 // Mirrors the parallel branches in ai-service/graph/builder.py
@@ -210,7 +210,7 @@ export default function AgentProgressCard({ loading }) {
         }`}
       >
         <div className="w-8 h-8 rounded-xl bg-white border border-border flex items-center justify-center shrink-0">
-          <IndianRupee
+          <Wallet
             className={`w-4 h-4 ${phase >= 3 ? "text-success" : "text-muted"}`}
             aria-hidden
           />

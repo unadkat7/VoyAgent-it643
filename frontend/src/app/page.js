@@ -4,10 +4,10 @@ import {
   Building2,
   Calendar,
   Compass,
-  IndianRupee,
   MapPin,
   Plane,
   ShieldCheck,
+  Wallet,
 } from "lucide-react";
 import BrandLogo from "@/components/layout/BrandLogo";
 import LandingStickyCta from "@/components/layout/LandingStickyCta";
@@ -16,7 +16,7 @@ const PIPELINE_STEPS = [
   {
     num: "01",
     title: "Conversation & Brief",
-    desc: "Share Origin, Destination, Duration, Party Size, Budget in INR, and Travel Style. If anything is missing, VoyAgent asks a crisp Clarification.",
+    desc: "Share Origin, Destination, Duration, Party Size, Budget in your currency, and Travel Style. If anything is missing, VoyAgent asks a crisp Clarification.",
   },
   {
     num: "02",
@@ -25,7 +25,7 @@ const PIPELINE_STEPS = [
   },
   {
     num: "03",
-    title: "Deterministic INR Caps",
+    title: "Deterministic budget caps",
     desc: "Pure budget arithmetic enforces Stays ≤ 50%/night and Flights ≤ 35% + 15% grace so every Trip Plan is Feasible before composing.",
   },
   {
@@ -37,9 +37,9 @@ const PIPELINE_STEPS = [
 
 const TRUST_PILLARS = [
   {
-    icon: IndianRupee,
+    icon: Wallet,
     tag: "Rule 2 & 3 · Budget Math",
-    title: "Hard INR Feasibility, Not LLM Guesswork",
+    title: "Hard Budget Feasibility, Not LLM Guesswork",
     desc: "Budget caps live in deterministic domain rules. If no stay fits your nightly cap, VoyAgent tells you honestly and quotes the lowest rate found instead of faking a plan.",
   },
   {
@@ -315,7 +315,7 @@ export default function LandingPage() {
             Where are you headed next?
           </h2>
           <p className="text-sm sm:text-base text-bg/65 mb-9 max-w-md mx-auto leading-relaxed">
-            Create a free account to build, save, and map complete INR-budgeted Trip Plans in
+            Create a free account to build, save, and map complete budget-checked Trip Plans in
             seconds.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">

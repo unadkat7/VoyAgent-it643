@@ -1,6 +1,6 @@
 # VoyAgent
 
-VoyAgent plans a Trip from a chat. Tell it where you start, where you want to go, for how long, how many of you are going, your Budget and your travel style. It asks for anything missing, then builds a day-by-day Itinerary with Hotel and Flight Recommendations that fit your Budget, plus an Estimated Cost in INR.
+VoyAgent plans a Trip from a chat. Tell it where you start, where you want to go, for how long, how many of you are going, your Budget and your travel style. It asks for anything missing, then builds a day-by-day Itinerary with Hotel and Flight Recommendations that fit your Budget, plus an Estimated Cost in your currency.
 
 **Live:** https://voyagent-it643.vercel.app/ (all three services on one Vercel project). See [docs/deployment.md](docs/deployment.md).
 

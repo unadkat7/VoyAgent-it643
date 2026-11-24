@@ -43,7 +43,7 @@ export default function LoginPage() {
       eyebrow="Your Personal Travel Desk"
       headline="Your AI travel team, working"
       accentWord="in parallel."
-      description="Stays, flights, day-by-day itineraries, and an interactive OpenStreetMap Trip Map—checked against your INR Budget before you ever leave."
+      description="Stays, flights, day-by-day itineraries, and an interactive OpenStreetMap Trip Map—checked against your Budget before you ever leave."
       title="Welcome back"
       subtitle="Sign in to access your saved Trip Plans and drafts."
       footer={
