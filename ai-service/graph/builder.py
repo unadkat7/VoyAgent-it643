@@ -69,9 +69,16 @@ def build_planning_graph(
     if places is not None and router is not None:
         graph.add_node("road", make_road_node(places, router))
         searches.append("road")
+    joins = list(searches)
     if fares is not None:
         graph.add_node("fares", make_fares_node(fares))
-        searches.append("fares")
+        joins.append("fares")
+        # Fares are searched for the trains found, so they wait for the rail step.
+        if "rail" in searches:
+            graph.add_edge("rail", "fares")
+            joins.remove("rail")
+        else:
+            searches.append("fares")
 
     # A new Conversation starts at understand; a plan edit starts later (see route_start).
     graph.add_conditional_edges(START, route_start, ["understand", "check_places", "budget_check"])
@@ -89,7 +96,7 @@ def build_planning_graph(
     # Fan out to the independent searches, then join before checking the Budget.
     for step in searches:
         graph.add_edge("prepare", step)
-    graph.add_edge(searches, "budget_check")
+    graph.add_edge(joins, "budget_check")
     graph.add_conditional_edges("budget_check", route_after_budget_check, ["locate", END])
     graph.add_edge("locate", "compose")
     graph.add_edge("compose", END)

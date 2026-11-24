@@ -60,6 +60,9 @@ class FakeFares:
             raise self._error
         return self._fares
 
+    def train_fares(self, segments, month):
+        return []
+
 
 class ScriptedLLM(FakeLLM):
     """FakeLLM whose PlanEdit answer is set per test, after the first plan is made."""
