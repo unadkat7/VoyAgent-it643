@@ -1,11 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, Calendar, IndianRupee, MapPin, Minus, Navigation, Plus, Sparkles, Users } from "lucide-react";
+import { ArrowRight, Calendar, MapPin, Minus, Navigation, Plus, Sparkles, Users, Wallet } from "lucide-react";
 import { composeBriefPrompt, formatMoney } from "@/lib/tripView";
 import StickyActionBar from "@/components/ui/StickyActionBar";
 
 const TRAVEL_STYLES = ["Relaxed", "Adventure", "Culture", "Family", "Luxury", "Budget"];
+const CURRENCIES = [
+  "INR", "USD", "EUR", "GBP", "AED", "SAR", "QAR",
+  "SGD", "MYR", "THB", "IDR", "JPY", "CNY", "HKD",
+  "AUD", "NZD", "CAD", "CHF", "ZAR", "NPR", "LKR",
+];
 const BUDGET_PRESETS = [20000, 35000, 50000, 80000];
 const DAY_PRESETS = [2, 3, 4, 5, 7];
 const MAX_BUDGET_DIGITS = 8;
@@ -17,7 +22,8 @@ const CHIP = "min-h-tap rounded-xl border px-3 text-sm font-semibold transition-
 const CHIP_ON = "border-ink bg-ink text-bg";
 const CHIP_OFF = "border-border bg-surface-warm text-ink-soft hover:border-border-strong";
 
-const groupedRupees = (digits) => (digits ? Number(digits).toLocaleString("en-IN") : "");
+const groupedAmount = (digits, currency) =>
+  digits ? Number(digits).toLocaleString(currency === "INR" ? "en-IN" : "en-US") : "";
 
 export default function TripBriefBuilder({ onSubmitPrompt, onPrefillPrompt, disabled = false }) {
   const [origin, setOrigin] = useState("");
@@ -25,9 +31,11 @@ export default function TripBriefBuilder({ onSubmitPrompt, onPrefillPrompt, disa
   const [durationDays, setDurationDays] = useState(3);
   const [partySize, setPartySize] = useState(2);
   const [budget, setBudget] = useState("40000");
+  const [currency, setCurrency] = useState("INR");
   const [travelStyle, setTravelStyle] = useState("Relaxed");
 
   const numericBudget = Number(budget);
+  const currencyPrefix = formatMoney(0, currency).replace(/[\d.,\s]/g, "");
   const missing = [
     !origin.trim() && "Origin city",
     !destination.trim() && "Destination",
@@ -44,6 +52,7 @@ export default function TripBriefBuilder({ onSubmitPrompt, onPrefillPrompt, disa
     duration_days: durationDays,
     party_size: partySize,
     budget: numericBudget,
+    currency,
     travel_style: travelStyle,
   });
   const canLaunch = missing.length === 0 && !disabled;
@@ -159,35 +168,49 @@ export default function TripBriefBuilder({ onSubmitPrompt, onPrefillPrompt, disa
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor="brief-budget" className={LABEL}>
-            <IndianRupee className="h-4 w-4 text-primary" aria-hidden />
-            Total budget (INR)
+            <Wallet className="h-4 w-4 text-primary" aria-hidden />
+            Total budget
           </label>
-          <div className="relative">
-            <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 font-mono text-base text-muted" aria-hidden>
-              ₹
-            </span>
-            <input
-              id="brief-budget"
-              type="text"
-              inputMode="numeric"
-              enterKeyHint="done"
-              value={groupedRupees(budget)}
-              onChange={(e) => setBudget(e.target.value.replace(/\D/g, "").slice(0, MAX_BUDGET_DIGITS))}
-              placeholder="40,000"
-              className={`${INPUT} pl-8 font-mono`}
-            />
-          </div>
           <div className="flex gap-2">
+            <div className="relative flex-1">
+              <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 font-mono text-base text-muted" aria-hidden>
+                {currencyPrefix}
+              </span>
+              <input
+                id="brief-budget"
+                type="text"
+                inputMode="numeric"
+                enterKeyHint="done"
+                value={groupedAmount(budget, currency)}
+                onChange={(e) => setBudget(e.target.value.replace(/\D/g, "").slice(0, MAX_BUDGET_DIGITS))}
+                placeholder="40,000"
+                className={`${INPUT} ${currencyPrefix.length > 2 ? "pl-14" : "pl-8"} font-mono`}
+              />
+            </div>
+            <select
+              aria-label="Currency"
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
+              className="min-h-tap shrink-0 rounded-xl border border-border bg-surface-warm px-2.5 font-mono text-sm font-semibold text-ink focus:border-primary focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary/15"
+            >
+              {CURRENCIES.map((code) => (
+                <option key={code} value={code}>
+                  {code}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex flex-wrap gap-2">
             {BUDGET_PRESETS.map((amount) => (
               <button
                 key={amount}
                 type="button"
                 onClick={() => setBudget(String(amount))}
-                aria-label={`Budget ${formatMoney(amount, "INR")}`}
+                aria-label={`Budget ${formatMoney(amount, currency)}`}
                 aria-pressed={numericBudget === amount}
                 className={`flex-1 font-mono ${CHIP} ${numericBudget === amount ? CHIP_ON : CHIP_OFF}`}
               >
-                ₹{amount / 1000}k
+                {formatMoney(amount, currency)}
               </button>
             ))}
           </div>

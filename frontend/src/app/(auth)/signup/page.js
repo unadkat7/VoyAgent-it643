@@ -67,7 +67,7 @@ export default function SignupPage() {
       eyebrow="Start Your Atlas"
       headline="Three specialists. One feasible"
       accentWord="Trip Plan."
-      description="Describe your destination, days, party size, and INR Budget in plain English—or build a guided Trip Brief in seconds."
+      description="Describe your destination, days, party size, and Budget in plain English—or build a guided Trip Brief in seconds."
       title="Create your account"
       subtitle="Free to use. Save and revisit every Trip Plan you create."
       footer={

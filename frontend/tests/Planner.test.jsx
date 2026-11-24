@@ -4,9 +4,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import TripPlanner from "@/app/trip/new/page";
 import { planTrip } from "@/services/trip.service";
 
+const router = { push: vi.fn(), replace: vi.fn() };
+const searchParams = new URLSearchParams();
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
-  useSearchParams: () => new URLSearchParams(),
+  useRouter: () => router,
+  useSearchParams: () => searchParams,
 }));
 vi.mock("@/services/auth.service", () => ({ getCurrentUser: async () => ({ user: { name: "Alex" } }) }));
 vi.mock("@/services/event.service", () => ({ trackInteraction: vi.fn() }));

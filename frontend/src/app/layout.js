@@ -26,7 +26,7 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata = {
   title: "VoyAgent — Editorial AI Travel Planner",
   description:
-    "Describe your Trip in natural language. Three specialist agents plan stays, flights, day-by-day itineraries, and an interactive Trip Map within your INR Budget.",
+    "Describe your Trip in natural language. Three specialist agents plan stays, flights, day-by-day itineraries, and an interactive Trip Map within your Budget.",
 };
 
 export const viewport = {

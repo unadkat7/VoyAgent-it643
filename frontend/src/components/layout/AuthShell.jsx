@@ -23,7 +23,7 @@ export default function AuthShell({
           <div className="relative z-10 flex items-center justify-between">
             <BrandLogo href="/" theme="dark" />
             <span className="font-mono text-label uppercase tracking-widest text-bg/45 border border-bg/12 px-2.5 py-1 rounded-full">
-              INR Budget-First
+              Budget-First
             </span>
           </div>
 

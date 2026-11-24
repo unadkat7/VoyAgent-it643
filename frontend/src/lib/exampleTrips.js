@@ -24,4 +24,16 @@ export const EXAMPLE_TRIPS = [
     meta: "5 days · 2 Travelers · ₹50,000 · Culture",
     prompt: "5-day Rajasthan tour from Delhi, 2 people, ₹50,000, culture",
   },
+  {
+    title: "New York City Sprint",
+    route: "Los Angeles → New York",
+    meta: "3 days · 1 Traveler · $1,500 · Solo",
+    prompt: "Los Angeles to New York, 3 days, $1,500, solo",
+  },
+  {
+    title: "Paris Weekend",
+    route: "London → Paris",
+    meta: "4 days · 2 Travelers · £1,200 · Culture",
+    prompt: "London to Paris, 4 days, £1,200, 2 people",
+  },
 ];
