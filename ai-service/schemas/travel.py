@@ -16,8 +16,18 @@ class TrainLeg(BaseModel):
     arrives: str
 
 
+class FareRange(BaseModel):
+    """A one-way fare for one Traveler in INR, as a range because fares vary by date and seat."""
+
+    low: int = Field(ge=0)
+    high: int = Field(ge=0)
+
+
 class TrainOption(BaseModel):
-    """A way to get there by train, straight from the timetable: never written by the LLM."""
+    """A way to get there by train. Times come from the timetable, never the LLM.
+
+    Fares are web estimates for these exact trains, one way per Traveler; None when not found.
+    """
 
     legs: list[TrainLeg]
     departs: str
@@ -26,13 +36,20 @@ class TrainOption(BaseModel):
     change_at: str | None = None
     wait_minutes: int | None = None
     runs_on: list[str] = Field(default_factory=list)
+    sleeper: FareRange | None = None
+    ac3: FareRange | None = None
 
 
-class FareRange(BaseModel):
-    """A one-way fare for one Traveler in INR, as a range because fares vary by date and seat."""
+class TrainFare(BaseModel):
+    """Web-found one-way fares for one train number, per Traveler in INR."""
 
-    low: int = Field(ge=0)
-    high: int = Field(ge=0)
+    train_number: str
+    sleeper: FareRange | None = None
+    ac3: FareRange | None = None
+
+
+class TrainFares(BaseModel):
+    fares: list[TrainFare] = Field(default_factory=list)
 
 
 class TravelFares(BaseModel):
