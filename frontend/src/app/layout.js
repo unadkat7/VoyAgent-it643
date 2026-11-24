@@ -2,6 +2,8 @@ import { Fraunces, JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { Toaster } from "react-hot-toast";
 import PageViewTracker from "@/components/analytics/PageViewTracker";
+import ServiceStatusBanner from "@/components/status/ServiceStatusBanner";
+import { ServiceStatusProvider } from "@/components/status/ServiceStatusProvider";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -62,7 +64,10 @@ export default function RootLayout({ children }) {
             },
           }}
         />
-        {children}
+        <ServiceStatusProvider>
+          <ServiceStatusBanner />
+          {children}
+        </ServiceStatusProvider>
         {/* Cookie-free page-view counts: evidence of outside use for the project ceiling. */}
         <Analytics />
         <PageViewTracker />

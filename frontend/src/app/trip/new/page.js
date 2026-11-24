@@ -9,10 +9,12 @@ import { trackInteraction } from "@/services/event.service";
 import { getTripById, planTrip } from "@/services/trip.service";
 import AppHeader from "@/components/layout/AppHeader";
 import BrandLogo from "@/components/layout/BrandLogo";
+import { useServiceStatus } from "@/components/status/ServiceStatusProvider";
 import AgentProgressCard from "@/components/trip/AgentProgressCard";
 import TripBriefBuilder from "@/components/trip/TripBriefBuilder";
 import SegmentedControl from "@/components/ui/SegmentedControl";
 import { EXAMPLE_TRIPS } from "@/lib/exampleTrips";
+import { formatCountdown } from "@/lib/serviceStatus";
 import { formatMoney } from "@/lib/tripView";
 
 const WELCOME = {
@@ -54,6 +56,9 @@ function errorReply(error) {
   const status = error.response?.status;
   if (status === 409) return "This Trip is already planned. Start a new Trip to plan something else.";
   if (status === 429) return error.response?.data?.message || "You have reached the planning limit for now. Please try again in an hour.";
+  if (status === 503 && error.response?.data?.code === "AI_LIMIT_REACHED") {
+    return error.response?.data?.message || "AI trip planning is temporarily paused until provider limits reset.";
+  }
   if (status === 400) return "Please write a shorter message (up to 2,000 characters).";
   return "The planner is unavailable right now. Please send your message again in a minute.";
 }
@@ -61,6 +66,8 @@ function errorReply(error) {
 function TripPlanner() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { status: serviceStatus, remainingMs, refreshStatus } = useServiceStatus();
+  const isPlannerPaused = Boolean(serviceStatus?.isDown);
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -122,7 +129,7 @@ function TripPlanner() {
 
   const send = async (text) => {
     const trimmed = text.trim();
-    if (!trimmed || loading) return;
+    if (!trimmed || loading || isPlannerPaused) return;
     setMessages((prev) => [...prev, { role: "traveler", content: trimmed }]);
     setPrompt("");
     setMissingFields([]);
@@ -147,6 +154,9 @@ function TripPlanner() {
       }
     } catch (error) {
       if (error.response?.status === 401) return router.replace("/login");
+      if (error.response?.status === 503 && error.response?.data?.code === "AI_LIMIT_REACHED") {
+        refreshStatus();
+      }
       // A failed planning attempt is still saved, so the next message continues the same Trip.
       const failedTripId = error.response?.data?.tripId;
       if (failedTripId) {
@@ -414,6 +424,19 @@ function TripPlanner() {
           }}
           className="mx-auto max-w-4xl"
         >
+          {isPlannerPaused && (
+            <div
+              role="alert"
+              className="mb-2.5 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-warning/30 bg-warning-light px-3.5 py-2 text-xs font-medium text-warning sm:text-sm"
+            >
+              <span>AI planning is paused until Groq or Cloudflare Workers AI limits reset.</span>
+              {serviceStatus.availableAt && (
+                <span className="font-mono font-semibold tabular-nums">
+                  Resumes in {formatCountdown(remainingMs)}
+                </span>
+              )}
+            </div>
+          )}
           <div className="flex items-end gap-2 rounded-2xl border border-border bg-surface-warm p-1.5 transition-all focus-within:border-primary focus-within:bg-surface focus-within:ring-2 focus-within:ring-primary/15">
             <label htmlFor="trip-prompt" className="sr-only">
               Describe your Trip
@@ -423,18 +446,24 @@ function TripPlanner() {
               id="trip-prompt"
               rows={1}
               enterKeyHint="send"
-              placeholder={hasStarted ? "e.g. 4 people, $2,000, 2 nights" : "Where to? e.g. Pune to Goa"}
+              placeholder={
+                isPlannerPaused
+                  ? "AI planning is temporarily paused — check the countdown above"
+                  : hasStarted
+                    ? "e.g. 4 people, $2,000, 2 nights"
+                    : "Where to? e.g. Pune to Goa"
+              }
               value={prompt}
               maxLength={MAX_PROMPT_LENGTH}
               onChange={(event) => setPrompt(event.target.value)}
               onKeyDown={handleComposerKeyDown}
-              disabled={loading}
-              className="min-h-tap min-w-0 flex-1 resize-none overflow-hidden rounded-xl bg-transparent px-2.5 py-2.5 text-base leading-6 text-ink placeholder-faint focus:outline-none"
+              disabled={loading || isPlannerPaused}
+              className="min-h-tap min-w-0 flex-1 resize-none overflow-hidden rounded-xl bg-transparent px-2.5 py-2.5 text-base leading-6 text-ink placeholder-faint focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
             />
             <button
               type="submit"
               aria-label="Send message"
-              disabled={!ready || loading || !prompt.trim()}
+              disabled={!ready || loading || isPlannerPaused || !prompt.trim()}
               className="inline-flex size-tap shrink-0 items-center justify-center rounded-xl bg-primary text-white transition-all hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:gap-1.5 sm:px-4"
             >
               <Send className="h-4 w-4" aria-hidden />
