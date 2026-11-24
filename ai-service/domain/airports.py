@@ -1,3 +1,7 @@
+import json
+from functools import cache
+from pathlib import Path
+
 CITY_AIRPORT_CODES: dict[str, str] = {
     # India
     "mumbai": "BOM",
@@ -48,7 +52,15 @@ CITY_AIRPORT_CODES: dict[str, str] = {
     "colombo": "CMB",
     "male": "MLE",
     "maldives": "MLE",
+    "istanbul": "IST",
 }
+# Every other city with scheduled flights; built by scripts/build_airports.py from OurAirports.
+AIRPORTS_FILE = Path(__file__).resolve().parent.parent / "data" / "airports.json"
+
+
+@cache
+def _bundled_codes() -> dict[str, str]:
+    return json.loads(AIRPORTS_FILE.read_text(encoding="utf-8"))["airports"]
 
 
 def airport_code(place: str | None) -> str | None:
@@ -56,7 +68,8 @@ def airport_code(place: str | None) -> str | None:
     if not place or not place.strip():
         return None
     cleaned = place.strip()
-    known = CITY_AIRPORT_CODES.get(cleaned.lower())
+    # The hand list wins: it picks the main airport where a city has several.
+    known = CITY_AIRPORT_CODES.get(cleaned.lower()) or _bundled_codes().get(cleaned.lower())
     if known:
         return known
     # Only an explicit uppercase code counts, so a city like "Una" is not read as an IATA code.
