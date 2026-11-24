@@ -7,6 +7,7 @@ from domain.places import PlaceMatch
 from domain.roads import Drive
 from domain.timetable import Station, Stop, Timetable, Train
 from graph.engine import PlanningEngine
+from ports.fares import FareError
 from ports.geocoder import GeocodeError
 from ports.roads import RouteError
 from ports.timetable import TimetableError
@@ -15,6 +16,7 @@ from schemas.geo import GeoPoint
 from schemas.itinerary import Activity, Itinerary, ItineraryDay
 from schemas.plan import TripSummary
 from schemas.recommendations import HotelRecommendation
+from schemas.travel import FareRange, TrainFare, TravelFares
 from schemas.trip_request import TripRequest
 from tests.fakes import FakeLLM, FakePlaces, FakeRouter, FakeTimetable, SequenceSearch
 
@@ -103,7 +105,31 @@ def request_to(destination, origin="Surat"):
     )
 
 
-def make_engine(destination, *, origin="Surat", timetable=None, places=None, router=None):
+class TrainFareFinder:
+    """Fake FarePort: no route-level fares, and a fixed 3AC fare per train number."""
+
+    def __init__(self, by_train=None, error=None):
+        self._by_train = by_train or {}
+        self._error = error
+        self.segments = []
+
+    def estimate(self, query):
+        return TravelFares()
+
+    def train_fares(self, segments, month):
+        self.segments += segments
+        if self._error:
+            raise self._error
+        return [
+            TrainFare(train_number=s.train_number, ac3=self._by_train[s.train_number])
+            for s in segments
+            if s.train_number in self._by_train
+        ]
+
+
+def make_engine(
+    destination, *, origin="Surat", timetable=None, places=None, router=None, fares=None
+):
     llm = FakeLLM(
         {
             TripRequest: request_to(destination, origin),
@@ -138,6 +164,7 @@ def make_engine(destination, *, origin="Surat", timetable=None, places=None, rou
         timetable=timetable or FakeTimetable(make_timetable()),
         places=places or FakePlaces(PLACES),
         router=router or FakeRouter(DRIVES, default=Drive(km=1350, hours=22.0)),
+        fares=fares,
     )
 
 
@@ -233,6 +260,34 @@ def test_destination_with_its_own_station_has_no_road_leg():
     assert [leg.train_number for leg in plan.trains_out[0].legs] == ["12911"]
     assert plan.road_leg is None
     assert plan.road_route is not None
+
+
+def test_train_fares_are_searched_for_the_trains_found_and_price_the_train_option():
+    finder = TrainFareFinder(
+        {"12911": FareRange(low=1_800, high=2_100), "12912": FareRange(low=1_700, high=2_000)}
+    )
+
+    plan = plan_for("Haridwar", fares=finder)
+
+    assert {(s.train_number, s.from_station, s.to_station) for s in finder.segments} == {
+        ("12911", "Surat", "Haridwar Jn"),
+        ("12912", "Haridwar Jn", "Surat"),
+    }
+    assert plan.trains_out[0].ac3 == FareRange(low=1_800, high=2_100)
+    assert plan.trains_back[0].ac3 == FareRange(low=1_700, high=2_000)
+    train = next(option for option in plan.travel_options if option.mode == "train")
+    assert (train.per_person_low, train.per_person_high) == (3_500, 4_100)
+    assert "12911" in train.detail and "12912" in train.detail
+
+
+def test_train_fare_outage_still_plans_the_trip_with_a_note():
+    finder = TrainFareFinder(error=FareError("quota"))
+
+    plan = plan_for("Haridwar", fares=finder)
+
+    assert plan.trains_out[0].ac3 is None
+    assert not any(option.mode == "train" for option in plan.travel_options)
+    assert any("Train fares could not be found" in note for note in plan.notes)
 
 
 def test_timetable_outage_still_plans_the_trip_with_a_road_route():

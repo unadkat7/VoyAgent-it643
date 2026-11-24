@@ -30,6 +30,8 @@ def budget_check(state: PlanningState) -> PlanningState:
             fares=state.get("fares"),
             road_km=road.distance_km if road else None,
             party_size=request.party_size,
+            trains_out=state.get("trains_out"),
+            trains_back=state.get("trains_back"),
         )
     travel = chosen_option(options, state.get("travel_mode"))
     activities = sum(

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Protocol
 
-from schemas.travel import TravelFares
+from schemas.travel import TrainFare, TravelFares
 
 
 class FareError(Exception):
@@ -15,5 +15,17 @@ class FareQuery:
     month: str  # e.g. "December 2026"
 
 
+@dataclass(frozen=True)
+class TrainSegment:
+    """One train ridden between two stations, as the timetable names it."""
+
+    train_number: str
+    train_name: str
+    from_station: str
+    to_station: str
+
+
 class FarePort(Protocol):
     def estimate(self, query: FareQuery) -> TravelFares: ...
+
+    def train_fares(self, segments: list[TrainSegment], month: str) -> list[TrainFare]: ...

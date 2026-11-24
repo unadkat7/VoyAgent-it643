@@ -1,5 +1,6 @@
 import { TrainFront } from "lucide-react";
 import {
+  formatInr,
   formatMinutes,
   formatRunningDays,
   formatTrainDeparture,
@@ -9,6 +10,7 @@ import RoadRouteCard from "./RoadRouteCard";
 
 function TrainOptionCard({ option }) {
   const start = option.departs;
+  const fares = [fareText("Sleeper", option.sleeper), fareText("3AC", option.ac3)].filter(Boolean);
   return (
     <li className="rounded-2xl border border-border bg-surface p-4">
       <div className="space-y-3">
@@ -38,11 +40,19 @@ function TrainOptionCard({ option }) {
         {formatMinutes(option.duration_minutes)}
         {formatRunningDays(option.runs_on) && <> · {formatRunningDays(option.runs_on)}</>}
       </p>
+      {fares.length > 0 && (
+        <p className="mt-1 text-sm font-medium text-ink-soft">
+          {fares.join(" · ")} one way per person · web estimate, check IRCTC
+        </p>
+      )}
     </li>
   );
 }
 
-// Train Options straight from the timetable. No fares: the Traveler checks them on IRCTC.
+const fareText = (label, range) =>
+  range && `${label} ${formatInr(range.low)}${range.high > range.low ? `–${formatInr(range.high)}` : ""}`;
+
+// Train Options from the timetable; fares are web estimates for these trains when found.
 export default function TrainList({ title, options, roadLeg = null }) {
   if (!options?.length) return null;
   const id = title.toLowerCase().replace(/\W+/g, "-");

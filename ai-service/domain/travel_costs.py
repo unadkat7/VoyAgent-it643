@@ -1,7 +1,9 @@
 from math import ceil
 
 from schemas.recommendations import FlightRecommendation
-from schemas.travel import FareRange, TravelFares, TravelOption
+from schemas.travel import FareRange, TrainFare, TrainOption, TravelFares, TravelOption
+
+SEATS = (("ac3", "3AC"), ("sleeper", "Sleeper"))
 
 # Rough fuel and tolls for one car, per km, in INR.
 CAR_RUPEES_PER_KM = 9
@@ -23,6 +25,8 @@ def travel_options(
     fares: TravelFares | None,
     road_km: float | None,
     party_size: int,
+    trains_out: list[TrainOption] | None = None,
+    trains_back: list[TrainOption] | None = None,
 ) -> list[TravelOption]:
     """Every priced way there and back for the whole Travel Party, cheapest first."""
     options: list[TravelOption] = []
@@ -59,9 +63,13 @@ def travel_options(
                 over_budget=flight.over_budget,
             )
         )
+    # Fares for the exact trains there and back beat a route-wide estimate.
+    by_train = _train_option(trains_out or [], trains_back or [], party_size)
+    if by_train:
+        options.append(by_train)
     if fares:
         train = fares.train_ac3 or fares.train_sleeper
-        if train:
+        if train and not by_train:
             seat = "3AC" if fares.train_ac3 else "Sleeper"
             other = fares.train_sleeper if fares.train_ac3 else None
             detail = f"Sleeper from ₹{other.low:,} one way" if other else None
@@ -97,6 +105,49 @@ def _fare_option(
         per_person_high=high,
         total=round((low + high) / 2 * party_size),
     )
+
+
+def price_trains(options: list[TrainOption], fares: list[TrainFare]) -> list[TrainOption]:
+    """A seat class is priced only when every train in the option has a fare for it."""
+    by_number = {fare.train_number: fare for fare in fares}
+    priced = []
+    for option in options:
+        update = {}
+        for seat, _ in SEATS:
+            ranges = [getattr(by_number.get(leg.train_number), seat, None) for leg in option.legs]
+            if ranges and all(ranges):
+                update[seat] = FareRange(
+                    low=sum(r.low for r in ranges), high=sum(r.high for r in ranges)
+                )
+        priced.append(option.model_copy(update=update))
+    return priced
+
+
+def _train_option(
+    out: list[TrainOption], back: list[TrainOption], party_size: int
+) -> TravelOption | None:
+    for seat, label in SEATS:
+        going = [o for o in out if getattr(o, seat)]
+        coming = [o for o in back if getattr(o, seat)]
+        if not going or not coming:
+            continue
+        there = min(going, key=lambda o: getattr(o, seat).low)
+        home = min(coming, key=lambda o: getattr(o, seat).low)
+        low = getattr(there, seat).low + getattr(home, seat).low
+        high = getattr(there, seat).high + getattr(home, seat).high
+        return TravelOption(
+            mode="train",
+            label=f"Train · {label}",
+            detail=f"{_trains(there)} there, {_trains(home)} back",
+            per_person_low=low,
+            per_person_high=high,
+            total=round((low + high) / 2 * party_size),
+        )
+    return None
+
+
+def _trains(option: TrainOption) -> str:
+    return " + ".join(f"{leg.train_number} {leg.train_name}" for leg in option.legs)
 
 
 def chosen_option(options: list[TravelOption], mode: str | None) -> TravelOption | None:
