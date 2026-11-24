@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ArrowRight, Calendar, IndianRupee, MapPin, Minus, Navigation, Plus, Sparkles, Users } from "lucide-react";
-import { composeBriefPrompt, formatInr } from "@/lib/tripView";
+import { composeBriefPrompt, formatMoney } from "@/lib/tripView";
 import StickyActionBar from "@/components/ui/StickyActionBar";
 
 const TRAVEL_STYLES = ["Relaxed", "Adventure", "Culture", "Family", "Luxury", "Budget"];
@@ -183,7 +183,7 @@ export default function TripBriefBuilder({ onSubmitPrompt, onPrefillPrompt, disa
                 key={amount}
                 type="button"
                 onClick={() => setBudget(String(amount))}
-                aria-label={`Budget ${formatInr(amount)}`}
+                aria-label={`Budget ${formatMoney(amount, "INR")}`}
                 aria-pressed={numericBudget === amount}
                 className={`flex-1 font-mono ${CHIP} ${numericBudget === amount ? CHIP_ON : CHIP_OFF}`}
               >

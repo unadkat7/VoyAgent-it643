@@ -3,8 +3,9 @@ import {
   budgetBreakdown,
   daysAndNights,
   fareRange,
-  formatInr,
+  formatMoney,
   formatShortDate,
+  planCurrency,
   stayLabel,
 } from "@/lib/tripView";
 
@@ -32,6 +33,7 @@ function CostRow({ color, label, detail, amount }) {
 }
 
 export default function TripOverview({ plan, travelMode = null }) {
+  const currency = planCurrency(plan);
   const partySize = plan.request?.party_size;
   const days = plan.request?.duration_days;
   const breakdown = budgetBreakdown(plan, travelMode);
@@ -77,10 +79,10 @@ export default function TripOverview({ plan, travelMode = null }) {
           </div>
           <div className="sm:text-right">
             <p data-testid="estimated-total" className="font-mono text-3xl font-semibold text-success">
-              {formatInr(breakdown.total)}
+              {formatMoney(breakdown.total, currency)}
             </p>
             {breakdown.perPerson > 0 && partySize > 1 && (
-              <p className="text-sm font-semibold text-ink-soft">{formatInr(breakdown.perPerson)} per person</p>
+              <p className="text-sm font-semibold text-ink-soft">{formatMoney(breakdown.perPerson, currency)} per person</p>
             )}
           </div>
         </div>
@@ -101,13 +103,13 @@ export default function TripOverview({ plan, travelMode = null }) {
             </div>
             {breakdown.overBy > 0 ? (
               <p className="mt-2 text-sm font-semibold text-warning">
-                About {formatInr(breakdown.overBy)} over {breakdown.budgetGuessed ? "the guessed" : "your"}{" "}
-                {formatInr(breakdown.budget)} budget
+                About {formatMoney(breakdown.overBy, currency)} over {breakdown.budgetGuessed ? "the guessed" : "your"}{" "}
+                {formatMoney(breakdown.budget, currency)} budget
               </p>
             ) : (
               <p className="mt-2 text-sm font-semibold text-success">
-                {formatInr(breakdown.remaining)} left of {breakdown.budgetGuessed ? "the guessed" : "your"}{" "}
-                {formatInr(breakdown.budget)} budget
+                {formatMoney(breakdown.remaining, currency)} left of {breakdown.budgetGuessed ? "the guessed" : "your"}{" "}
+                {formatMoney(breakdown.budget, currency)} budget
               </p>
             )}
           </div>
@@ -119,31 +121,31 @@ export default function TripOverview({ plan, travelMode = null }) {
             label={`Stay · ${stayLabel(plan.nights, breakdown.rooms)}`}
             detail={
               plan.stops?.length > 1 ? plan.stops.map(s => s.city).join(" → ") : firstStay
-                ? `${firstStay.name} · ${formatInr(firstStay.price_per_night)} a night`
+                ? `${firstStay.name} · ${formatMoney(firstStay.price_per_night, firstStay.currency ?? currency)} a night`
                 : "No stay found"
             }
-            amount={formatInr(breakdown.hotelTotal)}
+            amount={formatMoney(breakdown.hotelTotal, currency)}
           />
           <CostRow
             color="bg-ink"
             label={travel ? `Getting there · ${travel.label}` : "Getting there"}
             detail={
               plan.estimated_cost?.legs_total > 0
-                ? `Includes ${formatInr(plan.estimated_cost.legs_total)} between cities`
+                ? `Includes ${formatMoney(plan.estimated_cost.legs_total, currency)} between cities`
                 : travel
-                ? `${fareRange(travel)} per person, round trip · change it in the Travel tab`
+                ? `${fareRange(travel, currency)} per person, round trip · change it in the Travel tab`
                 : breakdown.travelTotal > 0
                   ? `Round trip${travellers ? ` for ${travellers}` : ""}`
                   : "Not counted: no fares were found"
             }
-            amount={formatInr(breakdown.travelTotal)}
+            amount={formatMoney(breakdown.travelTotal, currency)}
           />
           {breakdown.activitiesTotal > 0 && (
             <CostRow
               color="bg-success"
               label="Activities"
               detail="Entry fees and tours from the itinerary"
-              amount={formatInr(breakdown.activitiesTotal)}
+              amount={formatMoney(breakdown.activitiesTotal, currency)}
             />
           )}
           {breakdown.dailySpendTotal > 0 && (
@@ -151,12 +153,12 @@ export default function TripOverview({ plan, travelMode = null }) {
               color="bg-star"
               label="Food & local travel"
               detail={days ? `Rough amount for ${days} ${days === 1 ? "day" : "days"}` : "Rough amount"}
-              amount={formatInr(breakdown.dailySpendTotal)}
+              amount={formatMoney(breakdown.dailySpendTotal, currency)}
             />
           )}
           <div className="flex items-center justify-between gap-3 py-3">
             <dt className="font-semibold text-ink">Total</dt>
-            <dd className="font-mono font-semibold text-ink">{formatInr(breakdown.total)}</dd>
+            <dd className="font-mono font-semibold text-ink">{formatMoney(breakdown.total, currency)}</dd>
           </div>
         </dl>
       </section>

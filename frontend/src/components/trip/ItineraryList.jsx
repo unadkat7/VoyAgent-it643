@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Calendar, ExternalLink, MapPin, Star } from "lucide-react";
-import { formatInr } from "@/lib/tripView";
+import { formatMoney } from "@/lib/tripView";
 import SegmentedControl from "@/components/ui/SegmentedControl";
 import EmptyState from "./EmptyState";
 
@@ -28,6 +28,7 @@ function ActivityPhoto({ src, alt }) {
 export default function ItineraryList({
   days,
   stops = [],
+  currency = "INR",
   selectedDay = "all",
   onSelectDay = null,
   focusedPointKey = null,
@@ -102,7 +103,7 @@ export default function ItineraryList({
                       {activity.time}
                       <span className="ml-2 normal-case tracking-normal text-success">
                         {activity.estimated_cost > 0
-                          ? `Est. ${formatInr(activity.estimated_cost)} per traveller`
+                          ? `Est. ${formatMoney(activity.estimated_cost, currency)} per traveller`
                           : "Free"}
                       </span>
                     </p>

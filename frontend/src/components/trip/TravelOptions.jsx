@@ -1,5 +1,5 @@
 import { Bus, Car, Plane, TrainFront } from "lucide-react";
-import { chosenTravel, fareRange, formatInr } from "@/lib/tripView";
+import { chosenTravel, fareRange, formatMoney, planCurrency } from "@/lib/tripView";
 import PriceSourceBadge from "./PriceSourceBadge";
 
 const ICONS = { flight: Plane, train: TrainFront, bus: Bus, car: Car };
@@ -8,6 +8,7 @@ const ICONS = { flight: Plane, train: TrainFront, bus: Bus, car: Car };
 export default function TravelOptions({ plan, travelMode, onSelectMode = null }) {
   const options = plan.travel_options ?? [];
   if (options.length === 0) return null;
+  const currency = planCurrency(plan);
   const chosen = chosenTravel(plan, travelMode);
   const partySize = plan.request?.party_size;
 
@@ -41,7 +42,7 @@ export default function TravelOptions({ plan, travelMode, onSelectMode = null })
                   )}
                 </span>
                 <span className="mt-0.5 block text-sm text-muted">
-                  {fareRange(option)} per person
+                  {fareRange(option, currency)} per person
                   {option.detail ? ` · ${option.detail}` : ""}
                 </span>
                 <span className="mt-1.5 block">
@@ -49,7 +50,7 @@ export default function TravelOptions({ plan, travelMode, onSelectMode = null })
                 </span>
               </span>
               <span className="shrink-0 text-right">
-                <span className="block font-mono font-semibold text-ink">{formatInr(option.total)}</span>
+                <span className="block font-mono font-semibold text-ink">{formatMoney(option.total, currency)}</span>
                 {isChosen && <span className="text-label font-semibold text-success">In total</span>}
               </span>
             </>

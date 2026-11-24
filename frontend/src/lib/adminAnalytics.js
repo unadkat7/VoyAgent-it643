@@ -1,6 +1,6 @@
 // Pure formatting, normalization and export helpers for the Admin Dashboard.
 
-import { formatInr } from "./tripView";
+import { formatMoney } from "./tripView";
 
 export function formatCompactNumber(value) {
   if (!Number.isFinite(value)) return "0";
@@ -319,6 +319,7 @@ export function normalizeAdminOverview(raw = {}) {
       partySizes: Array.isArray(trips.partySizes) ? trips.partySizes : [],
       durationBuckets: Array.isArray(trips.durationBuckets) ? trips.durationBuckets : [],
       budgetAnalysis: {
+        nonInrTrips: trips.budgetAnalysis?.nonInrTrips ?? 0,
         totalPlannedBudgetInr: trips.budgetAnalysis?.totalPlannedBudgetInr ?? 0,
         totalEstimatedCostInr: trips.budgetAnalysis?.totalEstimatedCostInr ?? 0,
         avgBudgetInr: trips.budgetAnalysis?.avgBudgetInr ?? null,
@@ -374,4 +375,4 @@ export function normalizeAdminOverview(raw = {}) {
   };
 }
 
-export { formatInr };
+export { formatMoney };

@@ -1,16 +1,19 @@
 import { TrainFront } from "lucide-react";
 import {
-  formatInr,
   formatMinutes,
+  formatMoney,
   formatRunningDays,
   formatTrainDeparture,
   formatTrainTime,
 } from "@/lib/tripView";
 import RoadRouteCard from "./RoadRouteCard";
 
-function TrainOptionCard({ option }) {
+function TrainOptionCard({ option, currency = "INR" }) {
   const start = option.departs;
-  const fares = [fareText("Sleeper", option.sleeper), fareText("3AC", option.ac3)].filter(Boolean);
+  const fares = [
+    fareText("Sleeper", option.sleeper, currency),
+    fareText("3AC", option.ac3, currency),
+  ].filter(Boolean);
   return (
     <li className="rounded-2xl border border-border bg-surface p-4">
       <div className="space-y-3">
@@ -49,11 +52,12 @@ function TrainOptionCard({ option }) {
   );
 }
 
-const fareText = (label, range) =>
-  range && `${label} ${formatInr(range.low)}${range.high > range.low ? `–${formatInr(range.high)}` : ""}`;
+const fareText = (label, range, currency = "INR") =>
+  range &&
+  `${label} ${formatMoney(range.low, currency)}${range.high > range.low ? `–${formatMoney(range.high, currency)}` : ""}`;
 
 // Train Options from the timetable; fares are web estimates for these trains when found.
-export default function TrainList({ title, options, roadLeg = null }) {
+export default function TrainList({ title, options, roadLeg = null, currency = "INR" }) {
   if (!options?.length) return null;
   const id = title.toLowerCase().replace(/\W+/g, "-");
   return (
@@ -63,7 +67,11 @@ export default function TrainList({ title, options, roadLeg = null }) {
       </h2>
       <ol className="space-y-3">
         {options.map((option) => (
-          <TrainOptionCard key={`${option.departs}-${option.legs.map((l) => l.train_number).join("-")}`} option={option} />
+          <TrainOptionCard
+            key={`${option.departs}-${option.legs.map((l) => l.train_number).join("-")}`}
+            option={option}
+            currency={currency}
+          />
         ))}
       </ol>
       {roadLeg && <RoadRouteCard route={roadLeg} lead="Then by road: " />}

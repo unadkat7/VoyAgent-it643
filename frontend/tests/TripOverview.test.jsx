@@ -34,8 +34,8 @@ describe("TripOverview", () => {
       estimated_cost: {
         ...PLAN.estimated_cost,
         currency: "USD",
-        hotel_total: 300,
-        travel_total: 300,
+        hotel_total: 320,
+        travel_total: 280,
         total: 600,
         per_person: 600,
       },
@@ -43,7 +43,8 @@ describe("TripOverview", () => {
     render(<TripOverview plan={usdPlan} />);
 
     expect(screen.getByTestId("estimated-total")).toHaveTextContent("$600");
-    expect(screen.getByText(/\$300/)).toBeInTheDocument();
+    expect(screen.getByText("$320")).toBeInTheDocument();
+    expect(screen.getByText("$280")).toBeInTheDocument();
   });
 
   it("has no tips section when the plan has no tips", () => {

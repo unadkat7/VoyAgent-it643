@@ -1,14 +1,23 @@
 // Pure helpers for showing Trips. No React here, so they are easy to test.
 
-const inr = new Intl.NumberFormat("en-IN", {
-  style: "currency",
-  currency: "INR",
-  maximumFractionDigits: 0,
-});
+const formatters = new Map();
 
-export function formatInr(amount) {
-  return Number.isFinite(amount) ? inr.format(amount) : "—";
+export function formatMoney(amount, currency = "INR") {
+  if (!Number.isFinite(amount)) return "—";
+  if (!formatters.has(currency)) {
+    formatters.set(
+      currency,
+      new Intl.NumberFormat(currency === "INR" ? "en-IN" : "en-US", {
+        style: "currency",
+        currency,
+        maximumFractionDigits: 0,
+      })
+    );
+  }
+  return formatters.get(currency).format(amount);
 }
+
+export const planCurrency = (plan) => plan?.estimated_cost?.currency ?? "INR";
 
 const TITLE_LENGTH = 40;
 
@@ -58,12 +67,13 @@ const hasPoint = (coordinates) =>
 // Day views frame activities only. The whole-trip view also includes each city's stays.
 export function mapPoints(plan, day) {
   const points = [];
+  const currency = planCurrency(plan);
   const stops = day === "all" ? planStops(plan) : [];
   stops.forEach((stop, index) => {
     for (const [hotelIndex, hotel] of (stop.hotels ?? []).entries()) {
       if (!hasPoint(hotel.coordinates)) continue;
       points.push({ key: `hotel-${index}-${hotelIndex}`, kind: "hotel", title: hotel.name,
-        detail: `${formatInr(hotel.price_per_night)} / night`, ...hotel.coordinates });
+        detail: `${formatMoney(hotel.price_per_night, hotel.currency ?? currency)} / night`, ...hotel.coordinates });
     }
   });
   for (const itineraryDay of plan?.itinerary ?? []) {
@@ -172,10 +182,12 @@ export function budgetBreakdown(plan, travelMode = null) {
   };
 }
 
-export function fareRange(option) {
+export function fareRange(option, currency = "INR") {
   if (!option) return "—";
   const { per_person_low: low, per_person_high: high } = option;
-  return low === high ? formatInr(low) : `${formatInr(low)}–${formatInr(high)}`;
+  return low === high
+    ? formatMoney(low, currency)
+    : `${formatMoney(low, currency)}–${formatMoney(high, currency)}`;
 }
 
 export function stayLabel(nights, rooms) {
@@ -270,7 +282,7 @@ export function composeBriefPrompt(brief) {
 
   if (origin) parts.push(`from ${origin}`);
   if (partySize > 0) parts.push(`${partySize} ${partySize === 1 ? "traveler" : "travelers"}`);
-  if (budget > 0) parts.push(`total budget ${formatInr(budget)}`);
+  if (budget > 0) parts.push(`total budget ${formatMoney(budget, brief?.currency ?? "INR")}`);
   if (style) parts.push(`${style.toLowerCase()} travel style`);
 
   return parts.join(", ");

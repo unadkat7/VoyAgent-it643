@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { ArrowUpDown, Search, Users } from "lucide-react";
 import {
   formatDeviceLabel,
-  formatInr,
+  formatMoney,
   formatPlace,
   formatShortDate,
 } from "@/lib/adminAnalytics";
@@ -152,7 +152,7 @@ export default function UsersTable({ users = [] }) {
                 {Object.entries({
                   Tier: user.engagementTier ?? "explorer", Joined: formatShortDate(user.joinedAt),
                   "Last active": formatShortDate(user.lastActiveAt), "Planned trips": user.plannedTrips,
-                  Destination: user.topDestination, "Average budget": user.avgBudgetInr ? formatInr(user.avgBudgetInr) : null,
+                  Destination: user.topDestination, "Average budget": user.avgBudgetInr ? formatMoney(user.avgBudgetInr, "INR") : null,
                   Location: formatPlace(user), Device: formatDeviceLabel(user.device), Source: user.signupSource ?? "direct",
                 }).map(([label, value]) => <div key={label} className="contents"><dt className="text-muted">{label}</dt><dd>{value ?? "—"}</dd></div>)}
               </dl>
@@ -243,7 +243,7 @@ export default function UsersTable({ users = [] }) {
                       {user.topDestination ?? "—"}
                     </td>
                     <td className="py-2.5 pr-3 font-mono whitespace-nowrap">
-                      {user.avgBudgetInr ? formatInr(user.avgBudgetInr) : "—"}
+                      {user.avgBudgetInr ? formatMoney(user.avgBudgetInr, "INR") : "—"}
                     </td>
                     <td className="py-2.5 pr-3 whitespace-nowrap">
                       {formatShortDate(user.lastActiveAt)}
