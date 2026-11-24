@@ -1,4 +1,20 @@
+from typing import Literal
+
 from pydantic import BaseModel, Field
+
+PlaceKind = Literal["city", "region", "country", "multi_country", "not_on_earth", "not_a_place"]
+WorldArea = Literal[
+    "india",
+    "south_asia",
+    "southeast_asia",
+    "east_asia",
+    "middle_east",
+    "europe",
+    "africa",
+    "americas",
+    "oceania",
+    "polar",
+]
 
 
 class TripRequest(BaseModel):
@@ -17,3 +33,8 @@ class TripRequest(BaseModel):
     interests: list[str] = Field(default_factory=list)
     accommodation_type: str | None = Field(None, description="e.g. resort, hostel, if stated")
     special_requests: list[str] = Field(default_factory=list)
+    destination_kind: PlaceKind | None = Field(
+        None, description="Geographic type of destination, including invalid names"
+    )
+    destination_area: WorldArea | None = Field(None, description="World area of the destination")
+    origin_kind: PlaceKind | None = Field(None, description="Geographic type of the starting place")

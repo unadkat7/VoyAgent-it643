@@ -4,6 +4,7 @@ from datetime import date
 from langgraph.graph import END, START, StateGraph
 
 from agents.budget_check import budget_check, route_after_budget_check
+from agents.check_places import make_check_places_node
 from agents.clarify import clarify
 from agents.compose import make_compose_node
 from agents.fares import make_fares_node
@@ -30,7 +31,7 @@ def route_start(state: PlanningState) -> str:
     if state.get("finish_only"):
         return "budget_check"
     if state.get("request"):
-        return "prepare"
+        return "check_places"
     return "understand"
 
 
@@ -49,6 +50,7 @@ def build_planning_graph(
     graph = StateGraph(PlanningState)
     graph.add_node("understand", make_understand_node(llm, today))
     graph.add_node("clarify", clarify)
+    graph.add_node("check_places", make_check_places_node(geocoder))
     graph.add_node("prepare", make_prepare_node(today))
     graph.add_node("hotels", make_hotel_node(hotel_search))
     graph.add_node("flights", make_flight_node(flight_search))
@@ -70,8 +72,13 @@ def build_planning_graph(
         searches.append("fares")
 
     # A new Conversation starts at understand; a plan edit starts later (see route_start).
-    graph.add_conditional_edges(START, route_start, ["understand", "prepare", "budget_check"])
-    graph.add_conditional_edges("understand", route_after_understand, ["clarify", "prepare"])
+    graph.add_conditional_edges(START, route_start, ["understand", "check_places", "budget_check"])
+    graph.add_conditional_edges("understand", route_after_understand, ["clarify", "check_places"])
+    graph.add_conditional_edges(
+        "check_places",
+        lambda state: END if state.get("clarification") else "prepare",
+        [END, "prepare"],
+    )
     graph.add_edge("clarify", END)
 
     # Fan out to the independent searches, then join before checking the Budget.

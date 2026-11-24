@@ -2,6 +2,7 @@ from datetime import date
 
 import pytest
 
+from adapters.no_geocoder import NoGeocoder
 from agents.itinerary import SYSTEM as ITINERARY_SYSTEM
 from graph.engine import PlanningEngine
 from ports.llm import LLMError
@@ -71,7 +72,7 @@ def make_engine(llm, hotels=None, flights=None, geocoder=None):
         llm=llm,
         hotel_search=hotel_search,
         flight_search=flight_search,
-        geocoder=geocoder or FakeGeocoder(),
+        geocoder=geocoder or NoGeocoder(),
         today=lambda: TODAY,
     )
 
@@ -271,7 +272,9 @@ def test_plan_carries_coordinates_for_the_trip_map():
         llm_for(GOA_REQUEST),
         hotels=[[hotel("Sea View", 6_000, 4.5)]],
         flights=[[flight("IndiGo", 5_000)]],
-        geocoder=FakeGeocoder({"Goa": goa, "Baga, Goa": baga}),
+        geocoder=FakeGeocoder(
+            {"Goa": goa, "Baga, Goa": baga, "Ahmedabad": GeoPoint(lat=23, lng=72)}
+        ),
     )
 
     plan = ask(engine, "plan it").plan
@@ -346,3 +349,39 @@ def test_llm_outage_is_reported_not_hidden():
 
     with pytest.raises(LLMError):
         ask(engine, "Goa trip")
+
+
+@pytest.mark.parametrize(
+    ("fields", "field", "reason"),
+    [
+        ({"destination": "Sun", "destination_kind": "not_on_earth"}, "destination", "not_on_earth"),
+        ({"destination": "Antarctica", "destination_area": "polar"}, "destination", "unreachable"),
+        ({"destination": "Atlantiss"}, "destination", "not_a_place"),
+        ({"origin": "Direct Antarctica"}, "origin", "not_a_place"),
+        ({"duration_days": 45}, "duration_days", None),
+    ],
+)
+def test_invalid_request_asks_before_any_search(fields, field, reason):
+    request = TripRequest(**(GOA_REQUEST.model_dump() | fields))
+    engine = make_engine(llm_for(request), geocoder=FakeGeocoder({"Goa": GeoPoint(lat=15, lng=74)}))
+
+    response = ask(engine, "plan it")
+
+    assert response.plan is None
+    assert response.clarification.missing_fields == [field]
+    assert response.clarification.reason == reason
+
+
+def test_map_outage_allows_planning_with_a_note():
+    from ports.geocoder import GeocodeError
+
+    engine = make_engine(
+        llm_for(GOA_REQUEST),
+        hotels=[[]],
+        flights=[[]],
+        geocoder=FakeGeocoder(error=GeocodeError("down")),
+    )
+
+    plan = ask(engine, "Goa").plan
+
+    assert any("double-check 'Goa'" in note for note in plan.notes)

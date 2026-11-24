@@ -16,3 +16,4 @@ class PlanEdit(BaseModel):
     answer: str | None = Field(
         None, description="A short reply when the Traveler asks a question or wants suggestions"
     )
+    off_topic: bool = False
