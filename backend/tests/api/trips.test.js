@@ -161,6 +161,68 @@ describe("POST /api/trips/plan", () => {
   });
 });
 
+
+describe("Repeated rejected trip inputs", () => {
+  const endpoint = "/api/trips/plan";
+  const rejected = { ...CLARIFICATION, clarification: {
+    ...CLARIFICATION.clarification, reason: "not_on_earth",
+  } };
+
+  it("blocks only the account with five recent rejections, before calling the planner", async () => {
+    const agent = await signedInAgent();
+    for (let i = 0; i < 5; i++) {
+      aiAnswers(rejected);
+      expect((await agent.post(endpoint).send({ prompt: "Sun" })).status).toBe(200);
+    }
+    const unused = aiAnswers(PLANNED);
+    const blocked = await agent.post(endpoint).send({ prompt: "Goa" });
+
+    expect(blocked.status).toBe(429);
+    expect(blocked.body.message).toMatch(/real place/);
+    expect(unused.isDone()).toBe(false);
+    const fresh = await signedInAgent("other@example.com");
+    expect((await fresh.post(endpoint).send({ prompt: "Goa" })).status).toBe(200);
+  });
+
+  it("allows twenty valid plans after expired rejections", async () => {
+    const agent = await signedInAgent();
+    const { userId } = await Event.findOne({ type: "signup" });
+    const createdAt = new Date(Date.now() - 61 * 60000);
+    await Event.insertMany(Array.from({ length: 5 }, () => ({
+      type: "trip_input_rejected", userId, createdAt, visitorHash: "old",
+    })));
+
+    for (let i = 0; i < 20; i++) {
+      aiAnswers(PLANNED);
+      expect((await agent.post(endpoint).send({ prompt: "Goa" })).status).toBe(200);
+    }
+  });
+
+  it("leaves honest budget clarifications out of the rejection count", async () => {
+    const agent = await signedInAgent();
+    aiAnswers({ ...CLARIFICATION, clarification: { ...CLARIFICATION.clarification, reason: null } });
+
+    await agent.post(endpoint).send({ prompt: "Europe on a budget" });
+
+    expect(await Event.countDocuments({ type: "trip_input_rejected" })).toBe(0);
+  });
+
+  it("counts off-topic chat against the same account limit", async () => {
+    const agent = await signedInAgent();
+    aiAnswers(PLANNED);
+    const planned = await agent.post(endpoint).send({ prompt: "Goa" });
+    const tripId = planned.body.trip._id;
+    for (let i = 0; i < 5; i++) {
+      nock(AI).post("/planner/edit-plan").reply(200, {
+        outcome: "answered", change: "question", reply: "Ask about the trip.", reason: "off_topic",
+      });
+      expect((await agent.post(`/api/trips/${tripId}/chat`).send({ message: "write a poem" })).status).toBe(200);
+    }
+    expect(await Event.countDocuments({ type: "trip_input_rejected", tripId, "meta.category": "off_topic" })).toBe(5);
+    expect((await agent.post(`/api/trips/${tripId}/chat`).send({ message: "Goa" })).status).toBe(429);
+  });
+});
+
 describe("Chat about a planned Trip", () => {
   const EDIT_PATH = "/planner/edit-plan";
   const PLAN_WITH_OPTIONS = {
