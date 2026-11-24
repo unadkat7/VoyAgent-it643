@@ -1,5 +1,5 @@
 import { Plane } from "lucide-react";
-import { formatInr } from "@/lib/tripView";
+import { formatMoney } from "@/lib/tripView";
 import EmptyState from "./EmptyState";
 import PriceSourceBadge from "./PriceSourceBadge";
 
@@ -8,7 +8,7 @@ function stopsLabel(stops) {
   return `${stops} stop${stops > 1 ? "s" : ""}`;
 }
 
-export default function FlightList({ flights, partySize, notes = [] }) {
+export default function FlightList({ flights, partySize, currency = "INR", notes = [] }) {
   if (!flights?.length) {
     return (
       <EmptyState icon={Plane} notes={notes}>
@@ -98,13 +98,13 @@ export default function FlightList({ flights, partySize, notes = [] }) {
               <div className="md:col-span-3 p-5 flex md:flex-col items-center md:items-end justify-between md:justify-center border-t md:border-t-0 md:border-l border-dashed border-border-strong bg-bg/70">
                 <div className="md:text-right">
                   <p className="font-mono text-2xl font-semibold text-success">
-                    {formatInr(flight.price_per_traveler)}
+                    {formatMoney(flight.price_per_traveler, flight.currency ?? currency)}
                   </p>
                   <p className="text-xs text-muted">per traveller</p>
                 </div>
                 {partyTotal != null && (
                   <p className="font-mono text-label text-ink-soft bg-white border border-border px-2.5 py-1 rounded-lg md:mt-2">
-                    {formatInr(partyTotal)} for {partySize}
+                    {formatMoney(partyTotal, flight.currency ?? currency)} for {partySize}
                   </p>
                 )}
               </div>

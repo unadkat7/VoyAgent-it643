@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import { Building2, ExternalLink, MapPin, Star } from "lucide-react";
-import { formatInr, stayLabel } from "@/lib/tripView";
+import { formatMoney, stayLabel } from "@/lib/tripView";
 import EmptyState from "./EmptyState";
 import PriceSourceBadge from "./PriceSourceBadge";
 
 const MAX_AMENITIES = 3;
 
-function HotelCard({ hotel, nights, rooms, onTrack }) {
+function HotelCard({ hotel, nights, rooms, currency = "INR", onTrack }) {
+  const cur = hotel.currency ?? currency;
   const [imgFailed, setImgFailed] = useState(false);
   const showImage = Boolean(hotel.image_url) && !imgFailed;
   const visibleAmenities = hotel.amenities?.slice(0, MAX_AMENITIES) ?? [];
@@ -57,14 +58,14 @@ function HotelCard({ hotel, nights, rooms, onTrack }) {
         <div className="mt-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
           <p className="font-mono text-lg font-semibold text-success">
             {totalForStay != null
-              ? `${formatInr(totalForStay)} for ${stayLabel(nights, rooms)}`
-              : `${formatInr(hotel.price_per_night)} / night`}
+              ? `${formatMoney(totalForStay, cur)} for ${stayLabel(nights, rooms)}`
+              : `${formatMoney(hotel.price_per_night, cur)} / night`}
           </p>
           <PriceSourceBadge source={hotel.price_source} />
         </div>
         {totalForStay != null && (
           <p className="text-sm text-muted">
-            {formatInr(hotel.price_per_night)} a night{rooms > 1 ? " per room" : ""}
+            {formatMoney(hotel.price_per_night, cur)} a night{rooms > 1 ? " per room" : ""}
           </p>
         )}
 
@@ -93,7 +94,7 @@ function HotelCard({ hotel, nights, rooms, onTrack }) {
   );
 }
 
-export default function HotelList({ hotels, nights, rooms = 1, notes = [], onTrack = null }) {
+export default function HotelList({ hotels, nights, rooms = 1, currency = "INR", notes = [], onTrack = null }) {
   if (!hotels?.length) {
     return (
       <EmptyState icon={Building2} notes={notes}>
@@ -105,7 +106,7 @@ export default function HotelList({ hotels, nights, rooms = 1, notes = [], onTra
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
       {hotels.map((hotel) => (
-        <HotelCard key={hotel.name} hotel={hotel} nights={nights} rooms={rooms} onTrack={onTrack} />
+        <HotelCard key={hotel.name} hotel={hotel} nights={nights} rooms={rooms} currency={currency} onTrack={onTrack} />
       ))}
     </div>
   );

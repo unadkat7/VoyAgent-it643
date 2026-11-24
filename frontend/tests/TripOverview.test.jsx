@@ -27,6 +27,26 @@ describe("TripOverview", () => {
     expect(screen.getByText(PLAN.notes[0])).toBeInTheDocument();
   });
 
+  it("shows the Estimated Cost total and its parts in USD when the plan is in USD", () => {
+    const usdPlan = {
+      ...PLAN,
+      request: { ...PLAN.request, budget: 1000, currency: "USD" },
+      estimated_cost: {
+        ...PLAN.estimated_cost,
+        currency: "USD",
+        hotel_total: 320,
+        travel_total: 280,
+        total: 600,
+        per_person: 600,
+      },
+    };
+    render(<TripOverview plan={usdPlan} />);
+
+    expect(screen.getByTestId("estimated-total")).toHaveTextContent("$600");
+    expect(screen.getByText("$320")).toBeInTheDocument();
+    expect(screen.getByText("$280")).toBeInTheDocument();
+  });
+
   it("has no tips section when the plan has no tips", () => {
     render(<TripOverview plan={{ ...PLAN, important_tips: [] }} />);
 

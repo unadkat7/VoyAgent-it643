@@ -9,8 +9,9 @@ import {
   budgetBreakdown,
   daysAndNights,
   formatDateRange,
-  formatInr,
+  formatMoney,
   mapPoints,
+  planCurrency,
   planStops,
   tripRouteLabel,
   tripTitle,
@@ -160,6 +161,7 @@ export default function TripPlanView({ trip, onTripChange = null }) {
   };
 
   const { plan } = trip;
+  const currency = planCurrency(plan);
   const editable = Boolean(onTripChange);
   const canChat = editable && !trip.finalized;
   const route = tripRouteLabel(trip);
@@ -229,15 +231,15 @@ export default function TripPlanView({ trip, onTripChange = null }) {
             >
               <span className="min-w-0">
                 <span className="block text-label font-semibold uppercase tracking-wider text-muted">Estimated cost</span>{" "}
-                <span className="font-mono text-xl font-semibold text-success">{formatInr(breakdown.total)}</span>
+                <span className="font-mono text-xl font-semibold text-success">{formatMoney(breakdown.total, currency)}</span>
                 {breakdown.perPerson > 0 && partySize > 1 && (
                   <span className="ml-2 text-sm font-semibold text-ink-soft">
-                    {formatInr(breakdown.perPerson)} per person
+                    {formatMoney(breakdown.perPerson, currency)} per person
                   </span>
                 )}
                 <span className="block text-sm text-muted">
                   Stay, travel, activities and food
-                  {breakdown.budget > 0 && ` · ${breakdown.usedPercent}% of ${formatInr(breakdown.budget)}`}
+                  {breakdown.budget > 0 && ` · ${breakdown.usedPercent}% of ${formatMoney(breakdown.budget, currency)}`}
                 </span>
               </span>
               <ChevronRight className="h-5 w-5 shrink-0 text-muted" aria-hidden />
@@ -298,6 +300,7 @@ export default function TripPlanView({ trip, onTripChange = null }) {
               <ItineraryList
                 days={plan.itinerary}
                 stops={plan.stops}
+                currency={currency}
                 selectedDay={selectedDay}
                 onSelectDay={handleSelectDay}
                 focusedPointKey={focusedPointKey}
@@ -354,7 +357,7 @@ export default function TripPlanView({ trip, onTripChange = null }) {
               <section key={index}>
                 {plan.stops?.length > 1 && <h2 className="mb-3 text-xl font-semibold">{stop.city}</h2>}
                 <HotelList hotels={stop.hotels} nights={stop.nights} rooms={breakdown.rooms}
-                  notes={plan.notes} onTrack={handleTrack} />
+                  currency={currency} notes={plan.notes} onTrack={handleTrack} />
               </section>
             ))}
           </div>

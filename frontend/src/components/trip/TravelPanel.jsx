@@ -1,5 +1,5 @@
 import { ExternalLink } from "lucide-react";
-import { formatInr, formatShortDate } from "@/lib/tripView";
+import { formatMoney, formatShortDate, planCurrency } from "@/lib/tripView";
 import FlightList from "./FlightList";
 import RoadRouteCard from "./RoadRouteCard";
 import TrainList from "./TrainList";
@@ -10,6 +10,7 @@ const IRCTC_URL = "https://www.irctc.co.in/nget/train-search";
 // The Travel tab: priced ways to travel, then flights, trains there and back, and the drive.
 // Older plans have flights only.
 export default function TravelPanel({ plan, travelMode = null, onSelectMode = null }) {
+  const currency = planCurrency(plan);
   const flights = plan.flights ?? [];
   const trainsOut = plan.trains_out ?? [];
   const trainsBack = plan.trains_back ?? [];
@@ -32,7 +33,7 @@ export default function TravelPanel({ plan, travelMode = null, onSelectMode = nu
               : "No flights or trains for this trip. The road route is below."}
           </p>
         ) : (
-          <FlightList flights={flights} partySize={plan.request?.party_size} notes={plan.notes} />
+          <FlightList flights={flights} partySize={plan.request?.party_size} currency={currency} notes={plan.notes} />
         )}
       </section>
 
@@ -40,15 +41,18 @@ export default function TravelPanel({ plan, travelMode = null, onSelectMode = nu
         <section className="space-y-2">
           <h2 className="font-display text-xl font-semibold text-ink">Between cities</h2>
           {plan.legs.map((leg, index) => (
-            <p key={index}>{leg.from_city} → {leg.to_city} · {leg.mode} · ≈ {formatInr(leg.est_inr_per_person)} per person (estimate)</p>
+            <p key={index}>
+              {leg.from_city} → {leg.to_city} · {leg.mode} · ≈{" "}
+              {formatMoney(leg.est_per_person ?? leg.est_inr_per_person, currency)} per person (estimate)
+            </p>
           ))}
         </section>
       )}
 
       {hasTrains && (
         <div className="space-y-8">
-          <TrainList title="Getting there by train" options={trainsOut} roadLeg={plan.road_leg} />
-          <TrainList title="Coming back by train" options={trainsBack} />
+          <TrainList title="Getting there by train" options={trainsOut} roadLeg={plan.road_leg} currency={currency} />
+          <TrainList title="Coming back by train" options={trainsBack} currency={currency} />
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-bg px-4 py-3">
             <a
               href={IRCTC_URL}

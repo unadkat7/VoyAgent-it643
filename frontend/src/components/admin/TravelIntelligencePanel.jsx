@@ -11,7 +11,7 @@ import {
   Route,
   Sparkles,
 } from "lucide-react";
-import { formatInr, formatLatency, formatPercent } from "@/lib/adminAnalytics";
+import { formatLatency, formatMoney, formatPercent } from "@/lib/adminAnalytics";
 import Skeleton from "@/components/ui/Skeleton";
 
 const DestinationsMap = dynamic(() => import("./DestinationsMap"), {
@@ -183,7 +183,7 @@ export default function TravelIntelligencePanel({ trips, showMap = true }) {
                         <div className="flex items-center justify-between gap-2 mb-1">
                           <span className="font-semibold text-ink">{row.destination}</span>
                           <span className="font-mono text-muted">
-                            {row.avgBudgetInr ? `${formatInr(row.avgBudgetInr)} avg · ` : ""}
+                            {row.avgBudgetInr ? `${formatMoney(row.avgBudgetInr, "INR")} avg · ` : ""}
                             {row.avgDays ? `${row.avgDays}d · ` : ""}
                             <strong className="text-ink">{row.count}</strong>
                           </span>
@@ -212,7 +212,7 @@ export default function TravelIntelligencePanel({ trips, showMap = true }) {
                         <div className="flex items-center justify-between gap-2 mb-1">
                           <span className="font-semibold text-ink">{row.route}</span>
                           <span className="font-mono text-muted">
-                            {row.avgBudgetInr ? `${formatInr(row.avgBudgetInr)} · ` : ""}
+                            {row.avgBudgetInr ? `${formatMoney(row.avgBudgetInr, "INR")} · ` : ""}
                             <strong className="text-ink">{row.count}</strong>
                           </span>
                         </div>
@@ -274,10 +274,16 @@ export default function TravelIntelligencePanel({ trips, showMap = true }) {
         <div className={`${CARD} lg:col-span-6 flex flex-col justify-between gap-5`}>
           <div>
             <p className={EYEBROW}>INR Budget Intelligence</p>
-            <h3 className="font-display text-lg font-semibold text-ink flex items-center gap-1.5 mb-4">
+            <h3 className="font-display text-lg font-semibold text-ink flex items-center gap-1.5 mb-1">
               <IndianRupee className="w-4 h-4 text-success" aria-hidden />
               Budget utilization &amp; spend allocation
             </h3>
+            <p className="text-xs text-muted mb-4">
+              INR trips only
+              {budgetAnalysis.nonInrTrips > 0
+                ? ` (${budgetAnalysis.nonInrTrips} in other currencies)`
+                : ""}
+            </p>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mb-4">
               <div className="rounded-xl bg-bg border border-border p-3">
@@ -285,7 +291,7 @@ export default function TravelIntelligencePanel({ trips, showMap = true }) {
                   Avg Budget
                 </p>
                 <p className="font-mono text-base font-semibold text-ink mt-0.5">
-                  {formatInr(budgetAnalysis.avgBudgetInr)}
+                  {formatMoney(budgetAnalysis.avgBudgetInr, "INR")}
                 </p>
               </div>
               <div className="rounded-xl bg-bg border border-border p-3">
@@ -293,7 +299,7 @@ export default function TravelIntelligencePanel({ trips, showMap = true }) {
                   Median Budget
                 </p>
                 <p className="font-mono text-base font-semibold text-ink mt-0.5">
-                  {formatInr(budgetAnalysis.medianBudgetInr)}
+                  {formatMoney(budgetAnalysis.medianBudgetInr, "INR")}
                 </p>
               </div>
               <div className="rounded-xl bg-success-light border border-success/15 p-3 col-span-2 sm:col-span-1">
@@ -301,7 +307,7 @@ export default function TravelIntelligencePanel({ trips, showMap = true }) {
                   Avg full trip estimate
                 </p>
                 <p className="font-mono text-base font-semibold text-success mt-0.5">
-                  {formatInr(budgetAnalysis.avgEstimatedCostInr)}
+                  {formatMoney(budgetAnalysis.avgEstimatedCostInr, "INR")}
                 </p>
               </div>
             </div>
@@ -374,7 +380,7 @@ export default function TravelIntelligencePanel({ trips, showMap = true }) {
           <div className="pt-3 border-t border-bg-subtle flex items-center justify-between text-xs text-muted">
             <span>Total planned budget volume</span>
             <strong className="font-mono text-ink">
-              {formatInr(budgetAnalysis.totalPlannedBudgetInr)}
+              {formatMoney(budgetAnalysis.totalPlannedBudgetInr, "INR")}
             </strong>
           </div>
         </div>
@@ -400,7 +406,7 @@ export default function TravelIntelligencePanel({ trips, showMap = true }) {
                     <div className="flex justify-between text-ink-soft mb-1">
                       <span className="capitalize font-medium">{item.style}</span>
                       <span className="font-mono text-muted">
-                        {item.avgBudgetInr ? `${formatInr(item.avgBudgetInr)} · ` : ""}
+                        {item.avgBudgetInr ? `${formatMoney(item.avgBudgetInr, "INR")} · ` : ""}
                         <strong className="text-ink">{item.count}</strong>
                       </span>
                     </div>

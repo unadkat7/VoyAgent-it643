@@ -5,7 +5,7 @@ import L from "leaflet";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { Map as MapIcon } from "lucide-react";
-import { formatInr } from "@/lib/tripView";
+import { formatMoney } from "@/lib/tripView";
 
 function clusterIcon(count, maxCount) {
   const ratio = maxCount > 1 ? count / maxCount : 0.5;
@@ -86,7 +86,7 @@ export default function DestinationsMap({ pins = [] }) {
                 </p>
                 {pin.avgBudgetInr && (
                   <p className="text-xs text-success font-mono font-semibold">
-                    Avg budget {formatInr(pin.avgBudgetInr)}
+                    Avg budget {formatMoney(pin.avgBudgetInr, "INR")}
                   </p>
                 )}
               </div>

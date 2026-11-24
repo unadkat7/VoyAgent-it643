@@ -13,7 +13,7 @@ import {
   Minimize2,
   MousePointerClick,
 } from "lucide-react";
-import { formatInr, mapDays, mapPoints } from "@/lib/tripView";
+import { formatMoney, mapDays, mapPoints, planCurrency } from "@/lib/tripView";
 import useWideLayout from "@/lib/useWideLayout";
 import SegmentedControl from "@/components/ui/SegmentedControl";
 import Sheet from "@/components/ui/Sheet";
@@ -490,7 +490,7 @@ export default function TripMap({
                     {point.detail && <p className="text-sm text-muted">{point.detail}</p>}
                     {point.kind === "activity" && (
                       <p className="text-sm font-semibold text-success">
-                        {point.cost > 0 ? `Est. ${formatInr(point.cost)} per traveller` : "Free"}
+                        {point.cost > 0 ? `Est. ${formatMoney(point.cost, planCurrency(plan))} per traveller` : "Free"}
                       </p>
                     )}
                     <a

@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 import { getCurrentUser, logout } from "@/services/auth.service";
 import { trackInteraction } from "@/services/event.service";
 import { deleteTrip, getUserTrips } from "@/services/trip.service";
-import { formatInr, statusInfo, tripLink, tripRouteLabel, tripTitle } from "@/lib/tripView";
+import { formatMoney, planCurrency, statusInfo, tripLink, tripRouteLabel, tripTitle } from "@/lib/tripView";
 import FeedbackWidget from "@/components/feedback/FeedbackWidget";
 import AppHeader from "@/components/layout/AppHeader";
 import BottomNav from "@/components/layout/BottomNav";
@@ -48,7 +48,7 @@ function plannedSummary(plan) {
   return [
     plan.nights ? `${plan.nights} ${plan.nights === 1 ? "night" : "nights"}` : null,
     party ? `${party} ${party === 1 ? "traveler" : "travelers"}` : null,
-    plan.estimated_cost ? formatInr(plan.estimated_cost.total) : null,
+    plan.estimated_cost ? formatMoney(plan.estimated_cost.total, planCurrency(plan)) : null,
   ]
     .filter(Boolean)
     .join(" · ");

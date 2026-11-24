@@ -13,7 +13,7 @@ import AgentProgressCard from "@/components/trip/AgentProgressCard";
 import TripBriefBuilder from "@/components/trip/TripBriefBuilder";
 import SegmentedControl from "@/components/ui/SegmentedControl";
 import { EXAMPLE_TRIPS } from "@/lib/exampleTrips";
-import { formatInr } from "@/lib/tripView";
+import { formatMoney } from "@/lib/tripView";
 
 const WELCOME = {
   role: "assistant",
@@ -30,10 +30,10 @@ const FIELD_META = {
   travel_style: { label: "Travel Style", placeholder: "e.g. relaxed", example: "Relaxed" },
 };
 
-function chipLabel(field, suggestions) {
+function chipLabel(field, suggestions, currency) {
   const value = suggestions[field];
   if (value == null) return FIELD_META[field]?.label ?? field;
-  if (field === "budget") return `Use ${formatInr(value)}`;
+  if (field === "budget") return `Use ${formatMoney(value, currency ?? "INR")}`;
   if (field === "duration_days") return `Use ${value} days`;
   return `Use ${String(value)}`;
 }
@@ -69,6 +69,7 @@ function TripPlanner() {
   const [messages, setMessages] = useState([WELCOME]);
   const [missingFields, setMissingFields] = useState([]);
   const [suggestions, setSuggestions] = useState({});
+  const [clarificationCurrency, setClarificationCurrency] = useState(null);
   const [clarificationDraft, setClarificationDraft] = useState({});
   const [prompt, setPrompt] = useState(initialPrompt);
   const [briefVersion, setBriefVersion] = useState(0);
@@ -88,6 +89,7 @@ function TripPlanner() {
       setMessages([WELCOME, ...trip.conversation]);
       setMissingFields(trip.status === "draft" ? (trip.clarification?.missingFields ?? []) : []);
       setSuggestions(trip.status === "draft" ? (trip.clarification?.suggestions ?? {}) : {});
+      setClarificationCurrency(trip.status === "draft" ? (trip.clarification?.currency ?? null) : null);
       setShowBrief(false);
     } catch {
       setTripId(null);
@@ -125,6 +127,7 @@ function TripPlanner() {
     setPrompt("");
     setMissingFields([]);
     setSuggestions({});
+    setClarificationCurrency(null);
     setClarificationDraft({});
     setShowBrief(false);
     setLoading(true);
@@ -140,6 +143,7 @@ function TripPlanner() {
         setMessages((prev) => [...prev, { role: "assistant", content: trip.clarification.question }]);
         setMissingFields(trip.clarification.missingFields ?? []);
         setSuggestions(trip.clarification.suggestions ?? {});
+        setClarificationCurrency(trip.clarification.currency ?? null);
       }
     } catch (error) {
       if (error.response?.status === 401) return router.replace("/login");
@@ -162,6 +166,7 @@ function TripPlanner() {
     setMessages([WELCOME]);
     setMissingFields([]);
     setSuggestions({});
+    setClarificationCurrency(null);
     setClarificationDraft({});
     setPrompt("");
     setShowBrief(false);
@@ -180,6 +185,9 @@ function TripPlanner() {
       .map((field) => {
         const val = clarificationDraft[field]?.trim();
         if (!val) return null;
+        if (field === "budget" && /^\d+(?:\.\d+)?$/.test(val) && clarificationCurrency) {
+          return `Budget: ${formatMoney(Number(val), clarificationCurrency)}`;
+        }
         const label = FIELD_META[field]?.label ?? field;
         return `${label}: ${val}`;
       })
@@ -377,7 +385,7 @@ function TripPlanner() {
                       className="inline-flex min-h-tap items-center gap-1 rounded-xl border border-border bg-bg px-3 text-sm font-medium text-ink-soft hover:border-primary/40 hover:text-primary"
                     >
                       <Plus className="h-4 w-4" aria-hidden />
-                      {chipLabel(field, suggestions)}
+                      {chipLabel(field, suggestions, clarificationCurrency)}
                     </button>
                   ))}
                 </div>
