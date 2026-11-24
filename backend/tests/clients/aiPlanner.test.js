@@ -51,18 +51,20 @@ describe("requestPlan on a serverless platform", () => {
 });
 
 describe("requestPlan clarification", () => {
-  it("passes through clarification suggestions", async () => {
+  it("passes through clarification suggestions and currency", async () => {
     planner().reply(200, {
       status: "needs_clarification",
       clarification: {
         missing_fields: ["budget"],
         question: "Q",
-        suggestions: { budget: 110000 },
+        suggestions: { budget: 1100 },
+        currency: "USD",
       },
     });
 
     const result = await requestPlan(CALL);
 
-    expect(result.clarification.suggestions).toEqual({ budget: 110000 });
+    expect(result.clarification.suggestions).toEqual({ budget: 1100 });
+    expect(result.clarification.currency).toBe("USD");
   });
 });

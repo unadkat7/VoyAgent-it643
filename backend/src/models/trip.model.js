@@ -28,6 +28,7 @@ const tripSchema = new mongoose.Schema(
       missingFields: [String],
       question: String,
       suggestions: { type: Map, of: Number, default: undefined },
+      currency: String,
     },
     // The Trip plan exactly as the Planning Engine returned it.
     plan: {
