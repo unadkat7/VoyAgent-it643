@@ -1,9 +1,9 @@
 import pytest
 
 from adapters.web_fares import WebFares
-from ports.fares import FareError, FareQuery
+from ports.fares import FareError, FareQuery, TrainSegment
 from ports.web_search import WebResult, WebSearchError
-from schemas.travel import FareRange, TravelFares
+from schemas.travel import FareRange, TrainFare, TrainFares, TravelFares
 from tests.fakes import BrokenLLM, FakeLLM
 
 QUERY = FareQuery(origin="Ahmedabad", destination="Goa", month="December 2026")
@@ -43,6 +43,37 @@ def test_train_and_bus_results_are_read_into_fares():
 
 def test_no_results_means_no_fares_without_asking_the_llm():
     assert WebFares(FakeWeb([]), BrokenLLM()).estimate(QUERY) == TravelFares()
+
+
+SEGMENTS = [
+    TrainSegment("12911", "Bl Haridwar Exp", "Surat", "Haridwar Jn"),
+    TrainSegment("12912", "Hw Bl Exp", "Haridwar Jn", "Surat"),
+]
+
+
+def test_each_train_is_searched_by_number_and_stations_and_read_in_one_go():
+    prompts = []
+    fares = TrainFares(
+        fares=[
+            TrainFare(train_number="12911", ac3=FareRange(low=1_800, high=2_100)),
+            TrainFare(train_number="99999", ac3=FareRange(low=1, high=2)),
+        ]
+    )
+
+    def answer(prompt):
+        prompts.append(prompt)
+        return fares
+
+    web = FakeWeb([RESULT])
+
+    found = WebFares(web, FakeLLM({TrainFares: answer})).train_fares(SEGMENTS, "December 2026")
+
+    assert web.queries == [
+        "12911 Bl Haridwar Exp Surat to Haridwar Jn train fare sleeper 3AC December 2026",
+        "12912 Hw Bl Exp Haridwar Jn to Surat train fare sleeper 3AC December 2026",
+    ]
+    assert len(prompts) == 1
+    assert [fare.train_number for fare in found] == ["12911"]
 
 
 @pytest.mark.parametrize(
