@@ -2,16 +2,11 @@
 
 import { useState } from "react";
 import { ArrowRight, Calendar, MapPin, Minus, Navigation, Plus, Sparkles, Users, Wallet } from "lucide-react";
+import { budgetPresets, convertBudget, CURRENCIES } from "@/lib/currencies";
 import { composeBriefPrompt, formatMoney } from "@/lib/tripView";
 import StickyActionBar from "@/components/ui/StickyActionBar";
 
 const TRAVEL_STYLES = ["Relaxed", "Adventure", "Culture", "Family", "Luxury", "Budget"];
-const CURRENCIES = [
-  "INR", "USD", "EUR", "GBP", "AED", "SAR", "QAR",
-  "SGD", "MYR", "THB", "IDR", "JPY", "CNY", "HKD",
-  "AUD", "NZD", "CAD", "CHF", "ZAR", "NPR", "LKR",
-];
-const BUDGET_PRESETS = [20000, 35000, 50000, 80000];
 const DAY_PRESETS = [2, 3, 4, 5, 7];
 const MAX_BUDGET_DIGITS = 8;
 
@@ -190,7 +185,11 @@ export default function TripBriefBuilder({ onSubmitPrompt, onPrefillPrompt, disa
             <select
               aria-label="Currency"
               value={currency}
-              onChange={(e) => setCurrency(e.target.value)}
+              onChange={(e) => {
+                const next = e.target.value;
+                if (numericBudget > 0) setBudget(String(convertBudget(numericBudget, currency, next)));
+                setCurrency(next);
+              }}
               className="min-h-tap shrink-0 rounded-xl border border-border bg-surface-warm px-2.5 font-mono text-sm font-semibold text-ink focus:border-primary focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary/15"
             >
               {CURRENCIES.map((code) => (
@@ -201,7 +200,7 @@ export default function TripBriefBuilder({ onSubmitPrompt, onPrefillPrompt, disa
             </select>
           </div>
           <div className="flex flex-wrap gap-2">
-            {BUDGET_PRESETS.map((amount) => (
+            {budgetPresets(currency).map((amount) => (
               <button
                 key={amount}
                 type="button"
