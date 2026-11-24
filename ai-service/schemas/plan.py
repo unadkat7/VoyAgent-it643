@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 from schemas.geo import GeoPoint
 from schemas.itinerary import ItineraryDay
 from schemas.recommendations import FlightRecommendation, HotelRecommendation
+from schemas.route import RouteStop, StopLeg
 from schemas.travel import RoadRoute, TrainOption, TravelMode, TravelOption
 from schemas.trip_request import TripRequest
 
@@ -21,6 +22,7 @@ class EstimatedCost(BaseModel):
     total: float
     currency: Literal["INR"] = "INR"
     # The chosen way to get there and back; plans saved before this only had flight_total.
+    legs_total: float = 0
     travel_total: float = 0
     travel_mode: TravelMode | None = None
     # Defaults keep plans saved before these were added readable.
@@ -28,6 +30,14 @@ class EstimatedCost(BaseModel):
     daily_spend_total: float = 0
     rooms: int = 1
     per_person: float = 0
+
+
+class Stop(RouteStop):
+    check_in: str
+    check_out: str
+    nights: int
+    hotels: list[HotelRecommendation] = Field(default_factory=list)
+    coordinates: GeoPoint | None = None
 
 
 class TripPlan(BaseModel):
@@ -55,3 +65,5 @@ class TripPlan(BaseModel):
     assumed_fields: list[str] = Field(default_factory=list)
     assumptions: list[str] = Field(default_factory=list)
     follow_up: str | None = None
+    stops: list[Stop] = Field(default_factory=list)
+    legs: list[StopLeg] = Field(default_factory=list)

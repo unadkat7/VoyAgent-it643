@@ -15,6 +15,7 @@ class Activity(BaseModel):
 
 
 class ItineraryDay(BaseModel):
+    stop: int | None = Field(None, ge=0, description="Zero-based index of the base city")
     day: int = Field(ge=1)
     title: str
     activities: list[Activity]

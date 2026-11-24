@@ -25,7 +25,7 @@ class FlightQuery:
     origin_airport: str
     destination_airport: str
     outbound_date: date
-    return_date: date
+    return_date: date | None
     max_price_per_traveler: int
 
 

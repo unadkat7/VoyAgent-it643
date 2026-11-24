@@ -26,13 +26,16 @@ class HotelRecommendation(BaseModel):
 
 class FlightRecommendation(BaseModel):
     airline: str
+    direction: SkipJsonSchema[Literal["outbound", "return"] | None] = None
     flight_number: str | None = None
     departure_airport: str
     arrival_airport: str
     departure_time: str | None = None
     arrival_time: str | None = None
     duration: str | None = None
-    price_per_traveler: float = Field(ge=0, description="Round-trip fare for one Traveler in INR")
+    price_per_traveler: float = Field(
+        ge=0, description="Fare for the requested journey for one Traveler in INR"
+    )
     currency: Literal["INR"] = "INR"
     stops: int = Field(0, ge=0)
     price_source: PriceSource = "estimated"
